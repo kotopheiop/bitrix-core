@@ -1,6 +1,0 @@
-<?
-$MESS["SOCIALNETWORK_WORKGROUP_CHAT_TITLE"] = "Workgroup: \"#GROUP_NAME#\"";
-$MESS["SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED"] = "Workgroup \"#GROUP_NAME#\" is no longer linked to this chat.";
-$MESS["SOCIALNETWORK_WORKGROUP_CHAT_TITLE_PROJECT"] = "Project: \"#GROUP_NAME#\"";
-$MESS["SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED_PROJECT"] = "Project \"#GROUP_NAME#\" is no longer linked to this chat.";
-?>

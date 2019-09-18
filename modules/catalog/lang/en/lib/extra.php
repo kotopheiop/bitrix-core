@@ -1,5 +1,0 @@
-<?
-$MESS["EXTRA_ENTITY_ID_FIELD"] = "Surcharge ID";
-$MESS["EXTRA_ENTITY_NAME_FIELD"] = "Name";
-$MESS["EXTRA_ENTITY_PERCENTAGE_FIELD"] = "Amount";
-?>

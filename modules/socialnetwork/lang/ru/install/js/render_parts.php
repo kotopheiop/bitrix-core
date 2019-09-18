@@ -1,5 +1,0 @@
-<?
-$MESS["SONET_RENDERPARTS_JS_DESTINATION_ALL"] = "Все сотрудники";
-$MESS["SONET_RENDERPARTS_JS_DESTINATION_ALL_BUS"] = "Все пользователи";
-$MESS["SONET_RENDERPARTS_JS_HIDDEN"] = "Скрытый получатель";
-?>

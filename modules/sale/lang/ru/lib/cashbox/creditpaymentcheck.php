@@ -1,3 +1,0 @@
-<?php
-$MESS['SALE_CASHBOX_CREDIT_PAYMENT_NAME'] = 'Оплата кредита';
-$MESS['SALE_CASHBOX_CREDIT_PAYMENT_ITEM_NAME'] = 'Оплата кредита';

@@ -1,5 +1,0 @@
-<?
-$MESS["BX_SALE_DISCOUNT_MESS_SIMPLE_DESCRIPTION_BASKET"] = "Shopping cart total change";
-$MESS["BX_SALE_DISCOUNT_MESS_SIMPLE_DESCRIPTION_DELIVERY"] = "Cost of delivery change";
-$MESS["BX_SALE_DISCOUNT_MESS_SIMPLE_DESCRIPTION_UNKNOWN"] = "Unknown shopping cart rule";
-?>

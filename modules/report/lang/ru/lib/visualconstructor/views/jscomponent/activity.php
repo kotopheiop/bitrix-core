@@ -1,9 +1,0 @@
-<?php
-$MESS['REPORT_ACTIVITY_VIEW_LABEL'] = 'Àêòèâíîñòü';
-$MESS['MONDAY'] = 'Ïí';
-$MESS['TUESDAY'] = 'Âò';
-$MESS['WEDNESDAY'] = 'Ñð';
-$MESS['THURSDAY'] = '×ò';
-$MESS['FRIDAY'] = 'Ïò';
-$MESS['SATURDAY'] = 'Ñá';
-$MESS['SUNDAY'] = 'Âñ';
