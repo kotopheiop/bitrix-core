@@ -1,0 +1,5 @@
+<?
+$MESS["SALE_YML_BIG_LETTERS"] = "ÀÁÂÃÄÅ¨ÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞß";
+$MESS["SALE_YML_SMALL_LETTERS"] = "àáâãäå¸æçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
+$MESS["SALE_YML_REPLACE_FROM"] = "¨,¸";
+$MESS["SALE_YML_REPLACE_TO"] = "å";

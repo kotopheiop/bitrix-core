@@ -1,0 +1,77 @@
+<?
+namespace Bitrix\Sale\Location\Comparator;
+
+class Replacement
+{
+	public static function getLocalityTypes()
+	{
+		return array(
+			'ÐÀÁÎ×ÈÉ ÏÎÑ¨ËÎÊ' => array(),
+			'ÏÎÑ¨ËÎÊ ÃÎÐÎÄÑÊÎÃÎ ÒÈÏÀ' => array('ÏÃÒ'),
+			'ÏÎÑ¨ËÎÊ' => array('Ï', 'ÏÎÑ', 'ÏÎÑÅËÎÊ'),
+			'ÀÓË' => array(),
+			'ÑÅËÎ' => array('C'),
+			'ÕÓÒÎÐ' => array('Õ'),
+			'ÄÅÐÅÂÍß' => array('Ä', 'ÄÅÐ'),
+			'ÑÒÀÍÈÖÀ' => array('ÑÒ-ÖÀ', 'ÑÒÀÍ')
+		);
+	}
+
+	public static function getRegionTypes()
+	{
+		return array(
+			'ÎÁËÀÑÒÜ' => array('ÎÁË'),
+			'ÀÂÒÎÍÎÌÍÛÉ ÎÊÐÓÃ' => array('ÀÎ', 'ÀÂÒ ÎÊÐÓÃ'),
+			'ÐÅÑÏÓÁËÈÊÀ' => array('ÐÅÑÏ')
+		);
+	}
+
+	public static function getRegionVariants()
+	{
+		return array(
+			'×ÓÂÀØÈß' => '×ÓÂÀØÑÊÀß',
+			'ÌÎÑÊÂÀ' => 'ÌÎÑÊÎÂÑÊÀß ÎÁËÀÑÒÜ',
+			'ÑÀÍÊÒ-ÏÅÒÅÐÁÓÐÃ' => 'ËÅÍÈÍÃÐÀÄÑÊÀß ÎÁËÀÑÒÜ',
+			'ÓÄÌÓÐÒÈß' => 'ÓÄÌÓÐÒÑÊÀß',
+			'ÑÀÕÀ /ßÊÓÒÈß/ ÐÅÑÏ' => 'ÐÅÑÏÓÁËÈÊÀ ÑÀÕÀ (ßÊÓÒÈß)',
+			'ÕÀÍÒÛ-ÌÀÍÑÈÉÑÊÈÉ ÀÂÒÎÍÎÌÍÛÉ ÎÊÐÓÃ - ÞÃÐÀ ÀÎ' => 'ÕÀÍÒÛ-ÌÀÍÑÈÉÑÊÈÉ ÀÂÒÎÍÎÌÍÛÉ ÎÊÐÓÃ',
+			'ÅÂÐÅÉÑÊÀß ÀÎÁË' => 'ÅÂÐÅÉÑÊÀß ÀÂÒÎÍÎÌÍÀß ÎÁËÀÑÒÜ'
+		);
+	}
+
+	public static function getCountryVariants()
+	{
+		return array(
+			'ÐÔ' => 'ÐÎÑÑÈß',
+			'ÐÎÑÑÈÉÑÊÀß ÔÅÄÅÐÀÖÈß' => 'ÐÎÑÑÈß'
+		);
+	}
+
+	public static function isCountryRussia($countryName)
+	{
+		return in_array(
+			ToUpper(
+				trim(
+					$countryName
+				)
+			),
+			array(
+				'ÐÔ',
+				'ÐÎÑÑÈÉÑÊÀß ÔÅÄÅÐÀÖÈß',
+				'ÐÎÑÑÈß'
+			)
+		);
+	}
+
+	public static function getDistrictTypes()
+	{
+		return array(
+			'ÐÀÉÎÍ' => array('Ð-Í', 'Ð-ÎÍ')
+		);
+	}
+
+	public static function changeYoE($string)
+	{
+		return str_replace('¨', 'Å', $string);
+	}
+}
