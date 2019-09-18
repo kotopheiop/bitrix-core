@@ -340,12 +340,13 @@ class CBPRuntime
 		return null;
 	}
 
-	/**
-	* Adds new service to runtime. Runtime should be stopped.
-	* 
-	* @param string $name - Service code.
-	* @param CBPRuntimeService $service - Service object.
-	*/
+    /**
+     * Adds new service to runtime. Runtime should be stopped.
+     *
+     * @param string $name - Service code.
+     * @param CBPRuntimeService $service - Service object.
+     * @throws Exception
+     */
 	public function AddService($name, CBPRuntimeService $service)
 	{
 		if ($this->isStarted)
@@ -384,11 +385,12 @@ class CBPRuntime
 
 	/*******************  UTILITIES  ***************************************************************/
 
-	/**
-	* Includes activity file by activity code.
-	* 
-	* @param string $code - Activity code.
-	*/
+    /**
+     * Includes activity file by activity code.
+     *
+     * @param string $code - Activity code.
+     * @return bool
+     */
 	public function IncludeActivityFile($code)
 	{
 		if (in_array($code, $this->arLoadedActivities))

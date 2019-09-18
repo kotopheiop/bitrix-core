@@ -38,7 +38,12 @@ class CAllBlogUser
 		return False;
 	}
 
-	/*************** ADD, UPDATE, DELETE *****************/
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $ACTION
+     * @param $arFields
+     * @param int $ID
+     * @return bool
+     */
 	public static function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $DB;

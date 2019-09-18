@@ -71,11 +71,16 @@ var $creator;            // creator
 var $AliasNbPages;       // alias for total number of pages
 var $PDFVersion;         // PDF version number
 
-/*******************************************************************************
-*                                                                              *
-*                               Public methods                                 *
-*                                                                              *
-*******************************************************************************/
+    /*******************************************************************************
+     *                                                                              *
+     *                               Public methods                                 *
+     *                                                                              *
+     ******************************************************************************
+     * @param string $orientation
+     * @param string $unit
+     * @param string $size
+     * @return tFPDF
+     */
 function tFPDF($orientation='P', $unit='mm', $size='A4')
 {
 	// Some checks

@@ -4,7 +4,12 @@ $GLOBALS["BLOG_TRACKBACK"] = Array();
 
 class CAllBlogTrackback
 {
-	/*************** ADD, UPDATE, DELETE *****************/
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $ACTION
+     * @param $arFields
+     * @param int $ID
+     * @return bool
+     */
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $DB;

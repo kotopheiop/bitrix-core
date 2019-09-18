@@ -544,10 +544,10 @@ class CLdapUtil
 		return strlen(trim($authNet)) > 0;
 	}
 
-	/**
-	 * @param string $serverPort Server port.
-	 * @return bool|string Port for outlook connection.
-	 */
+    /**
+     * @param bool|string $serverPort Server port.
+     * @return bool|string Port for outlook connection.
+     */
 	public static function getTargetPort($serverPort = false)
 	{
 		if($serverPort === false)

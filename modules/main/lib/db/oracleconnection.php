@@ -184,24 +184,23 @@ class OracleConnection extends Connection
 		return new OracleResult($result, $this, $trackerQuery);
 	}
 
-	/**
-	 * Executes a query to the database.
-	 *
-	 * - query($sql)
-	 * - query($sql, $limit)
-	 * - query($sql, $offset, $limit)
-	 * - query($sql, $binds)
-	 * - query($sql, $binds, $limit)
-	 * - query($sql, $binds, $offset, $limit)
-	 *
-	 * @param string $sql Sql query.
-	 * @param array $binds Array of binds.
-	 * @param int $offset Offset of the first row to return, starting from 0.
-	 * @param int $limit Limit rows count.
-	 *
-	 * @return Result
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 */
+    /**
+     * Executes a query to the database.
+     *
+     * - query($sql)
+     * - query($sql, $limit)
+     * - query($sql, $offset, $limit)
+     * - query($sql, $binds)
+     * - query($sql, $binds, $limit)
+     * - query($sql, $binds, $offset, $limit)
+     *
+     * @param string $sql Sql query.
+     * @return Result
+     * @internal param array $binds Array of binds.
+     * @internal param int $offset Offset of the first row to return, starting from 0.
+     * @internal param int $limit Limit rows count.
+     *
+     */
 	public function query($sql)
 	{
 		list($sql, $binds, $offset, $limit) = self::parseQueryFunctionArgs(func_get_args());

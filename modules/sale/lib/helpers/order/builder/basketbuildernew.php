@@ -41,11 +41,12 @@ class BasketBuilderNew implements IBasketBuilderDelegate
 		return $item;
 	}
 
-	/**
-	 * @param string $basketCode
-	 * @param array $productData
-	 * @param BasketItem $item
-	 */
+    /**
+     * @param string $basketCode
+     * @param array $productData
+     * @param BasketItem $item
+     * @throws BuildingException
+     */
 	public function setItemData($basketCode, &$productData, &$item)
 	{
 		//Let's extract cached provider product data from field

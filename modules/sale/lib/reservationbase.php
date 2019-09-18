@@ -40,11 +40,12 @@ abstract class ReservationBase extends Attributes
 	 */
 
 
-	/**
-	 * @param Basket $basketCollection
-	 * @param array $productList
-	 * @return array
-	 */
+    /**
+     * @param Basket $basketCollection
+     * @param array $productList
+     * @return array
+     * @throws \Exception
+     */
 	public static function getProductList(Basket $basketCollection, array $productList = array())
 	{
 		throw new \Exception("Method 'ReservationBase::getProduct' is not overridden");

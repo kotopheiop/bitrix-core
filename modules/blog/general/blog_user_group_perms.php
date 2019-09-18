@@ -4,7 +4,12 @@ $GLOBALS["BLOG_USER_GROUP_PERMS"] = Array();
 
 class CAllBlogUserGroupPerms
 {
-	/*************** ADD, UPDATE, DELETE *****************/
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $ACTION
+     * @param $arFields
+     * @param int $ID
+     * @return bool
+     */
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		if ((is_set($arFields, "BLOG_ID") || $ACTION=="ADD") && IntVal($arFields["BLOG_ID"]) <= 0)

@@ -67,12 +67,13 @@ class MetadataProvider
 		);
 	}
 
-	/**
-	 * Parses google metadata from the PhoneNumberMetadata.xml
-	 * @see https://github.com/googlei18n/libphonenumber/blob/master/resources/
-	 * @params string $fileName Metadata file.
-	 * @return array Returns parsed metadata.
-	 */
+    /**
+     * Parses google metadata from the PhoneNumberMetadata.xml
+     * @see https://github.com/googlei18n/libphonenumber/blob/master/resources/
+     * @params string $fileName Metadata file.
+     * @param $fileName
+     * @return array Returns parsed metadata.
+     */
 	public static function parseGoogleMetadata($fileName)
 	{
 		$metadataBuilder = new \Bitrix\Main\PhoneNumber\Tools\MetadataBuilder($fileName);

@@ -19,7 +19,12 @@ final class BusinessValue
 	private static $consumers = array();
 	private static $consumerCodePersonMapping = array();
 
-	/** @deprecated */
+    /** @deprecated
+     * @param IBusinessValueProvider|null $provider
+     * @param $codeKey
+     * @param $consumerKey
+     * @return mixed
+     */
 	public static function getValueFromProvider(IBusinessValueProvider $provider = null, $codeKey, $consumerKey)
 	{
 		return self::get($codeKey, $consumerKey, $provider);
@@ -512,7 +517,9 @@ final class BusinessValue
 		return $groups;
 	}
 
-	/** @internal */
+    /** @internal
+     * @param array $data
+     */
 	private static function sortArray(array &$data)
 	{
 		@uasort( // @ because https://bugs.php.net/bug.php?id=50688
@@ -526,7 +533,11 @@ final class BusinessValue
 		);
 	}
 
-	/** @internal */
+    /** @internal
+     * @param bool $all
+     * @param array|null $resetAllPersonTypes
+     * @return array
+     */
 	public static function getPersonTypes($all = false, array $resetAllPersonTypes = null)
 	{
 		static $allPersonTypes = array(), $personTypes = array();
@@ -582,7 +593,11 @@ final class BusinessValue
 
 	// DEPRECATED API //////////////////////////////////////////////////////////////////////////////////////////////////
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $parentName
+     * @param $translationSource
+     * @param $data
+     */
 	public static function install($parentName, $translationSource, $data)
 	{
 	}

@@ -33,10 +33,11 @@ final class VoteUserType
 		);
 	}
 
-	/**
-	 * @param $userField
-	 * @return string
-	 */
+    /**
+     * @param $userField
+     * @return string
+     * @throws \Bitrix\Main\NotSupportedException
+     */
 	public static function getDBColumnType($userField)
 	{
 		$connection = \Bitrix\Main\Application::getConnection();
@@ -574,13 +575,14 @@ final class VoteUserType
 		return "";
 	}
 
-	/**
-	 * Called in all cases Mutiple=Y and Multiple=N
-	 * @param array $userField UserFiled array.
-	 * @param string $value Number of attach or n0, n1...
-	 * @param int $userId User ID.
-	 * @return int|string
-	 */
+    /**
+     * Called in all cases Mutiple=Y and Multiple=N
+     * @param array $userField UserFiled array.
+     * @param string $value Number of attach or n0, n1...
+     * @param bool|int $userId User ID.
+     * @return int|string
+     * @throws \Exception
+     */
 	public static function onBeforeSave($userField, $value, $userId = false)
 	{
 /*		if (empty($value))

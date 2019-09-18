@@ -266,11 +266,11 @@ class Parser
 		return $result;
 	}
 
-	/**
-	 * Strips and returns extension and extension separator from the specified phone number.
-	 * @param string $phoneNumber Phone number to be stripped.
-	 * @return [$extenstionSeparator, $extension]
-	 */
+    /**
+     * Strips and returns extension and extension separator from the specified phone number.
+     * @param string $phoneNumber Phone number to be stripped.
+     * @return array [$extenstionSeparator, $extension]
+     */
 	public function stripExtension(&$phoneNumber)
 	{
 		$extension = "";

@@ -271,11 +271,12 @@ abstract class Controller
 		return $this->errorCollection->getErrorByCode($code);
 	}
 
-	/**
-	 * Resolves action and description of action, which need to run.
-	 * @see listActions().
-	 * @return $this
-	 */
+    /**
+     * Resolves action and description of action, which need to run.
+     * @see listActions().
+     * @return $this
+     * @throws NotSupportedException
+     */
 	protected function resolveAction()
 	{
 		$listOfActions = array_change_key_case($this->listActions(), CASE_LOWER);
@@ -336,11 +337,13 @@ abstract class Controller
 		return $description;
 	}
 
-	/**
-	 * Checks action by settings in description.
-	 * This method may terminate controller and application.
-	 * @return boolean
-	 */
+    /**
+     * Checks action by settings in description.
+     * This method may terminate controller and application.
+     * @return bool
+     * @throws AccessDeniedException
+     * @throws ArgumentException
+     */
 	protected function checkAction()
 	{
 		$description = $this->getActionDescription();
@@ -446,11 +449,12 @@ abstract class Controller
 		return true;
 	}
 
-	/**
-	 * Runs action.
-	 * Will be run method with name processAction{$actionName}
-	 * @return mixed
-	 */
+    /**
+     * Runs action.
+     * Will be run method with name processAction{$actionName}
+     * @return mixed
+     * @throws InvalidOperationException
+     */
 	protected function runAction()
 	{
 		if (! method_exists($this, 'processAction' . $this->getAction()))

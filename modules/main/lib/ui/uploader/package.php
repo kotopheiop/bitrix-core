@@ -49,14 +49,15 @@ class Package
 		"start" => 0,
 		"current" => 0);
 
-	/**
-	 * Package constructor.
-	 * @param $path
-	 * @param $CID
-	 * @param $index
-	 * @throws ArgumentNullException
-	 * @throws NotImplementedException
-	 */
+    /**
+     * Package constructor.
+     * @param $path
+     * @param $CID
+     * @param $index
+     * @throws ArgumentException
+     * @throws ArgumentNullException
+     * @throws NotImplementedException
+     */
 	public function __construct($path, $CID, $index)
 	{
 		if (!is_string($path))
@@ -104,10 +105,12 @@ class Package
 	{
 		return $this->index;
 	}
-	/**
-	 * Returns package Log of Control Exemplar.
-	 * @return Log
-	 */
+
+    /**
+     * Returns package Log of Control Exemplar.
+     * @param null $key
+     * @return Log
+     */
 	public function getCidLog($key = null)
 	{
 		if (is_null($key))
@@ -115,10 +118,12 @@ class Package
 		$log = $this->cidLog->getLog();
 		return $log[$key];
 	}
-	/**
-	 * Returns package Log.
-	 * @return array|mixed
-	 */
+
+    /**
+     * Returns package Log.
+     * @param null $key
+     * @return array|mixed
+     */
 	public function getLog($key = null)
 	{
 		if (is_null($key))
@@ -127,10 +132,11 @@ class Package
 		return $log[$key];
 	}
 
-	/**
-	 * Returns file array.
-	 * @return array
-	 */
+    /**
+     * Returns file array.
+     * @param $id
+     * @return array
+     */
 	public function getFile($id)
 	{
 		return $this->files[$id];
@@ -227,12 +233,14 @@ class Package
 
 		return $res;
 	}
-	/**
-	 * Main function for uploading data.
-	 *
-	 * @throws NotImplementedException
-	 * @return array
-	 */
+
+    /**
+     * Main function for uploading data.
+     *
+     * @param $fileLimits
+     * @return array
+     * @throws NotImplementedException
+     */
 	public function checkPost($fileLimits)
 	{
 		$unescapedPost = self::unescape(Context::getCurrent()->getRequest()->getPostList()->toArray());

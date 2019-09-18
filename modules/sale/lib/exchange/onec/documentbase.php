@@ -738,10 +738,11 @@ class DocumentBase
 		return $this->outputXml($fields, $level);
 	}
 
-	/**
-	 * @param array $fields
-	 * @return string
-	 */
+    /**
+     * @param array $fields
+     * @param int $level
+     * @return string
+     */
 	protected function outputXml(array $fields, $level=0)
 	{
 		$xml = '';

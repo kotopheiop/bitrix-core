@@ -1227,10 +1227,11 @@ class CBPVirtualDocument
 		return (is_array($value) ? $arReturn : ((count($arReturn) > 0) ? $arReturn[0] : array()));
 	}
 
-	/**
-	* @param string $documentId
-	* @return string - document admin page url.
-	*/
+    /**
+     * @param string $documentId
+     * @return string - document admin page url.
+     * @throws CBPArgumentNullException
+     */
 	public function GetDocumentAdminPage($documentId)
 	{
 		return null;

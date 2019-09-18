@@ -57,12 +57,13 @@ abstract class Item
 		return $this;
 	}
 
-	/**
-	 * Get source.
-	 *
-	 * @return string
-	 * @throws ArgumentException
-	 */
+    /**
+     * Get source.
+     *
+     * @param $key
+     * @return string
+     * @throws ArgumentException
+     */
 	public function get($key)
 	{
 		if (!array_key_exists($key, $this->data))

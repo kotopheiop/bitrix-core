@@ -812,13 +812,14 @@ class Imap
 		return $list;
 	}
 
-	/**
-	 * Returns mailboxes list
-	 *
-	 * @param string $pattern Mailbox name pattern.
-	 * @param string &$error Error message.
-	 * @return array|false
-	 */
+    /**
+     * Returns mailboxes list
+     *
+     * @param string $pattern Mailbox name pattern.
+     * @param string &$error Error message.
+     * @param bool $flat
+     * @return array|false
+     */
 	public function listMailboxes($pattern, &$error, $flat = false)
 	{
 		$error = null;
@@ -1325,11 +1326,11 @@ class Imap
 		return $result;
 	}
 
-	/**
-	 * @param int|array $ids
-	 * @param $error
-	 * @return bool|null|string|string[]
-	 */
+    /**
+     * @param $error
+     * @return bool|null|string|string[]
+     * @internal param array|int $ids
+     */
 	private function expunge(&$error)
 	{
 		return $this->executeCommand('EXPUNGE', $error);

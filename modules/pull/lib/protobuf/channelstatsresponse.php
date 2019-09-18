@@ -55,7 +55,8 @@ class ChannelStatsResponse extends \Protobuf\AbstractMessage
     /**
      * Set 'channels' value
      *
-     * @param \Protobuf\Collection<\Bitrix\Pull\Protobuf\ChannelStats> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\Bitrix\Pull\Protobuf\ChannelStats> $value
      */
     public function setChannelsList(\Protobuf\Collection $value = null)
     {

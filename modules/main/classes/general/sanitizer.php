@@ -140,9 +140,11 @@
 			return $counter;
 		}
 
-		/**
-		 * @see AddTags()
-		 */
+        /**
+         * @see AddTags()
+         * @param $arTags
+         * @return int
+         */
 		public function UpdateTags($arTags)
 		{
 			return $this->AddTags($arTags);
@@ -511,9 +513,10 @@
 			return $confStr;
 		}
 
-		/**
-		 * @deprecated For compability only will be erased next versions
-		 */
+        /**
+         * @deprecated For compability only will be erased next versions
+         * @param $arTags
+         */
 		public static function SetTags($arTags)
 		{
 			self::$arOldTags = $arTags;
@@ -525,9 +528,14 @@
 			*/
 		}
 
-		/**
-		 * @deprecated For compability only will be erased next versions
-		 */
+        /**
+         * @deprecated For compability only will be erased next versions
+         * @param $html
+         * @param string $secLevel
+         * @param bool $htmlspecialchars
+         * @param bool $delTags
+         * @return string
+         */
 		public static function Sanitize($html, $secLevel='HIGH', $htmlspecialchars=true, $delTags=true)
 		{
 			$Sanitizer = new self;
@@ -826,12 +834,17 @@
 			return $filteredHTML;
 		}
 
-		/**
-		 * function CleanTable
-		 * Check if table code is valid, and corrects. If need
-		 * deletes all text and tags between diferent table tags if $delTextBetweenTags=true.
-		 * Checks if where are open tags from upper level if not - self-distructs.
-		 */
+        /**
+         * function CleanTable
+         * Check if table code is valid, and corrects. If need
+         * deletes all text and tags between diferent table tags if $delTextBetweenTags=true.
+         * Checks if where are open tags from upper level if not - self-distructs.
+         * @param $seg
+         * @param $openTagsStack
+         * @param $segIndex
+         * @param bool $delTextBetweenTags
+         * @return bool
+         */
 		protected function CleanTable(&$seg, &$openTagsStack, $segIndex, $delTextBetweenTags=true)
 		{
 			//if we found up level or not

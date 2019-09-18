@@ -25,13 +25,14 @@ class Feed
 	
 	/** @var \Bitrix\Sale\TradingPlatform\Timer|null $t iimer */
 	static $timer = NULL;
-	
-	/**
-	 * Feed constructor.
-	 *
-	 * @param $params
-	 * @param $startPosition string - ID of first element to export
-	 */
+
+    /**
+     * Feed constructor.
+     *
+     * @param $params
+     * @param $startPosition string - ID of first element to export
+     * @throws ArgumentException
+     */
 	public function __construct($params, $startPosition)
 	{
 		if (isset($params["TIMER"]) && $params["TIMER"] instanceof Timer)
@@ -61,14 +62,15 @@ class Feed
 	{
 		return self::$timer;
 	}
-	
-	/**
-	 * Consistently get data from source, convert them and processing export.
-	 * Export process runs on the steps.
-	 * Export controlling by timer. When timer expired - throw exception.
-	 *
-	 * @param null $exportId
-	 */
+
+    /**
+     * Consistently get data from source, convert them and processing export.
+     * Export process runs on the steps.
+     * Export controlling by timer. When timer expired - throw exception.
+     *
+     * @param null $exportId
+     * @throws TimeIsOverException
+     */
 	public function processData($exportId = NULL)
 	{
 //		EMPTY data for deleteAll-operations

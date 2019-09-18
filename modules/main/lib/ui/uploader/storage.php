@@ -7,10 +7,11 @@ use Bitrix\Main\Loader;
 
 interface Storable
 {
-	/**
-	 * @param array $file
-	 * @return \Bitrix\Main\Result
-	 */
+    /**
+     * @param $path
+     * @param array $file
+     * @return Result
+     */
 	public function copy($path, array $file);
 }
 

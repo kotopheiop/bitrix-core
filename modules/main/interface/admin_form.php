@@ -55,7 +55,12 @@ class CAdminForm extends CAdminTabControl
 		ob_start();
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $name
+     * @param $tabs
+     * @param bool $bCanExpand
+     * @param bool $bDenyAutosave
+     */
 	public function CAdminForm($name, $tabs, $bCanExpand = true, $bDenyAutosave = false)
 	{
 		self::__construct($name, $tabs, $bCanExpand, $bDenyAutosave);

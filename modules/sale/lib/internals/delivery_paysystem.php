@@ -88,15 +88,15 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 		);
 	}
 
-	/**
-	 * @param int $entityId
-	 * @param string $entityType self::ENTITY_TYPE_DELIVERY || self::ENTITY_TYPE_PAYSYSTEM
-	 * @param int[] $linkedIds Empty means all
-	 * @return \Bitrix\Main\Entity\Result
-	 * @throws ArgumentNullException
-	 * @throws ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
+    /**
+     * @param int $entityId
+     * @param string $entityType self::ENTITY_TYPE_DELIVERY || self::ENTITY_TYPE_PAYSYSTEM
+     * @param int[] $linkedIds Empty means all
+     * @param bool $actualizeRestrictions
+     * @return \Bitrix\Main\Entity\Result
+     * @throws ArgumentNullException
+     * @throws ArgumentOutOfRangeException
+     */
 	public static function  setLinks($entityId, $entityType, array $linkedIds = array(), $actualizeRestrictions = true)
 	{
 		if(intval($entityId) <= 0)
@@ -500,14 +500,14 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 		$con->queryExecute($sql);
 	}
 
-	/**
-	 * @param int $entityId
-	 * @param string $entityType self::ENTITY_TYPE_DELIVERY || self::ENTITY_TYPE_PAYSYSTEM
-	 * @return int[]
-	 * @throws ArgumentNullException
-	 * @throws ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
+    /**
+     * @param int $entityId
+     * @param string $entityType self::ENTITY_TYPE_DELIVERY || self::ENTITY_TYPE_PAYSYSTEM
+     * @param array $preparedData
+     * @param bool $considerParent
+     * @return int[]
+     * @throws ArgumentOutOfRangeException
+     */
 	public static function getLinks($entityId, $entityType, array $preparedData = array(), $considerParent = true)
 	{
 		$result = array();

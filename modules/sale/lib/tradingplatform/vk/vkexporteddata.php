@@ -24,12 +24,13 @@ class VkExportedData
 	private $exportId;
 	private $type;
 	private $cacheId;
-	
-	/**
-	 * VkExportedData constructor.
-	 * @param $exportId - int, ID of export profile
-	 * @param $type - string of export type
-	 */
+
+    /**
+     * VkExportedData constructor.
+     * @param $exportId - int, ID of export profile
+     * @param $type - string of export type
+     * @throws ArgumentNullException
+     */
 	public function __construct($exportId, $type)
 	{
 		$this->exportId = intval($exportId);

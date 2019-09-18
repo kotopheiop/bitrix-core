@@ -35,11 +35,12 @@ class SectionsList
 	
 	const VK_ICON = '<img src="/bitrix/images/sale/vk/vk_icon.png" style="height:16px; width:16px; margin-right: 1em;" />';
 	const VK_ICON_EMPTY = '<span style="width:16px; margin-right: 1em; display:inline-block;"></span>';
-	
-	/**
-	 * SectionsList constructor.
-	 * @param $exportId
-	 */
+
+    /**
+     * SectionsList constructor.
+     * @param $exportId
+     * @throws SystemException
+     */
 	public function __construct($exportId)
 	{
 		$this->exportId = intval($exportId);
@@ -62,22 +63,24 @@ class SectionsList
 			throw new SystemException("Can't include module \"IBlock\"! " . __METHOD__);
 		}
 	}
-	
-	/**
-	 * @return string
-	 * Create name for cache
-	 */
+
+    /**
+     * @param null $cacheName
+     * @return string Create name for cache
+     * Create name for cache
+     */
 	private function createCacheId($cacheName = null)
 	{
 		$cacheId = self::CACHE_ID_PREFIX . '__' . $this->exportId;
 		
 		return $cacheName ? $cacheId . '__' . $cacheName : self::CACHE_ID_PREFIX;
 	}
-	
-	/**
-	 * Create cache ID for iblock sections
-	 * @return string
-	 */
+
+    /**
+     * Create cache ID for iblock sections
+     * @param bool $onlyMapped
+     * @return string
+     */
 	public function createCacheIdSections($onlyMapped = true)
 	{
 		$cacheName = self::CACHE_ID_SECTIONS .
@@ -115,15 +118,15 @@ class SectionsList
 		$cacheManager->clean($this->createCacheIdMappedSections());
 		$cacheManager->clean($this->createCacheIdMappedSectionsList());
 	}
-	
-	
-	/**
-	 * Return list of iblock sections. At the first run saving list in cache.
-	 *
-	 * @param bool $tree - is true - list will be converted to tree
-	 * @return array
-	 * @throws \Bitrix\Main\SystemException
-	 */
+
+
+    /**
+     * Return list of iblock sections. At the first run saving list in cache.
+     *
+     * @param bool $tree - is true - list will be converted to tree
+     * @param bool $onlyMapped
+     * @return array
+     */
 	public function getSections($tree = false, $onlyMapped = true)
 	{
 //		We can save data in cache.Cache must be reload only if sections settings will be changed.
@@ -659,15 +662,15 @@ return $iblockIds;
 			return 0;
 		}
 	}
-	
-	
-	/**
-	 * Create selector for HTML. Not create <select> tag, only inner <options>
-	 *
-	 * @param null $checkedSection - ID of section. If not NULL - this option will be checked
-	 * @return string
-	 * @throws \Bitrix\Main\SystemException
-	 */
+
+
+    /**
+     * Create selector for HTML. Not create <select> tag, only inner <options>
+     *
+     * @param null $checkedSection - ID of section. If not NULL - this option will be checked
+     * @param bool $onlyMapped
+     * @return string
+     */
 	public function getSectionsSelector($checkedSection = null, $onlyMapped = true)
 	{
 //		old variant - get iblocks from map. Will work only when we check at least one section
@@ -788,14 +791,15 @@ return $iblockIds;
 		
 		return $currParams;
 	}
-	
-	/**
-	 * Set visibility for controls according by settings. Return settings array
-	 *
-	 * @param $params
-	 * @param $section
-	 * @return mixed
-	 */
+
+    /**
+     * Set visibility for controls according by settings. Return settings array
+     *
+     * @param $params
+     * @param $sectionId
+     * @return mixed
+     * @internal param $section
+     */
 	public function prepareSettingsVisibility($params, $sectionId)
 	{
 		$sections = $this->getSections(false, false);

@@ -168,11 +168,11 @@ abstract class Base extends View
 		return $data;
 	}
 
-	/**
-	 * @param $componentName
-	 * @param array $params
-	 * @return mixed
-	 */
+    /**
+     * @return mixed
+     * @internal param $componentName
+     * @internal param array $params
+     */
 	private function includeComponent()
 	{
 		global $APPLICATION;

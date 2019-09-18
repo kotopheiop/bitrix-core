@@ -19,11 +19,12 @@ class FilterableDictionary
 	 */
 	protected $arFilters = array();
 
-	/**
-	 * Creates object.
-	 *
-	 * @param array $values
-	 */
+    /**
+     * Creates object.
+     *
+     * @param array $values
+     * @param null $name
+     */
 	public function __construct(array $values, $name = null)
 	{
 		$this->values = $this->arRawValues = $values;
@@ -50,9 +51,11 @@ class FilterableDictionary
 		return null;
 	}
 
-	/**
-	 * Offset to set
-	 */
+    /**
+     * Offset to set
+     * @param mixed $offset
+     * @param mixed $value
+     */
 	public function offsetSet($offset, $value)
 	{
 		$this->values[$offset] = $this->arRawValues[$offset] = $value;
@@ -60,9 +63,10 @@ class FilterableDictionary
 			$this->values[$offset] = $filter->filter($this->values[$offset], $this->name."[".$offset."]", $this->values);
 	}
 
-	/**
-	 * Offset to unset
-	 */
+    /**
+     * Offset to unset
+     * @param mixed $offset
+     */
 	public function offsetUnset($offset)
 	{
 		unset($this->values[$offset]);

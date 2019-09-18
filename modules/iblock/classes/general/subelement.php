@@ -110,7 +110,8 @@ class CAdminSubList extends CAdminList
 	 * @param bool|CAdminSubSorting $sort
 	 * @param string $list_url
 	 * @param bool|array $arHideHeaders
-	 */
+	 *@return CAdminSubList
+*/
 	function CAdminSubList($table_id, $sort = false, $list_url, $arHideHeaders = false)
 	{
 		global $APPLICATION;

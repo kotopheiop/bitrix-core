@@ -25,11 +25,10 @@ class Log implements \ArrayAccess
 	protected $file = null;
 	var $data = array();
 
-	/**
-	 * Log constructor.
-	 * @param string $path Path to log file.
-	 * @return void
-	 */
+    /**
+     * Log constructor.
+     * @param string $path Path to log file.
+     */
 	function __construct($path)
 	{
 		$this->file = \CBXVirtualIo::GetInstance()->GetFile($path);

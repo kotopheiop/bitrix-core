@@ -230,13 +230,14 @@ abstract class UserImportBase extends ImportBase
 		return $id;
 	}
 
-	/**
-	 * @param $id
-	 * @param $xmlIdUser
-	 * @param $xmlIdFields
-	 * @return bool
-	 * @internal
-	 */
+    /**
+     * @param $id
+     * @param $xmlId
+     * @return bool
+     * @internal param $xmlIdUser
+     * @internal param $xmlIdFields
+     * @internal
+     */
 	static public function updateEmptyXmlId($id, $xmlId)
 	{
 		$result = false;
@@ -264,10 +265,11 @@ abstract class UserImportBase extends ImportBase
 		));
 	}
 
-	/**
-	 * @param IBusinessValueProvider $entity
-	 * @return Order
-	 */
+    /**
+     * @param IBusinessValueProvider $entity
+     * @return Order
+     * @throws ArgumentException
+     */
 	static protected function getBusinessValueOrderProvider(IBusinessValueProvider $entity)
 	{
 		if(!($entity instanceof Order))

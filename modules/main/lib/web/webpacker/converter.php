@@ -106,13 +106,14 @@ EOD;
 		return $content;
 	}
 
-	/**
-	 * Encode resource package.
-	 *
-	 * @param Resource\Package $package Package.
-	 * @param Resource\Profile $profile Profile.
-	 * @return string
-	 */
+    /**
+     * Encode resource package.
+     *
+     * @param Resource\Package $package Package.
+     * @param Resource\Profile $profile Profile.
+     * @return string
+     * @throws InvalidOperationException
+     */
 	protected static function encodePackage(Resource\Package $package, Resource\Profile $profile = null)
 	{
 		$content = '';

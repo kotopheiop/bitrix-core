@@ -32,6 +32,7 @@ class ImportCollision implements ICollision
      * @param $typeId
      * @param Entity $entity
      * @param null $message
+     * @return mixed|void
      * @throws ArgumentOutOfRangeException
      * @throws NotImplementedException
      */
@@ -152,11 +153,11 @@ class ImportCollision implements ICollision
 		return array();
 	}
 
-	/**
-	 * Resolve import collisions
-	 * @param EntityImport $item
-	 * @return Result
-	 */
+    /**
+     * Resolve import collisions
+     * @param EntityImport|ImportBase $item
+     * @return Result
+     */
 	public function resolve(ImportBase $item)
 	{
 		return new Result();
@@ -165,11 +166,11 @@ class ImportCollision implements ICollision
 class CollisionOrder extends ImportCollision
 {
 
-	/**
-	 * @param OrderImport $item
-	 * @return Result
-	 * @throws ArgumentException
-	 */
+    /**
+     * @param OrderImport|ImportBase $item
+     * @return Result
+     * @throws ArgumentException
+     */
 	public function resolve(ImportBase $item)
     {
 		if(!($item instanceof OrderImport))
@@ -228,8 +229,9 @@ class CollisionPayment extends ImportCollision
 {
     /**
      * Resolve import collisions
-     * @param PaymentImport $item
+     * @param PaymentImport|ImportBase $item
      * @return Result
+     * @throws ArgumentException
      */
 	public function resolve(ImportBase $item)
 	{
@@ -265,8 +267,9 @@ class CollisionShipment extends ImportCollision
 {
     /**
      * Resolve import collisions
-     * @param ShipmentImport $item
+     * @param ShipmentImport|ImportBase $item
      * @return Result
+     * @throws ArgumentException
      */
 	public function resolve(ImportBase $item)
 	{
@@ -302,9 +305,10 @@ class CollisionProfile extends ImportCollision
 {
     /**
      * Resolve import collisions
-     * @param ProfileImport $item
+     * @param ImportBase|ProfileImport $item
      * @return Result
-	 * @deprecated
+     * @throws ArgumentException
+     * @deprecated
      */
     public function resolve(ImportBase $item)
     {

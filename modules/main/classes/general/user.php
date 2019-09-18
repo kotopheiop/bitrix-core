@@ -737,7 +737,10 @@ abstract class CAllUser extends CDBResult
 		return $_SESSION["SESS_AUTH"]["SESSION_HASH"];
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $PASSWORD_HASH
+     * @return string
+     */
 	public function GetPasswordHash($PASSWORD_HASH)
 	{
 		$add = COption::GetOptionString("main", "pwdhashadd", "");
@@ -1415,9 +1418,14 @@ abstract class CAllUser extends CDBResult
 		return $errors;
 	}
 
-	/**
-	 * Sends a profile information to email
-	 */
+    /**
+     * Sends a profile information to email
+     * @param $ID
+     * @param $SITE_ID
+     * @param $MSG
+     * @param bool $bImmediate
+     * @param string $eventName
+     */
 	public static function SendUserInfo($ID, $SITE_ID, $MSG, $bImmediate=false, $eventName="USER_INFO")
 	{
 		global $DB;

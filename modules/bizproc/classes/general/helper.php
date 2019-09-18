@@ -1193,9 +1193,16 @@ class CBPHelper
 		return $arResult;
 	}
 
-	/**
-	 * @deprecated
-	 */
+    /**
+     * @deprecated
+     * @param $documentType
+     * @param $formName
+     * @param $fieldName
+     * @param $fieldValue
+     * @param $arDocumentField
+     * @param $bAllowSelection
+     * @return string
+     */
 	public static function GetGUIFieldEdit($documentType, $formName, $fieldName, $fieldValue, $arDocumentField, $bAllowSelection)
 	{
 		return self::GetFieldInputControl(

@@ -263,10 +263,13 @@ class CListPermissions
 		return $arResult;
 	}
 
-	/**
-	 * @param $iblockId int
-	 * @param $fieldId int
-	 */
+    /**
+     * @param $iblock_id
+     * @param $field_id
+     * @return bool
+     * @internal param int $iblockId
+     * @internal param int $fieldId
+     */
 	public static function CheckFieldId($iblock_id, $field_id)
 	{
 		if ($field_id === "DETAIL_PICTURE")

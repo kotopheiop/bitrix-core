@@ -51,10 +51,11 @@ class Policy
 		return $result;
 	}
 
-	/**
-	 * @param int $type Policy::TYPE_RETURN||Policy::TYPE_PAYMENT||Policy::TYPE_SHIPPING
-	 * @return array
-	 */
+    /**
+     * @param int $type Policy::TYPE_RETURN||Policy::TYPE_PAYMENT||Policy::TYPE_SHIPPING
+     * @return array
+     * @throws ArgumentOutOfRangeException
+     */
 	public function getPoliciesNames($type)
 	{
 		$policiesList = $this->getItemsList();

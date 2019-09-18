@@ -4,8 +4,8 @@
 /**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 /**********************************************************************/
 
-//TODO: СИСТЕМА ОБНОВЛЕНИЙ, module.php, module_admin.php, 
-//все файлы с CModule::CreateModuleObject ИЗМЕНЕНЫ!
+//TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, module.php, module_admin.php, 
+//пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ CModule::CreateModuleObject пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!
 
 define("DEFAULT_UPDATE_SERVER", "www.bitrixsoft.com");
 //define("DEFAULT_UPDATE_SERVER", "mysql.smn");
@@ -451,8 +451,12 @@ class CUpdateClientPartner
 		else
 			return $arResult;
 	}
-	
-	/** Пишет сообщения в лог файл системы обновлений. Чистит лог, если нужно. **/
+
+    /** пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ. *
+     * @param $sText
+     * @param string $sErrorCode
+     * @return bool
+     */
 	public static function AddMessage2Log($sText, $sErrorCode = "")
 	{
 		$MAX_LOG_SIZE = 1000000;
@@ -550,7 +554,7 @@ class CUpdateClientPartner
 		return $arRequestedModules;
 	}
 
-	/** Получение лицензионного ключа текущего клиента **/
+	/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ **/
 	public static function GetLicenseKey()
 	{
 		if (defined("US_LICENSE_KEY"))
@@ -567,7 +571,7 @@ class CUpdateClientPartner
 		return $GLOBALS["CACHE4UPDATESYS_LICENSE_KEY"];
 	}
 
-	/* Получить обновления следующего шага */
+	/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ */
 	public static function GetNextStepUpdates(&$strError, $lang = false, $stableVersionsOnly = "Y", $arRequestedModules = array(), $bStrongList = false)
 	{
 		$strError_tmp = "";
@@ -618,7 +622,7 @@ class CUpdateClientPartner
 			return True;
 	}
 
-	// Распаковывает архив файлов update_archive.gz в папкy $updatesDir
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ update_archive.gz пїЅ пїЅпїЅпїЅпїЅy $updatesDir
 	public static function UnGzipArchive(&$updatesDir, &$strError, $bDelArch = true)
 	{
 		$strError_tmp = "";
@@ -800,7 +804,7 @@ class CUpdateClientPartner
 			return True;
 	}
 
-	// Возвращает информацию по загруженным в папку $updatesDir обновлениям модулей
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ $updatesDir пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	public static function CheckUpdatability($updatesDir, &$strError)
 	{
 		$strError_tmp = "";
@@ -869,7 +873,7 @@ class CUpdateClientPartner
 			return True;
 	}
 
-	// Возвращает информацию по загруженным в папку $updatesDir обновлениям модулей
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ $updatesDir пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	public static function GetStepUpdateInfo($updatesDir, &$strError)
 	{
 		$arResult = array();
@@ -1017,7 +1021,10 @@ class CUpdateClientPartner
 		return False;
 	}
 
-	/** Собирает клиентские модули с версиями **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ *
+     * @param $strError
+     * @return array
+     */
 	public static function GetCurrentModules(&$strError)
 	{
 		$arClientModules = array();
@@ -1081,7 +1088,7 @@ class CUpdateClientPartner
 		return $arClientModules;
 	}
 
-	/* Получить список доступных обновлений */
+	/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 	public static function GetUpdatesList(&$strError, $lang = false, $stableVersionsOnly = "Y", $arRequestedModules = array(), $aditData = Array())
 	{
 		$strError_tmp = "";
@@ -1929,7 +1936,12 @@ class CUpdateClientPartner
 			return True;
 	}
 
-	/** Запускает updater модуля **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ updater пїЅпїЅпїЅпїЅпїЅпїЅ *
+     * @param $path
+     * @param $strError
+     * @param $updateDirFrom
+     * @param $moduleID
+     */
 	public static function __RunUpdaterScript($path, &$strError, $updateDirFrom, $moduleID)
 	{
 		global $DBType, $DB, $APPLICATION, $USER;
@@ -1969,10 +1981,14 @@ class CUpdateClientPartner
 		unset($updater);
 	}
 
-	/** Сравнение двух версий в формате XX.XX.XX  **/
-	/** Возвращает 1, если $strVers1 > $strVers2  **/
-	/** Возвращает -1, если $strVers1 < $strVers2 **/
-	/** Возвращает 0, если $strVers1 == $strVers2 **/
+	/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ XX.XX.XX  **/
+	/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1, пїЅпїЅпїЅпїЅ $strVers1 > $strVers2  **/
+	/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ -1, пїЅпїЅпїЅпїЅ $strVers1 < $strVers2 **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 0, пїЅпїЅпїЅпїЅ $strVers1 == $strVers2 *
+     * @param $strVers1
+     * @param $strVers2
+     * @return int
+     */
 	public static function __CompareVersions($strVers1, $strVers2)
 	{
 		$strVers1 = Trim($strVers1);
@@ -1999,9 +2015,14 @@ class CUpdateClientPartner
 		return -1;
 	}
 
-	/** Запрашивает методом POST страницу $page со списком параметров **/
-	/** $strVars и возвращает тело ответа. В параметре $strError      **/
-	/** возвращается текст ошибки, если таковая была.                 **/
+	/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ POST пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $page пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ **/
+	/** $strVars пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ. пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $strError      **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.                 *
+     * @param $page
+     * @param $strVars
+     * @param $strError
+     * @return string
+     */
 	public static function __GetHTTPPage($page, $strVars, &$strError)
 	{
 		global $SERVER_NAME, $DB;
@@ -2166,8 +2187,13 @@ class CUpdateClientPartner
 	}
 
 
-	/** Проверяет на ошибки ответ сервера $strServerOutput **/
-	/** и парсит в массив $arRes                           **/
+	/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ $strServerOutput **/
+    /** пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ $arRes                           *
+     * @param $strServerOutput
+     * @param $arRes
+     * @param $strError
+     * @return bool
+     */
 	public static function __ParseServerData(&$strServerOutput, &$arRes, &$strError)
 	{
 		$strError_tmp = "";
@@ -2229,7 +2255,7 @@ class CUpdateClientPartner
 			return True;
 	}
 
-	/** Проверка на установку GZip компрессии **/
+	/** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ GZip пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ **/
 	public static function __IsGzipInstalled()
 	{
 		if (function_exists("gzcompress"))
@@ -2259,20 +2285,23 @@ class CUpdateClientPartner
 			return 0;
 	}
 
-	/** Создание путя, если его нет, и установка прав писать **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ *
+     * @param $path
+     * @param bool $bPermission
+     */
 	public static function __CheckDirPath($path, $bPermission = true)
 	{
 		$badDirs = Array();
 		$path = str_replace("\\", "/", $path);
 		$path = str_replace("//", "/", $path);
 
-		if ($path[strlen($path)-1] != "/") //отрежем имя файла
+		if ($path[strlen($path)-1] != "/") //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 		{
 			$p = CUpdateClientPartner::__bxstrrpos($path, "/");
 			$path = substr($path, 0, $p);
 		}
 
-		while (strlen($path)>1 && $path[strlen($path)-1]=="/") //отрежем / в конце, если есть
+		while (strlen($path)>1 && $path[strlen($path)-1]=="/") //пїЅпїЅпїЅпїЅпїЅпїЅпїЅ / пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 			$path = substr($path, 0, strlen($path)-1);
 
 		$p = CUpdateClientPartner::__bxstrrpos($path, "/");
@@ -2299,7 +2328,13 @@ class CUpdateClientPartner
 		}
 	}
 
-	/** Рекурсивное копирование из $path_from в $path_to **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ $path_from пїЅ $path_to *
+     * @param $path_from
+     * @param $path_to
+     * @param $strError
+     * @param bool $bSkipUpdater
+     * @return bool
+     */
 	public static function __CopyDirFiles($path_from, $path_to, &$strError, $bSkipUpdater = True)
 	{
 		$strError_tmp = "";
@@ -2418,7 +2453,10 @@ class CUpdateClientPartner
 			return True;
 	}
 
-	/** Рекурсивное удаление $path **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $path *
+     * @param $path
+     * @return bool
+     */
 	public static function __DeleteDirFilesEx($path)
 	{
 		if (!file_exists($path))
@@ -2460,7 +2498,10 @@ class CUpdateClientPartner
 		return $index;
 	}
 
-	/** Возвращает экземпляр класса-инсталятора модуля по абсолютному пути $path **/
+    /** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ $path *
+     * @param $path
+     * @return array
+     */
 	public static function __GetModuleInfo($path)
 	{
 		$arModuleVersion = array();

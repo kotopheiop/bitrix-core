@@ -420,7 +420,13 @@ abstract class Base
 		return $html;
 	}
 
-	/** @return string */
+    /**
+     * @param $name
+     * @param array $input
+     * @param $value
+     * @return string
+     * @throws SystemException
+     */
 	public static function getEditHtmlSingle($name, array $input, $value)
 	{
 		throw new SystemException("you must implement [getEditHtmlSingle] or override [getEditHtml] in yor class", 0, __FILE__, __LINE__);
@@ -594,7 +600,13 @@ abstract class Base
 		}
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param array $input
+     * @param array $boolean
+     * @param array $other
+     * @param bool $withGlobal
+     * @return string
+     */
 	protected static function extractAttributes(array $input, array $boolean, array $other, $withGlobal = true)
 	{
 		$string = '';
@@ -1208,7 +1220,10 @@ class File extends Base
 		return $multiple ? $value : reset($value);
 	}
 
-	/** deprecated */
+    /** deprecated
+     * @param $file
+     * @return array|bool
+     */
 	static function loadInfoSingle($file)
 	{
 		if (is_array($file))

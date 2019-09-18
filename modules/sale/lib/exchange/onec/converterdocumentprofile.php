@@ -171,10 +171,11 @@ class ConverterDocumentProfile extends Converter
 		return $result;
 	}
 
-	/**
-	 * @param null $entity
-	 * @param array $fields
-	 */
+    /**
+     * @param null $entity
+     * @param array $fields
+     * @param ISettings $settings
+     */
 	static public function sanitizeFields($entity = null, array &$fields, ISettings $settings)
 	{
 		// TODO: Implement sanitizeFields() method.
@@ -400,11 +401,12 @@ class ConverterDocumentProfile extends Converter
 		return ($fields["IS_FIZ"]=="Y");
 	}
 
-	/**
-	 * @param $fields
-	 * @param null $fieldsInfo
-	 * @return array
-	 */
+    /**
+     * @param $fields
+     * @param null $fieldsInfo
+     * @param null $key
+     * @return array
+     */
 	public function externalizeArrayFields($fields, $fieldsInfo, $key=null)
 	{
 		$result = array();

@@ -30,12 +30,13 @@ class File extends Base
 		\CFile::Delete($id);
 	}
 
-	/**
-	 * Output.
-	 *
-	 * @param WebPacker\Builder $builder Module.
-	 * @return Result
-	 */
+    /**
+     * Output.
+     *
+     * @param WebPacker\Builder $builder Module.
+     * @return Result
+     * @throws SystemException
+     */
 	public function output(WebPacker\Builder $builder)
 	{
 		if (!$this->moduleId)

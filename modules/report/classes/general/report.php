@@ -449,7 +449,11 @@ class CReport
 		}
 	}
 
-	/** @deprecated 14.5.5 Method moved into a helper class */
+    /** @deprecated 14.5.5 Method moved into a helper class
+     * @param $filters
+     * @param $fieldList
+     * @param $helperClass
+     */
 	public static function fillFilterReferenceColumns(&$filters, &$fieldList, $helperClass)
 	{
 		foreach ($filters as &$filter)

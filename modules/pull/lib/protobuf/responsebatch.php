@@ -55,7 +55,8 @@ class ResponseBatch extends \Protobuf\AbstractMessage
     /**
      * Set 'responses' value
      *
-     * @param \Protobuf\Collection<\Bitrix\Pull\Protobuf\Response> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\Bitrix\Pull\Protobuf\Response> $value
      */
     public function setResponsesList(\Protobuf\Collection $value = null)
     {

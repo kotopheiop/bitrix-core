@@ -63,9 +63,10 @@ class User
 		return $this->userId;
 	}
 
-	/**
-	 * @return string
-	 */
+    /**
+     * @param bool $safe
+     * @return string
+     */
 	public function getFullName($safe = true)
 	{
 		$fields = $this->getFields();
@@ -75,9 +76,10 @@ class User
 		return $safe? $fields['name']: htmlspecialcharsback($fields['name']);
 	}
 
-	/**
-	 * @return string
-	 */
+    /**
+     * @param bool $safe
+     * @return string
+     */
 	public function getName($safe = true)
 	{
 		$fields = $this->getFields();
@@ -87,9 +89,10 @@ class User
 		return $safe? $fields['first_name']: htmlspecialcharsback($fields['first_name']);
 	}
 
-	/**
-	 * @return string
-	 */
+    /**
+     * @param bool $safe
+     * @return string
+     */
 	public function getLastName($safe = true)
 	{
 		$fields = $this->getFields();
@@ -223,9 +226,10 @@ class User
 		return $fields? $fields['avatar_id']: 0;
 	}
 
-	/**
-	 * @return string
-	 */
+    /**
+     * @param bool $safe
+     * @return string
+     */
 	public function getWorkPosition($safe = false)
 	{
 		$fields = $this->getFields();
@@ -448,9 +452,10 @@ class User
 		return $params? $params['departments']: Array();
 	}
 
-	/**
-	 * @return array|null
-	 */
+    /**
+     * @param array $options
+     * @return array|null
+     */
 	public function getArray($options = array())
 	{
 		if (!$this->isExists())

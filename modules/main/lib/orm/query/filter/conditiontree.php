@@ -90,31 +90,30 @@ class ConditionTree
 		return $this;
 	}
 
-	/**
-	 * General condition. In regular case used with 3 parameters:
-	 *   where(columnName, operator, value), e.g. ('ID', '=', 1); ('SALARY', '>', '500')
-	 *
-	 * List of available operators can be found in Operator class.
-	 * @see Operator::$operators
-	 *
-	 * Can be used in short format:
-	 *   where(columnName, value), with operator '=' by default
-	 * Can be used in ultra short format:
-	 *   where(columnName), for boolean fields only
-	 *
-	 * Can be used for subfilter set:
-	 *   where(ConditionTree subfilter)
-	 *
-	 * Instead of columnName, you can use runtime field:
-	 *   where(new ExpressionField('TMP', 'CONCAT(%s, %s)', ["NAME", "LAST_NAME"]), 'Anton Ivanov')
-	 *     or with expr helper
-	 *   where(Query::expr()->concat("NAME", "LAST_NAME"), 'Anton Ivanov')
-	 *
-	 * @param array ...$filter
-	 *
-	 * @return $this
-	 * @throws ArgumentException
-	 */
+    /**
+     * General condition. In regular case used with 3 parameters:
+     *   where(columnName, operator, value), e.g. ('ID', '=', 1); ('SALARY', '>', '500')
+     *
+     * List of available operators can be found in Operator class.
+     * @see Operator::$operators
+     *
+     * Can be used in short format:
+     *   where(columnName, value), with operator '=' by default
+     * Can be used in ultra short format:
+     *   where(columnName), for boolean fields only
+     *
+     * Can be used for subfilter set:
+     *   where(ConditionTree subfilter)
+     *
+     * Instead of columnName, you can use runtime field:
+     *   where(new ExpressionField('TMP', 'CONCAT(%s, %s)', ["NAME", "LAST_NAME"]), 'Anton Ivanov')
+     *     or with expr helper
+     *   where(Query::expr()->concat("NAME", "LAST_NAME"), 'Anton Ivanov')
+     * @return $this
+     * @throws ArgumentException
+     * @internal param array ...$filter
+     *
+     */
 	public function where()
 	{
 		$filter = func_get_args();
@@ -181,14 +180,13 @@ class ConditionTree
 		return $this;
 	}
 
-	/**
-	 * Sets NOT before any conditions or subfilter.
-	 * @see ConditionTree::where()
-	 *
-	 * @param array ...$filter
-	 *
-	 * @return $this
-	 */
+    /**
+     * Sets NOT before any conditions or subfilter.
+     * @see ConditionTree::where()
+     * @return $this
+     * @internal param array ...$filter
+     *
+     */
 	public function whereNot()
 	{
 		$filter = func_get_args();
@@ -200,15 +198,14 @@ class ConditionTree
 		return $this;
 	}
 
-	/**
-	 * The same logic as where(), but value will be taken as another column name.
-	 * @see ConditionTree::where()
-	 *
-	 * @param array ...$filter
-	 *
-	 * @return $this
-	 * @throws ArgumentException
-	 */
+    /**
+     * The same logic as where(), but value will be taken as another column name.
+     * @see ConditionTree::where()
+     * @return $this
+     * @throws ArgumentException
+     * @internal param array ...$filter
+     *
+     */
 	public function whereColumn()
 	{
 		$filter = func_get_args();

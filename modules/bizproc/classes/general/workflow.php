@@ -57,13 +57,13 @@ class CBPWorkflow
 
 	/************************  CONSTRUCTORS  ****************************************************/
 
-	/**
-	* Public constructor initializes a new workflow instance with the specified ID.
-	* 
-	* @param mixed $instanceId - ID of the new workflow instance.
-	* @param mixed $runtime - Runtime object.
-	* @return CBPWorkflow
-	*/
+    /**
+     * Public constructor initializes a new workflow instance with the specified ID.
+     *
+     * @param mixed $instanceId - ID of the new workflow instance.
+     * @param mixed $runtime - Runtime object.
+     * @throws Exception
+     */
 	public function __construct($instanceId, CBPRuntime $runtime)
 	{
 		if (strlen($instanceId) <= 0)
@@ -84,7 +84,14 @@ class CBPWorkflow
 		return array();
 	}
 
-	/************************  CREATE / LOAD WORKFLOW  ****************************************/
+    /************************  CREATE / LOAD WORKFLOW  ***************************************
+     * @param CBPActivity $rootActivity
+     * @param $documentId
+     * @param array $workflowParameters
+     * @param array $workflowVariablesTypes
+     * @param array $workflowParametersTypes
+     * @param int $workflowTemplateId
+     */
 
 	public function Initialize(CBPActivity $rootActivity, $documentId, $workflowParameters = array(), $workflowVariablesTypes = array(), $workflowParametersTypes = array(), $workflowTemplateId = 0)
 	{
@@ -263,7 +270,9 @@ class CBPWorkflow
 		$this->Resume();
 	}
 
-	/***********************  SEARCH ACTIVITY BY NAME  ****************************************************/
+    /***********************  SEARCH ACTIVITY BY NAME  ***************************************************
+     * @param CBPActivity $activity
+     */
 
 	private function FillNameActivityMapInternal(CBPActivity $activity)
 	{
@@ -288,12 +297,13 @@ class CBPWorkflow
 		$this->FillNameActivityMapInternal($this->rootActivity);
 	}
 
-	/**
-	* Returns activity by its name.
-	* 
-	* @param mixed $activityName - Activity name.
-	* @return CBPActivity - Returns activity object or null if activity is not found.
-	*/
+    /**
+     * Returns activity by its name.
+     *
+     * @param mixed $activityName - Activity name.
+     * @return CBPActivity - Returns activity object or null if activity is not found.
+     * @throws Exception
+     */
 	public function GetActivityByName($activityName)
 	{
 		if (strlen($activityName) <= 0)
@@ -311,11 +321,13 @@ class CBPWorkflow
 
 	/************************  ACTIVITY EXECUTION  *************************************************/
 
-	/**
-	* Initializes the specified activity by calling its method Initialize.
-	* 
-	* @param CBPActivity $activity
-	*/
+    /**
+     * Initializes the specified activity by calling its method Initialize.
+     *
+     * @param CBPActivity $activity
+     * @throws CBPArgumentNullException
+     * @throws Exception
+     */
 	public function InitializeActivity(CBPActivity $activity)
 	{
 		if ($activity == null)
@@ -327,12 +339,13 @@ class CBPWorkflow
 		$activity->Initialize();
 	}
 
-	/**
-	* Plans specified activity for execution.
-	* 
-	* @param CBPActivity $activity - Activity object.
-	* @param mixed $arEventParameters - Optional parameters.
-	*/
+    /**
+     * Plans specified activity for execution.
+     *
+     * @param CBPActivity $activity - Activity object.
+     * @param mixed $arEventParameters - Optional parameters.
+     * @throws Exception
+     */
 	public function ExecuteActivity(CBPActivity $activity, $arEventParameters = array())
 	{
 		if ($activity == null)
@@ -345,12 +358,13 @@ class CBPWorkflow
 		$this->AddItemToQueue(array($activity, CBPActivityExecutorOperationType::Execute));
 	}
 
-	/**
-	* Close specified activity.
-	* 
-	* @param CBPActivity $activity - Activity object.
-	* @param mixed $arEventParameters - Optional parameters.
-	*/
+    /**
+     * Close specified activity.
+     *
+     * @param CBPActivity $activity - Activity object.
+     * @param mixed $arEventParameters - Optional parameters.
+     * @throws Exception
+     */
 	public function CloseActivity(CBPActivity $activity, $arEventParameters = array())
 	{
 		switch ($activity->executionStatus)
@@ -374,12 +388,13 @@ class CBPWorkflow
 		throw new Exception("InvalidClosingState");
 	}
 
-	/**
-	* Cancel specified activity.
-	* 
-	* @param CBPActivity $activity - Activity object.
-	* @param mixed $arEventParameters - Optional parameters.
-	*/
+    /**
+     * Cancel specified activity.
+     *
+     * @param CBPActivity $activity - Activity object.
+     * @param mixed $arEventParameters - Optional parameters.
+     * @throws Exception
+     */
 	public function CancelActivity(CBPActivity $activity, $arEventParameters = array())
 	{
 		if ($activity == null)
@@ -411,7 +426,9 @@ class CBPWorkflow
 		}
 	}
 
-	/************************  ACTIVITIES QUEUE  ***********************************************/
+    /************************  ACTIVITIES QUEUE  **********************************************
+     * @param $item
+     */
 
 	private function AddItemToQueue($item)
 	{
@@ -580,7 +597,10 @@ class CBPWorkflow
 		$activity->Finalize();
 	}
 
-	/************************  EVENTS QUEUE  ********************************************************/
+    /************************  EVENTS QUEUE  *******************************************************
+     * @param $eventName
+     * @param array $arEventParameters
+     */
 
 	private function AddEventToQueue($eventName, $arEventParameters = array())
 	{

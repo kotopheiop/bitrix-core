@@ -637,10 +637,11 @@ class ShipmentImport extends EntityImport
 		return $result;
 	}
 
-	/**
-	 * @param Sale\IBusinessValueProvider $entity
-	 * @return Sale\Order
-	 */
+    /**
+     * @param Sale\IBusinessValueProvider $entity
+     * @return Order
+     * @throws Main\ArgumentException
+     */
 	static protected function getBusinessValueOrderProvider(\Bitrix\Sale\IBusinessValueProvider $entity)
 	{
 		if(!($entity instanceof Shipment))

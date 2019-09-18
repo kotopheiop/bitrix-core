@@ -16,10 +16,11 @@ abstract class DataProcessor
 
 	abstract public function process($data, Timer $timer = NULL);
 
-	/**
-	 * DataProcessor constructor.
-	 * @param $exportId - int ID of export
-	 */
+    /**
+     * DataProcessor constructor.
+     * @param $exportId - int ID of export
+     * @throws ArgumentNullException
+     */
 	public function __construct($exportId)
 	{
 		self::$vk = Vk::getInstance();

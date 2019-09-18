@@ -939,14 +939,12 @@ abstract class DataManager
 		return $result;
 	}
 
-	/**
-	 * @param      $rows
-	 * @param bool $ignoreEvents
-	 *
-	 * @return AddResult
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
+    /**
+     * @param      $rows
+     * @param bool $ignoreEvents
+     * @return AddResult
+     * @throws \Exception
+     */
 	public static function addMulti($rows, $ignoreEvents = false)
 	{
 		global $USER_FIELD_MANAGER;
@@ -1282,15 +1280,13 @@ abstract class DataManager
 		return $result;
 	}
 
-	/**
-	 * @param array $primaries
-	 * @param array $data
-	 * @param bool  $ignoreEvents
-	 *
-	 * @return UpdateResult
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
-	 */
+    /**
+     * @param array $primaries
+     * @param array $data
+     * @param bool $ignoreEvents
+     * @return UpdateResult
+     * @throws \Exception
+     */
 	public static function updateMulti($primaries, $data, $ignoreEvents = false)
 	{
 		$entity = static::getEntity();

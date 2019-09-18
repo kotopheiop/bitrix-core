@@ -1775,14 +1775,11 @@ class Order extends OrderBase implements \IShipmentOrder, \IPaymentOrder, IBusin
 		return $result;
 	}
 
-	/**
-	 * @param $select
-	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotSupportedException
-	 * @throws Main\ObjectNotFoundException
-	 */
+    /**
+     * @return Result
+     * @throws Main\ObjectNotFoundException
+     * @internal param $select
+     */
 	protected function refreshInternal()
 	{
 		$result = parent::refreshInternal();

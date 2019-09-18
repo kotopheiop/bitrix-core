@@ -289,8 +289,12 @@ function GetAnyAccessibleVote($site_id=SITE_ID, $channel_id=null)
 
 
 /********************************************************************
-				Functions for old templates
-/*******************************************************************/
+ * Functions for old templates
+ * /******************************************************************
+ * @param string $type
+ * @param string $path
+ * @return array
+ */
 function GetTemplateList($type="SV", $path="xxx")
 {
 	$arReferenceId = array();

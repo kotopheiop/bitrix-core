@@ -117,15 +117,16 @@ class Engine
 		return $parent;
 	}
 
-	/**
-	 * Parses "{=" part of the template. Moves internal pointer right behind balanced "}"
-	 * after {= a field of the entity should follow
-	 * or a function call.
-	 *
-	 * @param array[]string &$parsedTemplate Template tokens.
-	 *
-	 * @return NodeEntityField|NodeFunction|null
-	 */
+    /**
+     * Parses "{=" part of the template. Moves internal pointer right behind balanced "}"
+     * after {= a field of the entity should follow
+     * or a function call.
+     *
+     * @param array $parsedTemplate
+     * @return NodeEntityField|NodeFunction|null
+     * @internal param array[] $string &$parsedTemplate Template tokens.
+     *
+     */
 	protected static function parseFormula(array &$parsedTemplate)
 	{
 		$node = null;
@@ -150,18 +151,18 @@ class Engine
 		return $node;
 	}
 
-	/**
-	 * Adds function arguments to a $function.
-	 * An formula may be evaluated as oa argument.
-	 * An number or
-	 * A string in double quotes.
-	 *
-	 * @param string $token Expression string.
-	 * @param array[]string &$parsedTemplate Template tokens.
-	 * @param NodeFunction $function Function object to which arguments will be added.
-	 *
-	 * @return void
-	 */
+    /**
+     * Adds function arguments to a $function.
+     * An formula may be evaluated as oa argument.
+     * An number or
+     * A string in double quotes.
+     *
+     * @param string $token Expression string.
+     * @param array $parsedTemplate
+     * @param NodeFunction $function Function object to which arguments will be added.
+     * @return void
+     * @internal param array[] $string &$parsedTemplate Template tokens.
+     */
 	protected static function parseFunctionArguments($token, array &$parsedTemplate, NodeFunction $function)
 	{
 		$token = ltrim($token, " \t\n\r");

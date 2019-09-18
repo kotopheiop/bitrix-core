@@ -124,15 +124,15 @@ class CUserCounter extends CAllUserCounter
 		return true;
 	}
 
-	/**
-	 * @deprecated
-	 * @param $user_id
-	 * @param $code
-	 * @param string $site_id
-	 * @param bool $sendPull
-	 * @param int $decrement
-	 * @return bool
-	 */
+    /**
+     * @deprecated
+     * @param $user_id
+     * @param $code
+     * @param bool|mixed|string $site_id
+     * @param bool $sendPull
+     * @param int $decrement
+     * @return bool
+     */
 	public static function Decrement($user_id, $code, $site_id = SITE_ID, $sendPull = true, $decrement = 1)
 	{
 		global $DB, $CACHE_MANAGER;

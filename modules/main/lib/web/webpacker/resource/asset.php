@@ -119,12 +119,13 @@ abstract class Asset
 		return $this->path;
 	}
 
-	/**
-	 * Set path to resource.
-	 *
-	 * @param string $path Path to file.
-	 * @return $this
-	 */
+    /**
+     * Set path to resource.
+     *
+     * @param string $path Path to file.
+     * @return $this
+     * @throws ArgumentException
+     */
 	public function setPath($path)
 	{
 		if (!static::isExists($path))

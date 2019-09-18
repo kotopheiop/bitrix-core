@@ -29,9 +29,10 @@ abstract class ImportBase
     /** @var  Exchange\Internals\LoggerDiag $logger */
     protected $logger = array();
 
-	/**
-	 * @return string
-	 */
+    /**
+     * @return string
+     * @throws Main\NotImplementedException
+     */
 	static public function getFieldExternalId()
 	{
 		throw new Main\NotImplementedException('The method is not implemented.');
@@ -331,11 +332,12 @@ abstract class ImportBase
 
 	}
 
-	/**
-	 * @param Sale\Order $order
-	 * @return array
-	 * @deprecated
-	 */
+    /**
+     * @param Sale\IBusinessValueProvider $entity
+     * @return array
+     * @internal param Sale\Order $order
+     * @deprecated
+     */
 	static public function getBusinessValue(\Bitrix\Sale\IBusinessValueProvider $entity)
 	{
 		$order = static::getBusinessValueOrderProvider($entity);
@@ -403,10 +405,11 @@ abstract class ImportBase
 		return $result;
 	}
 
-	/**
-	 * @param Sale\IBusinessValueProvider $entity
-	 * @return Sale\Order
-	 */
+    /**
+     * @param Sale\IBusinessValueProvider $entity
+     * @return Sale\Order
+     * @throws Main\NotImplementedException
+     */
 	static protected function getBusinessValueOrderProvider(\Bitrix\Sale\IBusinessValueProvider $entity)
 	{
 		throw new Main\NotImplementedException('The method is not implemented.');

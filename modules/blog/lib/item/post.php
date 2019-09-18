@@ -428,11 +428,11 @@ class Post
 		return $result;
 	}
 
-	/**
-	 * Detect tags in data array.
-	 * @param array $fields Data array.
-	 * @return array
-	 */
+    /**
+     * Detect tags in data array.
+     * @return array
+     * @internal param array $fields Data array.
+     */
 	public function detectTags()
 	{
 		static $parser = null;

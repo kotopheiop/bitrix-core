@@ -3,7 +3,10 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/general/blog_user_g
 
 class CBlogUserGroup extends CAllBlogUserGroup
 {
-	/*************** ADD, UPDATE, DELETE *****************/
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $arFields
+     * @return bool|int
+     */
 	function Add($arFields)
 	{
 		global $DB;
@@ -170,7 +173,7 @@ class CBlogUserGroup extends CAllBlogUserGroup
 			}
 			else
 			{
-				// ÒÎËÜÊÎ ÄËß MYSQL!!! ÄËß ORACLE ÄÐÓÃÎÉ ÊÎÄ
+				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ MYSQL!!! ï¿½ï¿½ï¿½ ORACLE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
 				$cnt = $dbRes->SelectedRowsCount();
 			}
 

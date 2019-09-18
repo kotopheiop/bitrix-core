@@ -17,10 +17,9 @@ class CCloudStorageUpload
 	protected /*.int.*/ $_max_retries = 3;
 	protected /*.array[string]string.*/ $_cache = null;
 
-	/**
-	 * @param string $filePath
-	 * @return void
-	*/
+    /**
+     * @param string $filePath
+     */
 	function __construct($filePath)
 	{
 		$this->_filePath = $filePath;
@@ -75,12 +74,13 @@ class CCloudStorageUpload
 		$DB->Query("DELETE FROM b_clouds_file_upload WHERE TIMESTAMP_X < ".$DB->CharToDateFunction(ConvertTimeStamp(time()-24*60*60)));
 	}
 
-	/**
-	 * @param int $bucket_id
-	 * @param float $fileSize
-	 * @param string $ContentType
-	 * @return bool
-	*/
+    /**
+     * @param int $bucket_id
+     * @param float $fileSize
+     * @param string $ContentType
+     * @param bool $tmpFileName
+     * @return bool
+     */
 	function Start($bucket_id, $fileSize, $ContentType = 'binary/octet-stream', $tmpFileName = false)
 	{
 		global $DB;
@@ -127,10 +127,11 @@ class CCloudStorageUpload
 		return false;
 	}
 
-	/**
-	 * @param string $data
-	 * @return bool
-	*/
+    /**
+     * @param string $data
+     * @param null $obBucket
+     * @return bool
+     */
 	function Next($data, $obBucket = null)
 	{
 		global $APPLICATION;
@@ -167,11 +168,12 @@ class CCloudStorageUpload
 		return false;
 	}
 
-	/**
-	 * @param string $data
-	 * @param int $part_no
-	 * @return bool
-	*/
+    /**
+     * @param string $data
+     * @param int $part_no
+     * @param null $obBucket
+     * @return bool
+     */
 	function Part($data, $part_no, $obBucket = null)
 	{
 		global $APPLICATION;
@@ -216,9 +218,10 @@ class CCloudStorageUpload
 		return false;
 	}
 
-	/**
-	 * @return bool
-	*/
+    /**
+     * @param null $obBucket
+     * @return bool
+     */
 	function Finish($obBucket = null)
 	{
 		if($this->isStarted())

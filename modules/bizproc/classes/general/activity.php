@@ -838,7 +838,9 @@ abstract class CBPActivity
 		return null;
 	}
 
-	/************************  CONSTRUCTORS  *****************************************************/
+    /************************  CONSTRUCTORS  ****************************************************
+     * @param $name
+     */
 
 	public function __construct($name)
 	{
@@ -904,7 +906,9 @@ abstract class CBPActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	/************************  LOAD / SAVE  *******************************************************/
+    /************************  LOAD / SAVE  ******************************************************
+     * @param CBPActivity $nestedActivity
+     */
 
 	public function FixUpParentChildRelationship(CBPActivity $nestedActivity)
 	{
@@ -964,7 +968,10 @@ abstract class CBPActivity
 		return $strUsedActivities.";".serialize($this);
 	}
 
-	/************************  STATUS CHANGE HANDLERS  **********************************************/
+    /************************  STATUS CHANGE HANDLERS  *********************************************
+     * @param $event
+     * @param $eventHandler
+     */
 
 	public function AddStatusChangeHandler($event, $eventHandler)
 	{
@@ -991,7 +998,10 @@ abstract class CBPActivity
 			unset($this->arStatusChangeHandlers[$event][$index]);
 	}
 
-	/************************  EVENTS  **********************************************************************/
+    /************************  EVENTS  *********************************************************************
+     * @param $event
+     * @param array $arEventParameters
+     */
 
 	private function FireStatusChangedEvents($event, $arEventParameters = array())
 	{
@@ -1030,7 +1040,10 @@ abstract class CBPActivity
 		}
 	}
 
-	/************************  CREATE  *****************************************************************/
+    /************************  CREATE  ****************************************************************
+     * @param $code
+     * @return bool
+     */
 
 	public static function IncludeActivityFile($code)
 	{
@@ -1078,7 +1091,10 @@ abstract class CBPActivity
 		}
 	}
 
-	/************************  MARK  ****************************************************************/
+    /************************  MARK  ***************************************************************
+     * @param array $arEventParameters
+     * @throws Exception
+     */
 
 	public function MarkCanceled($arEventParameters = array())
 	{

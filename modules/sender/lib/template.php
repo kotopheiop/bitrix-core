@@ -76,11 +76,12 @@ class TemplateTable extends ORM\Data\DataManager
 		return $resultList;
 	}
 
-	/**
-	 * Increment use counter.
-	 *
-	 * @return bool
-	 */
+    /**
+     * Increment use counter.
+     *
+     * @param $id
+     * @return bool
+     */
 	public static function incUseCount($id)
 	{
 		return static::update($id, array(

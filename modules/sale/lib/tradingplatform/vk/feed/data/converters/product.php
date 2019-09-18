@@ -19,11 +19,12 @@ class Product extends DataConverter
 	const DESCRIPTION_LENGHT_MAX = 3300;	// it is not entirely accurate value, but in doc i can't find true info
 	const NAME_LENGHT_MIN = 4;
 	const NAME_LENGHT_MAX = 100;
-	
-	/**
-	 * Product constructor.
-	 * @param $exportId - int ID of export
-	 */
+
+    /**
+     * Product constructor.
+     * @param $exportId - int ID of export
+     * @throws ArgumentNullException
+     */
 	public function __construct($exportId)
 	{
 		if (!isset($exportId) || strlen($exportId) <= 0)
@@ -158,15 +159,16 @@ class Product extends DataConverter
 		
 		return $newName;
 	}
-	
-	
-	/**
-	 * Valid length of description
-	 *
-	 * @param $name
-	 * @param Vk\Logger|NULL $logger
-	 * @return string
-	 */
+
+
+    /**
+     * Valid length of description
+     *
+     * @param $desc
+     * @param Vk\Logger|NULL $logger
+     * @return string
+     * @internal param $name
+     */
 	private function validateDescription($desc, Vk\Logger $logger = NULL)
 	{
 		$newDesc = $desc;

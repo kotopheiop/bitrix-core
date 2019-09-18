@@ -170,12 +170,14 @@ final class MailHandler
 
 		return $commentId;
 	}
-	/**
-	 * Adds new post from mail
-	 *
-	 * @param \Bitrix\Main\Event $event Event.
-	 * @return int|false
-	 */
+
+    /**
+     * Adds new post from mail
+     *
+     * @param \Bitrix\Main\Event $event Event.
+     * @return false|int
+     * @throws Main\SystemException
+     */
 	public static function handleForwardReceivedBlogPost(\Bitrix\Main\Event $event)
 	{
 		$userId = intval($event->getParameter('from'));

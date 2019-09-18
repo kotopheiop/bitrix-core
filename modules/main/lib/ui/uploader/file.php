@@ -484,11 +484,13 @@ class File
 				self::view($file, array("content_type" => $file["type"]));
 		}
 	}
-	/**
-	 * @param string $act
-	 * @param string $copy
-	 * @return string
-	 */
+
+    /**
+     * @param string $act
+     * @param string $copy
+     * @param null $uri
+     * @return string
+     */
 	private function getUrl($act = "view", $copy = "default", $uri = null)
 	{
 		$uri = is_null($uri) ? \Bitrix\Main\Context::getCurrent()->getRequest()->getRequestUri() : $uri;

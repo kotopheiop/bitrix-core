@@ -107,9 +107,17 @@ class CAllSaleDelivery
 		}
 	}
 
-	/**
-	 * @deprecated Use \Bitrix\Sale\Delivery\Services\Manager
-	 */
+    /**
+     * @deprecated Use \Bitrix\Sale\Delivery\Services\Manager
+     * @param $location
+     * @param $locationZip
+     * @param $weight
+     * @param $price
+     * @param $currency
+     * @param null $siteId
+     * @param array $arShoppingCart
+     * @return array
+     */
 	public static function DoLoadDelivery($location, $locationZip, $weight, $price, $currency, $siteId = null, $arShoppingCart = array())
 	{
 		$location = intval($location);
@@ -244,9 +252,11 @@ class CAllSaleDelivery
 		return $arResult;
 	}
 
-	/**
-	 * @deprecated Use \Bitrix\Sale\Delivery\Services\Table::getById().
-	 */
+    /**
+     * @deprecated Use \Bitrix\Sale\Delivery\Services\Table::getById().
+     * @param $ID
+     * @return array
+     */
 	public static function GetByID($ID)
 	{
 		$res = self::GetList(array(), array("ID" => $ID));
@@ -290,10 +300,13 @@ class CAllSaleDelivery
 		return $dbResult;
 	}
 
-	/**
-	 * @deprecated
-	 * @internal
-	 */
+    /**
+     * @deprecated
+     * @internal
+     * @param $ACTION
+     * @param $arFields
+     * @return bool
+     */
 	public static function CheckFields($ACTION, &$arFields)
 	{
 		global $DB;
@@ -393,9 +406,13 @@ class CAllSaleDelivery
 		$class::resetMultipleForOwner($ID, $links);
 	}
 
-	/**
-	 * @deprecated
-	 */
+    /**
+     * @deprecated
+     * @param $oldId
+     * @param $arFields
+     * @param array $arOptions
+     * @return mixed
+     */
 	public static function Update($oldId, $arFields, $arOptions = array())
 	{
 		if(strlen($oldId) <= 0)
@@ -602,9 +619,11 @@ class CAllSaleDelivery
 		return $oldId;
 	}
 
-	/**
-	 * @deprecated
-	 */
+    /**
+     * @deprecated
+     * @param $ID
+     * @return bool|CDBResult
+     */
 	public static function Delete($ID)
 	{
 		$newId = \CSaleDelivery::getIdByCode($ID);

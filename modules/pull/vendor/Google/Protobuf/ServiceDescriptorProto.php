@@ -98,7 +98,8 @@ class ServiceDescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'method' value
      *
-     * @param \Protobuf\Collection<\google\protobuf\MethodDescriptorProto> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\google\protobuf\MethodDescriptorProto> $value
      */
     public function setMethodList(\Protobuf\Collection $value = null)
     {

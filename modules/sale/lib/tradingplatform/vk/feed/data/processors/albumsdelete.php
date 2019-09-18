@@ -12,12 +12,15 @@ use Bitrix\Sale\TradingPlatform\TimeIsOverException;
  */
 class AlbumsDelete extends DataProcessor
 {
-	/**
-	 * Main export process method. Delete from VK only albums, which were adding via export
-	 * Have not input params - get values from VK and from mapping and compare them.
-	 *
-	 * @return bool - return true if OK or if errors it not critical. Expression if timer is over
-	 */
+    /**
+     * Main export process method. Delete from VK only albums, which were adding via export
+     * Have not input params - get values from VK and from mapping and compare them.
+     *
+     * @param null $data
+     * @param Timer|null $timer
+     * @return bool - return true if OK or if errors it not critical. Expression if timer is over
+     * @throws TimeIsOverException
+     */
 	public function process($data = NULL, Timer $timer = NULL)
 	{
 		$apiHelper = new Vk\Api\ApiHelper($this->exportId);

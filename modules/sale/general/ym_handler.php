@@ -1473,12 +1473,12 @@ class CSaleYMHandler
 		return array("error" => $message);
 	}
 
-	/**
-	 * @param int $orderId
-	 * @param string $status
-	 * @param string $substatus
-	 * @return bool
-	 */
+    /**
+     * @param int $orderId
+     * @param string $status
+     * @param bool|string $substatus
+     * @return bool
+     */
 	public function sendStatus($orderId, $status, $substatus = false)
 	{
 		global $APPLICATION;
@@ -1787,14 +1787,14 @@ class CSaleYMHandler
 		self::onSaleStatusOrder($shipment->getField('ORDER_ID'), "DEDUCTED");
 	}
 
-	/**
-	 * Executes when order's status was changed in shop
-	 * event OnSaleCancelOrder
-	 * @param int $orderId Identifier
-	 * @param string $status New status
-	 * @param string $substatus Substatus.
-	 * @return bool
-	 */
+    /**
+     * Executes when order's status was changed in shop
+     * event OnSaleCancelOrder
+     * @param int $orderId Identifier
+     * @param string $status New status
+     * @param bool|string $substatus Substatus.
+     * @return bool
+     */
 	public function onSaleStatusOrder($orderId, $status, $substatus = false)
 	{
 		if(self::$isYandexRequest)
@@ -2236,7 +2236,12 @@ class CSaleYMHandler
 		return array('YANDEX', 'CASH_ON_DELIVERY', 'CARD_ON_DELIVERY');
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $orderId
+     * @param $value
+     * @param $description
+     * @return bool
+     */
 	public static function onSaleCancelOrder($orderId, $value, $description)
 	{
 		if($value != "Y" || self::$isYandexRequest)
@@ -2252,7 +2257,11 @@ class CSaleYMHandler
 		return self::onSaleStatusOrder($orderId, "CANCELED", $description);
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $orderId
+     * @param $value
+     * @return bool
+     */
 	public static function onSaleDeliveryOrder($orderId, $value)
 	{
 		if($value != "Y" || self::$isYandexRequest)
@@ -2261,7 +2270,11 @@ class CSaleYMHandler
 		return self::onSaleStatusOrder($orderId, "ALLOW_DELIVERY");
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $orderId
+     * @param $value
+     * @return bool
+     */
 	public static function onSalePayOrder($orderId, $value)
 	{
 		if($value != "Y" || self::$isYandexRequest)
@@ -2270,7 +2283,11 @@ class CSaleYMHandler
 		return self::onSaleStatusOrder($orderId, "PAYED");
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $orderId
+     * @param $value
+     * @return bool
+     */
 	public static function onSaleDeductOrder($orderId, $value)
 	{
 		if($value != "Y" || self::$isYandexRequest)
@@ -2279,7 +2296,12 @@ class CSaleYMHandler
 		return self::onSaleStatusOrder($orderId, "DEDUCTED");
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $delivery
+     * @param $price
+     * @param int $weight
+     * @return array
+     */
 	protected function getDeliveryOptions($delivery, $price, $weight = 0)
 	{
 		$arResult = array();
@@ -2344,7 +2366,10 @@ class CSaleYMHandler
 		return $arResult;
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $cityName
+     * @return int
+     */
 	protected function getLocationByCityName($cityName)
 	{
 		return $this->locationMapper->getLocationByCityName($cityName);

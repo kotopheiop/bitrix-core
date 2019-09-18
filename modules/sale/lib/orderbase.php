@@ -655,12 +655,10 @@ abstract class OrderBase extends Internals\Entity
 
 	}
 
-	/**
-	 * @param $select
-	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 */
+    /**
+     * @return Result
+     * @internal param $select
+     */
 	protected function refreshInternal()
 	{
 		$result = new Result();

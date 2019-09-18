@@ -76,9 +76,10 @@ class EventMessageCompiler
 		$this->setMailCharset($arMessageParams['CHARSET']);
 	}
 
-	/**
-	 * @return EventMessageCompiler
-	 */
+    /**
+     * @param array $arMessageParams
+     * @return EventMessageCompiler
+     */
 	public static function createInstance(array $arMessageParams)
 	{
 		return new static($arMessageParams);
@@ -191,9 +192,9 @@ class EventMessageCompiler
 		return $this->mailContentType;
 	}
 
-	/**
-	 * @param mixed $mailAttachment
-	 */
+    /**
+     * @internal param mixed $mailAttachment
+     */
 	protected function setMailAttachment()
 	{
 		$eventMessageAttachment = array();

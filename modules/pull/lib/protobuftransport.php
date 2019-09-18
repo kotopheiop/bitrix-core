@@ -15,9 +15,11 @@ class ProtobufTransport
 	protected $hits = 0;
 	protected $bytes = 0;
 
-	/**
-	 * @param array $messages Messages to send to the pull server.
-	 */
+    /**
+     * @param array $messages Messages to send to the pull server.
+     * @return bool
+     * @throws SystemException
+     */
 	public static function sendMessages(array $messages)
 	{
 		if(\CPullOptions::GetQueueServerVersion() < 4)

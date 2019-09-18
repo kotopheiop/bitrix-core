@@ -212,13 +212,14 @@ class EventMessageThemeCompiler
 		return $this->themeEpilog;
 	}
 
-	/**
-	 * Set style.
-	 *
-	 * @param array $arPaths
-	 * @param bool $sort
-	 * @return void
-	 */
+    /**
+     * Set style.
+     *
+     * @param $path
+     * @param bool $sort
+     * @return void
+     * @internal param array $arPaths
+     */
 	public function setStyle($path, $sort = false)
 	{
 		$sort = ($sort === false ? $this->currentResourceOrder : $sort);
@@ -414,11 +415,17 @@ class EventMessageThemeCompiler
 		$this->resultString = str_replace($arReplaceIdentificators, $arReplaceStrings, $this->resultString);
 	}
 
-	/**
-	 * Include mail component.
-	 *
-	 * @return mixed
-	 */
+    /**
+     * Include mail component.
+     *
+     * @param $componentName
+     * @param $componentTemplate
+     * @param array $arParams
+     * @param null $parentComponent
+     * @param array $arFunctionParams
+     * @return mixed
+     * @throws StopException
+     */
 	public static function includeComponent($componentName, $componentTemplate, $arParams = array(), $parentComponent = null, $arFunctionParams = array())
 	{
 		$componentRelativePath = \CComponentEngine::MakeComponentPath($componentName);

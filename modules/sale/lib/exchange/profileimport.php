@@ -296,6 +296,7 @@ class ProfileImport extends UserImportBase
 
     /**
      * @param array $fields
+     * @param $arErrors
      * @return mixed
      */
     public function initFieldsProfile(array $fields, &$arErrors)

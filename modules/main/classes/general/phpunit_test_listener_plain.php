@@ -148,12 +148,13 @@ class PHPUnit_Util_Log_BX_Plain extends PHPUnit_Util_Printer implements PHPUnit_
 		echo $test->getActualOutput();
 	}
 
-	/**
-	 * @param string $status
-	 * @param float  $time
-	 * @param array  $trace
-	 * @param string $message
-	 */
+    /**
+     * @param string $status
+     * @param float $time
+     * @param array $trace
+     * @param string $message
+     * @param null $test
+     */
 	protected function writeCase($status, $time, array $trace = array(), $message = '', $test = NULL)
 	{
 		$output = '';

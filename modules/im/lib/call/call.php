@@ -347,9 +347,15 @@ class Call
 		return $this->provider == static::PROVIDER_VOXIMPLANT ? 10 : 4;
 	}
 
-	/**
-	 * Use this constructor only for creating new calls
-	 */
+    /**
+     * Use this constructor only for creating new calls
+     * @param $type
+     * @param $provider
+     * @param $entityType
+     * @param $entityId
+     * @param $initiatorId
+     * @return static
+     */
 	public static function createWithEntity($type, $provider, $entityType, $entityId, $initiatorId)
 	{
 		$instance = new static();

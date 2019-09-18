@@ -17,17 +17,15 @@ class AlbumAdd extends DataProcessor
 	private static $firstRunning = true;
 	private static $apiHelper;
 	private static $isAgressive;
-	
-	/**
-	 * Main export process method. Adding albums in VK
-	 *
-	 * @param $data - array of albums to export. Max 25 items
-	 * @param null $timer - Tradingplatform\Timer to control execution time
-	 * @return bool - return true if OK or if errors it not critical. Expression if timer is over
-	 * @throws SystemException
-	 * @throws TimeIsOverException
-	 * @throws Vk\ExecuteException
-	 */
+
+    /**
+     * Main export process method. Adding albums in VK
+     *
+     * @param $data - array of albums to export. Max 25 items
+     * @param Timer|null $timer - Tradingplatform\Timer to control execution time
+     * @return bool - return true if OK or if errors it not critical. Expression if timer is over
+     * @throws TimeIsOverException
+     */
 	public function process($data = null, Timer $timer = null)
 	{
 		$logger = new Vk\Logger($this->exportId);

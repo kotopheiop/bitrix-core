@@ -276,11 +276,12 @@ class Helper
 		return $result;
 	}
 
-	/**
-	 * @param string $siteId
-	 * @return \Bitrix\Sale\TradingPlatform\Sftp
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 */
+    /**
+     * @param string $siteId
+     * @return Sftp
+     * @throws ArgumentNullException
+     * @throws SystemException
+     */
 	public static function getSftp($siteId)
 	{
 		if(strlen($siteId) <= 0)

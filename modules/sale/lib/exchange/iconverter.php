@@ -17,6 +17,8 @@ interface IConverter
     /**
      * @param null $entity
      * @param array $fields
+     * @param ISettings $settings
+     * @return
      */
     static public function sanitizeFields($entity=null, array &$fields, ISettings $settings);
 

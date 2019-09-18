@@ -15,12 +15,11 @@ class RandomSequence
 	private $mz = 0;
 	private $mw = 0;
 
-	/**
-	 * Starts new sequence of pseudo random values.
-	 *
-	 * @param string $seed
-	 * @return void
-	 */
+    /**
+     * Starts new sequence of pseudo random values.
+     *
+     * @param string $seed
+     */
 	public function __construct($seed = "")
 	{
 		$md = md5($seed);

@@ -5,7 +5,13 @@ $GLOBALS["BLOG_COMMENT"] = Array();
 class CAllBlogComment
 {
 	const UF_NAME = 'UF_BLOG_COMMENT_DOC';
-	/*************** ADD, UPDATE, DELETE *****************/
+
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $ACTION
+     * @param $arFields
+     * @param int $ID
+     * @return bool
+     */
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $DB, $APPLICATION;

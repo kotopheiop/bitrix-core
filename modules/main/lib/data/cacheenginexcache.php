@@ -128,16 +128,15 @@ class CacheEngineXCache
 		return false;
 	}
 
-	/**
-	 * Releases the lock obtained by lock method.
-	 *
-	 * @param string $baseDir Base cache directory (usually /bitrix/cache).
-	 * @param string $initDir Directory within base.
-	 * @param string $key Calculated cache key.
-	 * @param integer $TTL Expiration period in seconds.
-	 *
-	 * @return void
-	 */
+    /**
+     * Releases the lock obtained by lock method.
+     *
+     * @param string $baseDir Base cache directory (usually /bitrix/cache).
+     * @param bool|string $initDir Directory within base.
+     * @param bool|string $key Calculated cache key.
+     * @param integer $TTL Expiration period in seconds.
+     * @return void
+     */
 	protected function unlock($baseDir, $initDir = false, $key = false, $TTL = 0)
 	{
 		if ($key !== false)
@@ -176,15 +175,14 @@ class CacheEngineXCache
 		}
 	}
 
-	/**
-	 * Cleans (removes) cache directory or file.
-	 *
-	 * @param string $baseDir Base cache directory (usually /bitrix/cache).
-	 * @param string $initDir Directory within base.
-	 * @param string $filename File name.
-	 *
-	 * @return void
-	 */
+    /**
+     * Cleans (removes) cache directory or file.
+     *
+     * @param string $baseDir Base cache directory (usually /bitrix/cache).
+     * @param bool|string $initDir Directory within base.
+     * @param bool|string $filename File name.
+     * @return void
+     */
 	public function clean($baseDir, $initDir = false, $filename = false)
 	{
 		$key = false;

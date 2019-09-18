@@ -156,17 +156,21 @@ class Table extends Entity\DataManager
 
 	/* Deprecated methods moved to manager. Will be removed in future versions. */
 
-	/**
-	 * @deprecated use Services\Manager::getIdByCode()
-	 */
+    /**
+     * @deprecated use Services\Manager::getIdByCode()
+     * @param $code
+     * @return int
+     */
 	public static function getIdByCode($code)
 	{
 		return Services\Manager::getIdByCode($code);
 	}
 
-	/**
-	 * @deprecated use Services\Manager::getCodeById()
-	 */
+    /**
+     * @deprecated use Services\Manager::getCodeById()
+     * @param $id
+     * @return string
+     */
 	public static function getCodeById($id)
 	{
 		return Services\Manager::getCodeById($id);

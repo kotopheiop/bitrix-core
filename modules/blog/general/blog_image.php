@@ -5,8 +5,13 @@ $GLOBALS["BLOG_IMAGE"] = Array();
 class CAllBlogImage
 {
 	const NOT_ATTACHED_IMAGES_LIFETIME = 86400; //one day
-	
-	/*************** ADD, UPDATE, DELETE *****************/
+
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $ACTION
+     * @param $arFields
+     * @param int $ID
+     * @return bool
+     */
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $APPLICATION;

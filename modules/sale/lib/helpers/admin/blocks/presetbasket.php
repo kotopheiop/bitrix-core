@@ -20,9 +20,14 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/admin_tool.
 class PresetBasket extends OrderBasket
 {
 
-	/**
-	 * PresetBasket constructor.
-	 */
+    /**
+     * PresetBasket constructor.
+     * @param Order $order
+     * @param string $jsObjName
+     * @param string $idPrefix
+     * @param bool $createProductBasement
+     * @param int $mode
+     */
 	public function __construct(Order $order, $jsObjName = "", $idPrefix = "", $createProductBasement = true, $mode = self::EDIT_MODE)
 	{
 		parent::__construct($order, $jsObjName, $idPrefix, $createProductBasement, $mode);

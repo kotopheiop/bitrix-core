@@ -83,7 +83,8 @@ class IncomingMessage extends \Protobuf\AbstractMessage
     /**
      * Set 'receivers' value
      *
-     * @param \Protobuf\Collection<\Bitrix\Pull\Protobuf\Receiver> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\Bitrix\Pull\Protobuf\Receiver> $value
      */
     public function setReceiversList(\Protobuf\Collection $value = null)
     {

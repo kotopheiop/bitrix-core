@@ -739,9 +739,11 @@ abstract class Mailbox
 		return;
 	}
 
-	/**
-	 * @deprecated
-	 */
+    /**
+     * @deprecated
+     * @param null $message
+     * @throws Main\ArgumentException
+     */
 	public function resortTree($message = null)
 	{
 		global $DB;
@@ -880,9 +882,11 @@ abstract class Mailbox
 		}
 	}
 
-	/**
-	 * @deprecated
-	 */
+    /**
+     * @deprecated
+     * @param $message
+     * @throws Main\ArgumentException
+     */
 	public function incrementTree($message)
 	{
 		if (empty($message['ID']))

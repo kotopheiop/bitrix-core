@@ -17,14 +17,13 @@ use Bitrix\Main\ORM\Query\Filter\ConditionTree as Filter;
  */
 class Join
 {
-	/**
-	 * Short alias to init filter with whereColumn.
-	 * @see Filter::whereColumn()
-	 *
-	 * @param array ...$condition
-	 *
-	 * @return Filter
-	 */
+    /**
+     * Short alias to init filter with whereColumn.
+     * @see Filter::whereColumn()
+     * @return Filter
+     * @internal param array ...$condition
+     *
+     */
 	public static function on()
 	{
 		$condition = func_get_args();

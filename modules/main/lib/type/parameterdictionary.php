@@ -45,17 +45,22 @@ class ParameterDictionary
 		return $this->arRawValues;
 	}
 
-	/**
-	 * Offset to set
-	 */
+    /**
+     * Offset to set
+     * @param $offset
+     * @param $value
+     * @throws NotSupportedException
+     */
 	public function offsetSet($offset, $value)
 	{
 		throw new NotSupportedException("Can not set readonly value");
 	}
 
-	/**
-	 * Offset to unset
-	 */
+    /**
+     * Offset to unset
+     * @param $offset
+     * @throws NotSupportedException
+     */
 	public function offsetUnset($offset)
 	{
 		throw new NotSupportedException("Can not unset readonly value");

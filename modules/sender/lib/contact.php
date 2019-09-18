@@ -136,11 +136,12 @@ class ContactTable extends Entity\DataManager
 		);
 	}
 
-	/**
-	 * Check email.
-	 *
-	 * @return bool|string
-	 */
+    /**
+     * Check email.
+     *
+     * @param $value
+     * @return bool|string
+     */
 	public static function checkEmail($value)
 	{
 		if(empty($value) || check_email($value))

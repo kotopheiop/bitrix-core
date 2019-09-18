@@ -1412,6 +1412,15 @@ function fGetPayFromAccount($USER_ID, $CURRENCY)
 /**
  * Returns HTML select control with delivery services data for admin pages
  * @deprecated
+ * @param $location
+ * @param $locationZip
+ * @param $weight
+ * @param $price
+ * @param $currency
+ * @param $siteId
+ * @param $defaultDelivery
+ * @param $arShoppingCart
+ * @return array
  */
 function fGetDeliverySystemsHTML($location, $locationZip, $weight, $price, $currency, $siteId, $defaultDelivery, $arShoppingCart)
 {

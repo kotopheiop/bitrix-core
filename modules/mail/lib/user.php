@@ -340,9 +340,12 @@ class User
 		return false;
 	}
 
-	/**
-	 * Agent method, retrieves stored user message and sends an event
-	 */
+    /**
+     * Agent method, retrieves stored user message and sends an event
+     * @param int $messageId
+     * @param int $cnt
+     * @return string|void
+     */
 	public static function sendEventAgent($messageId = 0, $cnt = 0)
 	{
 		$messageId = intval($messageId);

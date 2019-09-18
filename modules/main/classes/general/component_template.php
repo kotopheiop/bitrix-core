@@ -823,15 +823,14 @@ class CBitrixComponentTemplate
 		return $result;
 	}
 
-	/**
-	 * Includes template language file.
-	 *
-	 * @param string $relativePath
-	 * @param false|string $lang
-	 * @param boolean $return
-	 *
-	 * @return array
-	 */
+    /**
+     * Includes template language file.
+     *
+     * @param string $relativePath
+     * @param bool|false|string $lang
+     * @param boolean $return
+     * @return array
+     */
 	public function IncludeLangFile($relativePath = "", $lang = false, $return = false)
 	{
 		$arLangMessages = array();
@@ -1022,50 +1021,48 @@ class CBitrixComponentTemplate
 		}
 	}
 
-	/**
-	 * Shows menu with edit action in edit mode.
-	 * <code>
-	 * $this->AddEditAction(
-	 * 	'USER'.$arUser['ID'],
-	 * 	$arUser['EDIT_LINK'],
-	 * 	GetMessage('INTR_ISP_EDIT_USER'),
-	 * 	array(
-	 * 		'WINDOW' => array("width"=>780, "height"=>500), // popup params
-	 * 		'ICON' => 'bx-context-toolbar-edit-icon' // icon css
-	 * 		'SRC' => '/bitrix/images/myicon.gif' // icon image
-	 * 	)
-	 * );
-	 * </code>
-	 *
-	 * @param string $entryId Entry identifier. prefix like 'USER' needed only in case when template has two or more lists of different editable entities.
-	 * @param string $editLink Edit form link, Should be set in a component. Will be opened in js popup.
-	 * @param false|string $editTitle Button caption.
-	 * @param array $arParams Additional parameters.
-	 *
-	 * @return void
-	 * @see CBitrixcomponentTemplate::GetEditAreaId
-	 */
+    /**
+     * Shows menu with edit action in edit mode.
+     * <code>
+     * $this->AddEditAction(
+     *    'USER'.$arUser['ID'],
+     *    $arUser['EDIT_LINK'],
+     *    GetMessage('INTR_ISP_EDIT_USER'),
+     *    array(
+     *        'WINDOW' => array("width"=>780, "height"=>500), // popup params
+     *        'ICON' => 'bx-context-toolbar-edit-icon' // icon css
+     *        'SRC' => '/bitrix/images/myicon.gif' // icon image
+     *    )
+     * );
+     * </code>
+     *
+     * @param string $entryId Entry identifier. prefix like 'USER' needed only in case when template has two or more lists of different editable entities.
+     * @param string $editLink Edit form link, Should be set in a component. Will be opened in js popup.
+     * @param bool|false|string $editTitle Button caption.
+     * @param array $arParams Additional parameters.
+     * @return void
+     * @see CBitrixcomponentTemplate::GetEditAreaId
+     */
 	public function AddEditAction($entryId, $editLink, $editTitle = false, $arParams = array())
 	{
 		$this->__component->addEditButton(array('AddEditAction', $entryId, $editLink, $editTitle, $arParams));
 	}
 
-	/**
-	 * Shows menu with delete action in edit mode.
-	 * <ul>
-	 * $arParams['CONFIRM'] = false - disable confirm;
-	 * $arParams['CONFIRM'] = 'Text' - confirm with custom text;
-	 * no $arParams['CONFIRM'] at all - confirm with default text
-	 * </ul>
-	 *
-	 * @param string $entryId Entry identifier. prefix like 'USER' needed only in case when template has two or more lists of different editable entities.
-	 * @param string $deleteLink Delete action link, Should be set in a component.
-	 * @param false|string $deleteTitle Button caption.
-	 * @param array $arParams Additional parameters.
-	 *
-	 * @return void
-	 * @see CBitrixcomponentTemplate::GetEditAreaId
-	 */
+    /**
+     * Shows menu with delete action in edit mode.
+     * <ul>
+     * $arParams['CONFIRM'] = false - disable confirm;
+     * $arParams['CONFIRM'] = 'Text' - confirm with custom text;
+     * no $arParams['CONFIRM'] at all - confirm with default text
+     * </ul>
+     *
+     * @param string $entryId Entry identifier. prefix like 'USER' needed only in case when template has two or more lists of different editable entities.
+     * @param string $deleteLink Delete action link, Should be set in a component.
+     * @param bool|false|string $deleteTitle Button caption.
+     * @param array $arParams Additional parameters.
+     * @return void
+     * @see CBitrixcomponentTemplate::GetEditAreaId
+     */
 	public function AddDeleteAction($entryId, $deleteLink, $deleteTitle = false, $arParams = array())
 	{
 		$this->__component->addEditButton(array('AddDeleteAction', $entryId, $deleteLink, $deleteTitle, $arParams));

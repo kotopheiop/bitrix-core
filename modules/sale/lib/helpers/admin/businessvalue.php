@@ -139,7 +139,12 @@ final class BusinessValueControl
 		return ! $this->errors;
 	}
 
-	/** @internal @deprecated */
+    /** @internal @deprecated
+     * @param $personTypeId
+     * @param array $mapping
+     * @param array|null $providerKeys
+     * @return array
+     */
 	public static function sanitizeMapping($personTypeId, array &$mapping, array $providerKeys = null)
 	{
 		$error = array();
@@ -573,7 +578,15 @@ final class BusinessValueControl
 		self::renderScript();
 	}
 
-	/** @internal */
+    /** @internal
+     * @param array $mappings
+     * @param $inputNamePrefix
+     * @param array $providerInput
+     * @param array $providerValueInput
+     * @param array|null $commonProviderInput
+     * @param array|null $commonProviderValueInput
+     * @return array|bool|null
+     */
 	public static function renderMapping(array $mappings, $inputNamePrefix, array $providerInput, array $providerValueInput, array $commonProviderInput = null, array $commonProviderValueInput = null)
 	{
 		foreach ($mappings as &$m)
@@ -951,7 +964,10 @@ final class BusinessValueControl
 		<?
 	}
 
-	/** @internal */
+    /** @internal
+     * @param $filter
+     * @return array
+     */
 	public static function getFilter($filter)
 	{
 		$filter = is_array($filter)
@@ -1006,7 +1022,11 @@ final class BusinessValueControl
 		list (self::$consumerInput, self::$consumerCodeInput) = self::getConsumerInputs(BusinessValue::getConsumers(), self::$groups);
 	}
 
-	/** @internal */
+    /** @internal
+     * @param $personTypeId
+     * @param array|null $providerKeys
+     * @return
+     */
 	public static function getProviderInput($personTypeId, array $providerKeys = null)
 	{
 		$providerInput = self::$personProviderInput[$personTypeId];
@@ -1017,7 +1037,11 @@ final class BusinessValueControl
 		return $providerInput;
 	}
 
-	/** @internal */
+    /** @internal
+     * @param $personTypeId
+     * @param null $providerKey
+     * @return
+     */
 	public static function getValueInput($personTypeId, $providerKey = null)
 	{
 		return $providerKey

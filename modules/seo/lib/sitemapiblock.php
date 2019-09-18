@@ -218,9 +218,11 @@ class SitemapIblock
 		'BEFOREUPDATESECTION' => array(array(),array()),
 	);
 
-	/**
-	 * Event handler for multiple IBlock events
-	 */
+    /**
+     * Event handler for multiple IBlock events
+     * @param $name
+     * @param $arguments
+     */
 	public static function __callStatic($name, $arguments)
 	{
 		$name = ToUpper($name);

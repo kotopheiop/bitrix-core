@@ -7,10 +7,12 @@ IncludeModuleLangFile(__FILE__);
  */
 class CSaleDeliveryHelper
 {
-	/**
-	 * getRegionsList
-	 * @return array regions (locations) list
-	 */
+    /**
+     * getRegionsList
+     * @param int $countryId
+     * @param bool $bFlip
+     * @return array regions (locations) list
+     */
 	public static function getRegionsList($countryId = 0, $bFlip = false)
 	{
 		static $arRegions = array();

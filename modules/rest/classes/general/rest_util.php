@@ -425,17 +425,28 @@ class CRestUtil
 		return $resultQueryParams;
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $appId
+     * @param $userId
+     * @param array $additionalData
+     * @return array|bool|null
+     */
 	public static function getAuthForEvent($appId, $userId, array $additionalData = array())
 	{
 		return \Bitrix\Rest\Event\Sender::getAuth($appId, $userId, $additionalData, \Bitrix\Rest\Event\Sender::getDefaultEventParams());
 	}
 
-	/**
-	 * @deprecated
-	 *
-	 * use \Bitrix\Rest\OAuth\Auth::get
-	 */
+    /**
+     * @deprecated
+     *
+     * use \Bitrix\Rest\OAuth\Auth::get
+     * @param $appId
+     * @param $appSecret
+     * @param $scope
+     * @param $additionalParams
+     * @param int $user_id
+     * @return bool
+     */
 	public static function getAuth($appId, $appSecret, $scope, $additionalParams, $user_id = 0)
 	{
 		global $USER;
@@ -630,13 +641,14 @@ class CRestUtil
 		}
 	}
 
-	/**
-	 * Simple app installation without checks.
-	 *
-	 * @param string $appCode Application code.
-	 *
-	 * @return boolean
-	 */
+    /**
+     * Simple app installation without checks.
+     *
+     * @param $code
+     * @return bool
+     * @internal param string $appCode Application code.
+     *
+     */
 	public static function InstallApp($code)
 	{
 		$result = false;
@@ -758,11 +770,13 @@ class CRestUtil
 		return $result;
 	}
 
-	/**
-	 * @deprecated
-	 *
-	 * use \Bitrix\Rest\AppTable::update
-	 */
+    /**
+     * @deprecated
+     *
+     * use \Bitrix\Rest\AppTable::update
+     * @param $appId
+     * @param $oldVersion
+     */
 	public static function UpdateApp($appId, $oldVersion)
 	{
 		$arApp = CBitrix24App::GetByID($appId);

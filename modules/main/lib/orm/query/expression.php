@@ -137,13 +137,12 @@ class Expression
 		return new ExpressionField($alias, 'UPPER(%s)', $columnName);
 	}
 
-	/**
-	 * Expression with CONCAT(...) function.
-	 *
-	 * @param array $columns
-	 *
-	 * @return ExpressionField
-	 */
+    /**
+     * Expression with CONCAT(...) function.
+     * @return ExpressionField
+     * @internal param array $columns
+     *
+     */
 	public function concat()
 	{
 		$columns = func_get_args();

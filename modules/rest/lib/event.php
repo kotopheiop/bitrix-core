@@ -117,11 +117,15 @@ class EventTable extends Main\Entity\DataManager
 		return $connection->query("DELETE FROM ".static::getTableName()." WHERE APP_ID='".intval($appId)."' AND EVENT_NAME='ONAPPINSTALL'");
 	}
 
-	/**
-	 * @deprecated
-	 *
-	 * Use \Bitrix\Rest\HandlerHelper::checkCallback
-	 */
+    /**
+     * @deprecated
+     *
+     * Use \Bitrix\Rest\HandlerHelper::checkCallback
+     * @param $eventCallback
+     * @param $appInfo
+     * @param bool $checkInstallUrl
+     * @return bool
+     */
 	public static function checkCallback($eventCallback, $appInfo, $checkInstallUrl = true)
 	{
 		return \Bitrix\Rest\HandlerHelper::checkCallback($eventCallback, $appInfo, $checkInstallUrl);

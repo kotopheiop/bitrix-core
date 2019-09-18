@@ -795,7 +795,9 @@ abstract class CDBResultMysql extends CAllDBResult
 		parent::__construct($res);
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param null $res
+     */
 	public function CDBResultMysql($res = null)
 	{
 		self::__construct($res);

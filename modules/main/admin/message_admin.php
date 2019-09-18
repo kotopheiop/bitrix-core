@@ -56,8 +56,11 @@ $lAdmin->InitFilter($arFilterFields);
 
 
 /***************************************************************************
-Functions
-***************************************************************************/
+ * Functions
+ **************************************************************************
+ * @param $arFilterFields
+ * @return bool
+ */
 function CheckFilter($arFilterFields) // checking input fields
 {
 	global $lAdmin;

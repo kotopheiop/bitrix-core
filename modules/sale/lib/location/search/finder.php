@@ -153,12 +153,14 @@ class Finder
 		return $typesFromDb;
 	}
 
-	/**
-	 * 
-	 * $parameters is an ORM`s getList compatible array of parameters
-	 * 
-	 * 
-	 */
+    /**
+     *
+     * $parameters is an ORM`s getList compatible array of parameters
+     *
+     * @param $parameters
+     * @param array $behaviour
+     * @return DB\ArrayResult|DB\Result
+     */
 	public static function find($parameters, $behaviour = array('FALLBACK_TO_NOINDEX_ON_NOTFOUND' => true, 'USE_INDEX' => true, 'USE_ORM' => true))
 	{
 		/////////////////////////////////
@@ -466,13 +468,12 @@ class Finder
 		return $res;
 	}
 
-	/**
-	*
-	*
-	* @param
-	*
-	* @return
-	*/
+    /**
+     *
+     *
+     * @param
+     * @return DB\ArrayResult|DB\Result
+     */
 	protected static function findNoIndex($parameters)
 	{
 		$dbConnection = Main\HttpApplication::getConnection();

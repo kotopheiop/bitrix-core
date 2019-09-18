@@ -13,10 +13,11 @@ class Monitoring
 	protected static $rrdPath = "/var/lib/munin";
 	protected static $monitoringCategories = array();
 
-	/**
-	 * Checks if database files are created
-	 * @return bool
-	 */
+    /**
+     * Checks if database files are created
+     * @param $hostname
+     * @return bool
+     */
 	public static function isDatabaseCreated($hostname)
 	{
 		$dir = new \Bitrix\Main\IO\Directory(static::$rrdPath."/".$hostname);

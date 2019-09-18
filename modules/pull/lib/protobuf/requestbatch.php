@@ -55,7 +55,8 @@ class RequestBatch extends \Protobuf\AbstractMessage
     /**
      * Set 'requests' value
      *
-     * @param \Protobuf\Collection<\Bitrix\Pull\Protobuf\Request> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\Bitrix\Pull\Protobuf\Request> $value
      */
     public function setRequestsList(\Protobuf\Collection $value = null)
     {

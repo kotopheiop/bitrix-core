@@ -487,17 +487,17 @@ class CWiki
 	}
 
 
-	/**
-	 * Renames inner links, and categories on wiki pages
-	 * alternatively you must do that manualy, after page, or catgory was renamed.
-	 * @param int $iBlockId (mandatory)- id of iblock witch contain page, or category.
-	 * @param str $oldName (mandatory)- old page or category name.
-	 * @param str $newName (mandatory)- new page or category name.
-	 * @param int $iBlockSectId (optional) - id of iBlock section witch contain page, or category.
-	 *			if wiki used with socnet groups, this param must be setted, otherwise all pages of all soc. groups
-	 *			will be changed.
-	 * @return int the amount of changed pages.
-	 */
+    /**
+     * Renames inner links, and categories on wiki pages
+     * alternatively you must do that manualy, after page, or catgory was renamed.
+     * @param int $iBlockId (mandatory)- id of iblock witch contain page, or category.
+     * @param str $oldName (mandatory)- old page or category name.
+     * @param str $newName (mandatory)- new page or category name.
+     * @param bool|int $iBlockSectId (optional) - id of iBlock section witch contain page, or category.
+     *            if wiki used with socnet groups, this param must be setted, otherwise all pages of all soc. groups
+     *            will be changed.
+     * @return int the amount of changed pages.
+     */
 	function RenameLinkOnPages($iBlockId, $oldName, $newName, $iBlockSectId = false)
 	{
 		if(!$iBlockId || !$oldName || !$newName)
@@ -755,13 +755,14 @@ class CWiki
 		return $arResult;
 	}
 
-	/**
-	 *
-	 *
-	 *
-	 * @param int $ID
-	 * @return array
-	 */
+    /**
+     *
+     *
+     *
+     * @param int $ID
+     * @param $arFilter
+     * @return array
+     */
 	public static function GetElementById($ID, $arFilter)
 	{
 		global $arParams;

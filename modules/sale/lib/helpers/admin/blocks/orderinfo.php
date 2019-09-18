@@ -91,10 +91,12 @@ class OrderInfo
 		return $result;
 	}
 
-	/**
-	 * @param Order $order
-	 * @return string HTML
-	 */
+    /**
+     * @param Order $order
+     * @param $orderBasket
+     * @return string HTML
+     * @throws ArgumentNullException
+     */
 	public static function getView(Order $order, $orderBasket)
 	{
 		$currency = $order->getCurrency();

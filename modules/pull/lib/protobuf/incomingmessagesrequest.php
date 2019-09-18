@@ -55,7 +55,8 @@ class IncomingMessagesRequest extends \Protobuf\AbstractMessage
     /**
      * Set 'messages' value
      *
-     * @param \Protobuf\Collection<\Bitrix\Pull\Protobuf\IncomingMessage> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\Bitrix\Pull\Protobuf\IncomingMessage> $value
      */
     public function setMessagesList(\Protobuf\Collection $value = null)
     {

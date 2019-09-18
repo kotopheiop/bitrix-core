@@ -17,15 +17,16 @@ class ActionsChain
 
 	public $results = "";
 
-	/**
-	 * @param string $actionId
-	 * @param array $actionParams
-	 * @param string $serverHostname
-	 * @param array $userParams
-	 * @param array $freeParams
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentTypeException
-	 */
+    /**
+     * @param string $actionId
+     * @param array $actionParams
+     * @param string $serverHostname
+     * @param array $userParams
+     * @param array $freeParams
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentTypeException
+     * @throws \Exception
+     */
 	public function __construct($actionId, $actionParams, $serverHostname = "", $userParams = array(), $freeParams = array())
 	{
 		if(strlen($actionId) <= 0)

@@ -261,10 +261,11 @@ HTML
 		return new $c($params, $hashIsID);
 	}
 
-	/**
-	 * @param array $values
-	 * @return string
-	 */
+    /**
+     * @param array $values
+     * @param bool $getDataFromRequest
+     * @return string
+     */
 	public function show($values = array(), $getDataFromRequest = false)
 	{
 		\CJSCore::Init(array('fileinput'));

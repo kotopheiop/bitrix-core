@@ -19,11 +19,12 @@ Loc::loadMessages(__FILE__);
  */
 class CallLogTable extends Entity\DataManager
 {
-	/**
-	 * Get recipient id by call id.
-	 *
-	 * @return integer|null
-	 */
+    /**
+     * Get recipient id by call id.
+     *
+     * @param $callId
+     * @return int|null
+     */
 	public static function getRecipientIdByCallId($callId)
 	{
 		$row = static::getRowById(array('CALL_ID' => $callId));

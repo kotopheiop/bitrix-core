@@ -344,13 +344,11 @@ abstract class PropertyBase
 		return $result;
 	}
 
-	/**
-	 * @param $key
-	 * @param $value
-	 *
-	 * @return Result
-	 * @throws Main\SystemException
-	 */
+    /**
+     * @param $value
+     * @return Result
+     * @internal param $key
+     */
 	public function checkRequiredValue($value)
 	{
 		static $errors = [];

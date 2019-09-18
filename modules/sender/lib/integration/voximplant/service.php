@@ -70,9 +70,11 @@ class Service
 		return $data['CALL_ID'];
 	}
 
-	/**
-	 * OnInfoCallResult event handler.
-	 */
+    /**
+     * OnInfoCallResult event handler.
+     * @param $callId
+     * @param $callData
+     */
 	public static function onInfoCallResult($callId, $callData)
 	{
 		if (!is_array($callData))

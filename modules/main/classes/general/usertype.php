@@ -1020,12 +1020,17 @@ class CUserTypeManager
 		return $obUserField->DropEntity($entity_id);
 	}
 
-	/**
-	 * Функция возвращает метаданные полей определеных для сущности.
-	 *
-	 * <p>Важно! В $arUserField добалено поле ENTITY_VALUE_ID - это идентификатор экземпляра сущности
-	 * позволяющий отделить новые записи от старых и соответсвенно использовать значения по умолчанию.</p>
-	*/
+    /**
+     * Функция возвращает метаданные полей определеных для сущности.
+     *
+     * <p>Важно! В $arUserField добалено поле ENTITY_VALUE_ID - это идентификатор экземпляра сущности
+     * позволяющий отделить новые записи от старых и соответсвенно использовать значения по умолчанию.</p>
+     * @param $entity_id
+     * @param int $value_id
+     * @param bool $LANG
+     * @param bool $user_id
+     * @return array|mixed
+     */
 	function GetUserFields($entity_id, $value_id = 0, $LANG = false, $user_id = false)
 	{
 		$entity_id = preg_replace("/[^0-9A-Z_]+/", "", $entity_id);

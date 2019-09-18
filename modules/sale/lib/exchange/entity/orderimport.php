@@ -887,10 +887,11 @@ class OrderImport extends EntityImport
 		return EntityType::SHIPMENT;
 	}
 
-	/**
-	 * @return Exchange\ImportBase
-	 * @internal
-	 */
+    /**
+     * @param $typeId
+     * @return Exchange\ImportBase
+     * @internal
+     */
 	protected function entityCreateByFactory($typeId)
 	{
 		return EntityImportFactory::create($typeId);
@@ -993,10 +994,11 @@ class OrderImport extends EntityImport
 		return $result;
 	}
 
-	/**
-	 * @param Sale\IBusinessValueProvider $entity
-	 * @return Order
-	 */
+    /**
+     * @param Sale\IBusinessValueProvider $entity
+     * @return Order
+     * @throws Main\ArgumentException
+     */
 	static protected function getBusinessValueOrderProvider(Sale\IBusinessValueProvider $entity)
 	{
 		if(!($entity instanceof Order))

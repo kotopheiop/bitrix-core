@@ -12,11 +12,10 @@ class Filter
 {
 	protected $boardId;
 
-	/**
-	 * Base filter constructor.
-	 * @param string $boardId Board id for which construct filter.
-	 * @return void.
-	 */
+    /**
+     * Base filter constructor.
+     * @param string $boardId Board id for which construct filter.
+     */
 	public function __construct($boardId)
 	{
 		$this->boardId = $boardId;

@@ -49,10 +49,10 @@ abstract class SettingsBase
 		return EntityType::ResolveName($entityTypeId);
 	}
 
-	/**
-	 * @return array|null
-	 * @throws ArgumentNullException
-	 */
+    /**
+     * @return array|null
+     * @throws NotImplementedException
+     */
 	static protected function loadCurrentSettings()
 	{
 		throw new NotImplementedException('The method is not implemented.');

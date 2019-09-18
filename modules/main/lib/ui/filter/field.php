@@ -548,14 +548,17 @@ class Field
 		return $days;
 	}
 
-	/**
-	 * Prepares data of user field
-	 * @param string $name
-	 * @param string $value
-	 * @param string $label
-	 * @param string $placeholder
-	 * @return array
-	 */
+    /**
+     * Prepares data of user field
+     * @param string $name
+     * @param string $label
+     * @param string $placeholder
+     * @param bool $multiple
+     * @param array $params
+     * @param bool $lightweight
+     * @return array
+     * @internal param string $value
+     */
 	public static function destSelector($name, $label = "", $placeholder = "", $multiple = false, $params = array(), $lightweight = false)
 	{
 		\CJSCore::init(array('socnetlogdest'));

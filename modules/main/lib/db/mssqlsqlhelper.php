@@ -235,15 +235,14 @@ class MssqlSqlHelper extends SqlHelper
 		return $sql.')';
 	}
 
-	/**
-	 * Returns function for concatenating database fields or expressions.
-	 * <p>
-	 * All parameters are SQL unsafe.
-	 *
-	 * @param string $field,... Database fields or expressions.
-	 *
-	 * @return string
-	 */
+    /**
+     * Returns function for concatenating database fields or expressions.
+     * <p>
+     * All parameters are SQL unsafe.
+     * @return string
+     * @internal param string $field Database fields or expressions.
+     *
+     */
 	public function getConcatFunction()
 	{
 		return implode(" + ", func_get_args());

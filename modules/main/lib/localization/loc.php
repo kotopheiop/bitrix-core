@@ -253,9 +253,12 @@ final class Loc
 		return $mess;
 	}
 
-	/**
-	 * @deprecated Do not use, will be removed soon. loadLanguageFile() is enough
-	 */
+    /**
+     * @deprecated Do not use, will be removed soon. loadLanguageFile() is enough
+     * @param $langFile
+     * @param null $language
+     * @return array
+     */
 	public static function loadFile($langFile, $language = null)
 	{
 		if (empty($language))

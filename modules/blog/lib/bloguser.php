@@ -92,14 +92,15 @@ class BlogUser
 		
 		return $result;
 	}
-	
-	
-	/**
-	 * Get blog users data from cache. If them not exist on cache - get new data from DB and write on cache.
-	 * False if error.
-	 *
-	 * @return array|bool
-	 */
+
+
+    /**
+     * Get blog users data from cache. If them not exist on cache - get new data from DB and write on cache.
+     * False if error.
+     *
+     * @param $ids
+     * @return array|bool
+     */
 	private function getUsersFromCache($ids)
 	{
 		$cache = Cache::createInstance();
@@ -119,13 +120,14 @@ class BlogUser
 		
 		return $result;
 	}
-	
-	
-	/**
-	 * Delete all data from blog users cache
-	 *
-	 * @return mixed
-	 */
+
+
+    /**
+     * Delete all data from blog users cache
+     *
+     * @param null $blogId
+     * @return mixed
+     */
 	public static function cleanCache($blogId = NULL)
 	{
 		$cache = Cache::createInstance();
@@ -155,11 +157,13 @@ class BlogUser
 		
 		return self::CACHE_ID . '_' . implode('_', $ids);
 	}
-	
-	
-	/**
-	 * Catch data from CUser, CBlogUser and formatted them to array to save in cache
-	 */
+
+
+    /**
+     * Catch data from CUser, CBlogUser and formatted them to array to save in cache
+     * @param array $ids
+     * @return array
+     */
 	private function getUsersFromDB($ids = array())
 	{
 		$result = array();
@@ -290,13 +294,15 @@ class BlogUser
 //		get created BlogUsers from DB
 		return $this->getUsersFromDB($ids);
 	}
-	
-	
-	/**
-	 * Return users ids of post author and comments authors (for this post)
-	 *
-	 * @param $postId
-	 */
+
+
+    /**
+     * Return users ids of post author and comments authors (for this post)
+     *
+     * @param $postId
+     * @return array
+     * @throws ArgumentNullException
+     */
 	public static function getCommentAuthorsIdsByPostId($postId)
 	{
 		if (!$postId)
@@ -313,11 +319,13 @@ class BlogUser
 		
 		return $result;
 	}
-	
-	/**
-	 * Return users ids of blog posts
-	 * @param $blogId
-	 */
+
+    /**
+     * Return users ids of blog posts
+     * @param $blogId
+     * @return array
+     * @throws ArgumentNullException
+     */
 	public static function getPostAuthorsIdsByBlogId($blogId)
 	{
 		if (!$blogId)
@@ -423,13 +431,16 @@ class BlogUser
 		
 		return $result;
 	}
-	
-	/**
-	 * Check, is user given consent for current agreement ever in the past.
-	 * Consent checked based on component URL, it means, that if URL will be changed, result will be false again.
-	 *
-	 * @param $userId - ID of main user (not blog user!)
-	 */
+
+    /**
+     * Check, is user given consent for current agreement ever in the past.
+     * Consent checked based on component URL, it means, that if URL will be changed, result will be false again.
+     *
+     * @param $userId - ID of main user (not blog user!)
+     * @param $agreementId
+     * @return bool
+     * @throws ArgumentNullException
+     */
 	public static function isUserGivenConsent($userId, $agreementId)
 	{
 		if (!$userId || $userId <= 0)

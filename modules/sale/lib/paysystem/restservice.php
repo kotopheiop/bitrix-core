@@ -344,11 +344,10 @@ class RestService extends \IRestService
 		return $result;
 	}
 
-	/**
-	 * @return array
-	 * @throws AccessException
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
+    /**
+     * @param array $params
+     * @return array
+     */
 	public static function getPaySystemList(array $params=[])
 	{
 		static::checkPaySystemPermission();

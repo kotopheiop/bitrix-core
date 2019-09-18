@@ -67,15 +67,17 @@ class Api
 		
 		return $this->response['response'];
 	}
-	
-	/**
-	 * Parse response string from VK and find errors.
-	 * If find errors - add them to vk-log
-	 *
-	 * @param $response
-	 * @param $params - array of request params
-	 * @return null
-	 */
+
+    /**
+     * Parse response string from VK and find errors.
+     * If find errors - add them to vk-log
+     *
+     * @param $method
+     * @param $params - array of request params
+     * @return null
+     * @throws Vk\ExecuteException
+     * @internal param $response
+     */
 	private function checkError($method, $params)
 	{
 //		check limit of requests count. If limit catched - run again

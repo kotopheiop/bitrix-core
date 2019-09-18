@@ -187,12 +187,12 @@ abstract class Base
 		);
 	}
 
-	/**
-	 * @param $fields
-	 * @param array $fieldsInfo
-	 * @return array
-	 * @throws NotImplementedException
-	 */
+    /**
+     * @param $fields
+     * @return array
+     * @throws NotImplementedException
+     * @internal param array $fieldsInfo
+     */
 	public function internalizeFieldsModify($fields)
 	{
 		throw new NotImplementedException('The method internalizeFieldsModify is not implemented.');

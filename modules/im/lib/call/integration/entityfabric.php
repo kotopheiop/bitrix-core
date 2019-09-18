@@ -7,14 +7,15 @@ use Bitrix\Main\ArgumentException;
 
 class EntityFabric
 {
-	/**
-	 * Return proxy object, to access entity, associated with the call.
-	 *
-	 * @param string $entityType Type of the associated entity.
-	 * @param integer $entityId Id of the associated entity.
-	 * @return AbstractEntity
-	 * @throws ArgumentException
-	 */
+    /**
+     * Return proxy object, to access entity, associated with the call.
+     *
+     * @param Call $call
+     * @param string $entityType Type of the associated entity.
+     * @param integer $entityId Id of the associated entity.
+     * @return AbstractEntity
+     * @throws ArgumentException
+     */
 	public static function createEntity(Call $call, $entityType, $entityId)
 	{
 		if($entityType === EntityType::CHAT)

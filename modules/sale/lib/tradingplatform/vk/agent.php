@@ -273,9 +273,11 @@ class Agent
 	}
 
 
-	/**
-	 * Delete agent by ID
-	 */
+    /**
+     * Delete agent by ID
+     * @param $agentId
+     * @return bool
+     */
 	public static function deleteAgent($agentId)
 	{
 		return \CAgent::Delete($agentId);

@@ -8,10 +8,11 @@ final class ErrorsContainer extends Result
 {
 	protected $acceptableErrorCodes = [];
 
-	/**
-	 * Adds the error.
-	 * @param Error $error
-	 */
+    /**
+     * Adds the error.
+     * @param Error $error
+     * @return Result|void
+     */
 	public function addError(Error $error)
 	{
 		if(!$this->isErrorAcceptable($error))

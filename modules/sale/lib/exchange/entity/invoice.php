@@ -19,11 +19,12 @@ class Invoice extends OrderImport
 		return EntityType::INVOICE;
 	}
 
-	/**
-	 * @param $order
-	 * @param $entity
-	 * @param $result
-	 */
+    /**
+     * @param $invoice
+     * @param $entity
+     * @param $result
+     * @internal param $order
+     */
 	protected function addMarker($invoice, $entity, $result)
 	{
 		EntityMarker::addMarker($invoice, $entity, $result);

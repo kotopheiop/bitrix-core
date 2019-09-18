@@ -68,12 +68,13 @@ class RouteTable extends Entity\DataManager
 		return static::getList($parameters)->fetch();
 	}
 
-	/**
-	 * Adds route to route table. If route record already exists, updates it.
-	 *
-	 * @param array $data Record to be merged to the table.
-	 * @return AddResult
-	 */
+    /**
+     * Adds route to route table. If route record already exists, updates it.
+     *
+     * @param array $data Record to be merged to the table.
+     * @return AddResult
+     * @throws \Exception
+     */
 	public static function merge(array $data)
 	{
 		$result = new AddResult();

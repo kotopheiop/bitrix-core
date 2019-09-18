@@ -142,7 +142,8 @@ class CodeGeneratorRequest extends \Protobuf\AbstractMessage
     /**
      * Set 'proto_file' value
      *
-     * @param \Protobuf\Collection<\google\protobuf\FileDescriptorProto> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\google\protobuf\FileDescriptorProto> $value
      */
     public function setProtoFileList(\Protobuf\Collection $value = null)
     {

@@ -72,12 +72,13 @@ class FileController extends Builder
 		return $this->file;
 	}
 
-	/**
-	 * Set output.
-	 *
-	 * @param Output\Base $output Output.
-	 * @return $this
-	 */
+    /**
+     * Set output.
+     *
+     * @param Output\Base $output Output.
+     * @return $this
+     * @throws ArgumentException
+     */
 	public function setOutput(Output\Base $output)
 	{
 		if (! $output instanceof Output\File)

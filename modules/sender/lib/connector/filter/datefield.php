@@ -18,11 +18,12 @@ use Bitrix\Main\UserFieldTable;
  */
 class DateField extends AbstractField
 {
-	/**
-	 * Fetch field value.
-	 *
-	 * @return array
-	 */
+    /**
+     * Fetch field value.
+     *
+     * @param $filterFields
+     * @return array
+     */
 	public function fetchFieldValue($filterFields)
 	{
 		$result = FilterOptions::fetchDateFieldValue(

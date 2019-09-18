@@ -40,9 +40,10 @@ class SynchronizerLogTable extends DataManager
 		);
 	}
 
-	/**
-	 * Clears old logging data
-	 */
+    /**
+     * Clears old logging data
+     * @param $direction
+     */
 	public static function deleteOldRecords($direction)
 	{
 		$tableName = static::getTableName();

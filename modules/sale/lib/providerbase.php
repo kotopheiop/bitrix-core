@@ -2556,12 +2556,12 @@ abstract class ProviderBase
 		return $result;
 	}
 
-	/**
-	 * @param Basket BasketItemCollection
-	 * @param BasketItem|null $refreshItem
-	 *
-	 * @return array
-	 */
+    /**
+     * @param BasketItemCollection $basketCollection
+     * @param BasketItem|null $refreshItem
+     * @return array
+     * @internal param BasketItemCollection $Basket
+     */
 	protected static function makeArrayFromBasketCollection(BasketItemCollection $basketCollection, BasketItem $refreshItem = null)
 	{
 		$basketList = array();

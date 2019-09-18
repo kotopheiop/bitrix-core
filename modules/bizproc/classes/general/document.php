@@ -424,14 +424,15 @@ class CBPDocument
 		}
 	}
 
-	/**
-	* Method terminates workflow.
-	*
-	* @param string $workflowId -  Workflow id.
-	* @param array $documentId - Document type array(MODULE_ID, ENTITY, DOCUMENT_TYPE).
-	* @param array $arErrors - Errors array(array("code" => error_code, "message" => message, "file" => file_path), ...).
-	* @param string $stateTitle - State title (workflow status).
-	*/
+    /**
+     * Method terminates workflow.
+     *
+     * @param string $workflowId -  Workflow id.
+     * @param array $documentId - Document type array(MODULE_ID, ENTITY, DOCUMENT_TYPE).
+     * @param array $arErrors - Errors array(array("code" => error_code, "message" => message, "file" => file_path), ...).
+     * @param string $stateTitle - State title (workflow status).
+     * @return bool
+     */
 	public static function TerminateWorkflow($workflowId, $documentId, &$arErrors, $stateTitle = '')
 	{
 		$arErrors = array();

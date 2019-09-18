@@ -92,14 +92,14 @@ class PasswordTable extends Main\Entity\DataManager
 	}
 
 
-	/**
-	 * Generates AP for REST access.
-	 *
-	 * @param string $siteTitle Site title for AP description.
-	 *
-	 * @return bool|string password or false
-	 * @throws \Exception
-	 */
+    /**
+     * Generates AP for REST access.
+     *
+     * @param $userId
+     * @param array $scopeList
+     * @param string $siteTitle Site title for AP description.
+     * @return bool|string password or false
+     */
 	public static function createPassword($userId, array $scopeList, $siteTitle)
 	{
 		$password = static::generatePassword();

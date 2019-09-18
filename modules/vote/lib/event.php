@@ -453,10 +453,12 @@ SQL
 		}
 	}
 
-	/**
-	 * @param int $eventId Event ID.
-	 * @return boolean
-	 */
+    /**
+     * @param int $eventId Event ID.
+     * @return bool
+     * @throws ArgumentNullException
+     * @throws ArgumentTypeException
+     */
 	public static function deleteEvent($eventId)
 	{
 		if (!is_integer($eventId))

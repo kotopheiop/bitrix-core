@@ -3,7 +3,11 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/general/blog_commen
 
 class CBlogComment extends CAllBlogComment
 {
-	/*************** ADD, UPDATE, DELETE *****************/
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $arFields
+     * @param bool $bSearchIndex
+     * @return bool|int
+     */
 	function Add($arFields, $bSearchIndex = true)
 	{
 		global $DB, $USER_FIELD_MANAGER;

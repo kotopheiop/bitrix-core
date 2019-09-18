@@ -177,16 +177,17 @@ class PhotoUploader
 		
 		return $photoSaveResults;
 	}
-	
 
-	/**
-	 * Execute http requst
-	 *
-	 * @param $uploadServer
-	 * @param $params
-	 * @return bool|string - result of http request
-	 * @throws TimeIsOverException
-	 */
+
+    /**
+     * Execute http requst
+     *
+     * @param $data
+     * @param $uploadServer
+     * @return bool|string - result of http request
+     * @throws TimeIsOverException
+     * @internal param $params
+     */
 	private function uploadHttp($data, $uploadServer)
 	{
 		$postParams = array(
@@ -240,13 +241,14 @@ class PhotoUploader
 		
 		return $result;
 	}
-	
-	
-	/**
-	 * Save photo after http upload
-	 *
-	 * @param $uploadResult - array of http upload result
-	 */
+
+
+    /**
+     * Save photo after http upload
+     *
+     * @param $uploadResult - array of http upload result
+     * @return mixed|null
+     */
 	private function savePhoto($uploadResult)
 	{
 		$photoSaveParams = array(

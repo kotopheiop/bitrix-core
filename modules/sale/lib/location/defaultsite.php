@@ -27,9 +27,12 @@ class DefaultSiteTable extends Entity\DataManager
 		return 'b_sale_loc_def2site';
 	}
 
-	/**
-	* $locationCodeList format: array(array('LOCATION_CODE' => int, 'SORT' => int))
-	*/
+    /**
+     * $locationCodeList format: array(array('LOCATION_CODE' => int, 'SORT' => int))
+     * @param $siteId
+     * @param array $locationCodeList
+     * @throws Main\SystemException
+     */
 	public static function addMultipleForOwner($siteId, $locationCodeList = array())
 	{
 		$siteId = static::checkSiteId($siteId);
@@ -61,9 +64,13 @@ class DefaultSiteTable extends Entity\DataManager
 		$GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
 	}
 
-	/**
-	* $locationCodeList format
-	*/
+    /**
+     * $locationCodeList format
+     * @param $siteId
+     * @param array $locationCodeList
+     * @param array $behaviour
+     * @throws Main\SystemException
+     */
 	public static function updateMultipleForOwner($siteId, $locationCodeList = array(), $behaviour = array('REMOVE_ABSENT' => true))
 	{
 		$siteId = static::checkSiteId($siteId);

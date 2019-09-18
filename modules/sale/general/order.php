@@ -309,10 +309,17 @@ class CAllSaleOrder
 		}
 	}
 
-	/**
-	*
-	*
-	*/
+    /**
+     *
+     * @param $arOrder
+     * @param $arAdditionalFields
+     * @param $orderId
+     * @param $arErrors
+     * @param array $arCoupons
+     * @param array $arStoreBarcodeOrderFormData
+     * @param bool $bSaveBarcodes
+     * @return int|null
+     */
 	public static function DoSaveOrder(&$arOrder, $arAdditionalFields, $orderId, &$arErrors, $arCoupons = array(), $arStoreBarcodeOrderFormData = array(), $bSaveBarcodes = false)
 	{
 		global $APPLICATION;
@@ -2850,17 +2857,17 @@ class CAllSaleOrder
 	}
 
 
-	/**
-	* @deprecated Use CSaleOrderChange::GetList instead
-	* The function selects order history
-	*
-	* @param array $arOrder - array to sort
-	* @param array $arFilter - array to filter
-	* @param array|false $arGroupBy - array to group records
-	* @param array|false $arNavStartParams - array to parameters
-	* @param array $arSelectFields - array to selectes fields
-	* @return object $dbRes - object result
-	*/
+    /**
+     * @deprecated Use CSaleOrderChange::GetList instead
+     * The function selects order history
+     *
+     * @param array $arOrder - array to sort
+     * @param array $arFilter - array to filter
+     * @param array|bool|false $arGroupBy - array to group records
+     * @param array|bool|false $arNavStartParams - array to parameters
+     * @param array $arSelectFields - array to selectes fields
+     * @return object $dbRes - object result
+     */
 	public function GetHistoryList($arOrder = array("ID"=>"DESC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
 	{
 		global $DB;

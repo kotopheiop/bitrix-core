@@ -57,9 +57,11 @@ class Helper
 		return '';
 	}
 
-	/**
-	 * @deprecated
-	 */
+    /**
+     * @deprecated
+     * @param $id
+     * @return string
+     */
 	public static function resortTreeAgent($id)
 	{
 		$mailboxHelper = Helper\Mailbox::createInstance($id, false);

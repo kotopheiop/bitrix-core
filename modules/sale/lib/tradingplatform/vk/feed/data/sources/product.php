@@ -23,11 +23,13 @@ class Product extends DataSource implements \Iterator
 	protected $vk;
 	protected $exportId;
 
-	/**
-	 * Product constructor.
-	 * @param $exportId	- int value of export ID
-	 * @param $startPosition - can be null. ID of first element to process
-	 */
+    /**
+     * Product constructor.
+     * @param $exportId - int value of export ID
+     * @param $startPosition - can be null. ID of first element to process
+     * @throws ArgumentNullException
+     * @throws SystemException
+     */
 	public function __construct($exportId, $startPosition)
 	{
 		$this->vk = Vk\Vk::getInstance();

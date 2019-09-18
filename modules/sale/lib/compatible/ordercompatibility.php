@@ -98,10 +98,11 @@ class OrderCompatibility extends Internals\EntityCompatibility
 		$this->basket = $basketCompatibility;
 	}
 
-	/**
-	 * @param array $fields
-	 * @return static
-	 */
+    /**
+     * @param array $fields
+     * @return static
+     * @throws Sale\UserMessageException
+     */
 	public static function create(array $fields)
 	{
 		$adminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
@@ -1760,7 +1761,7 @@ class OrderCompatibility extends Internals\EntityCompatibility
 					if (intval($fUserId) > 0 && intval($fUserIdByUserId) > 0
 						&& intval($fUserId) != intval($fUserIdByUserId))
 					{
-						// TODO: ... [SALE_BASKET_001] - вызов старого метода переноса корзины
+						// TODO: ... [SALE_BASKET_001] - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 						\CSaleBasket::TransferBasket($fUserId, $fUserIdByUserId);
 					}
 
@@ -3018,9 +3019,10 @@ class OrderCompatibility extends Internals\EntityCompatibility
 		);
 	}
 
-	/**
-	 * @return array
-	 */
+    /**
+     * @param Sale\Internals\CollectableEntity $entity
+     * @return array
+     */
 	protected static function getEntityDateFields(Sale\Internals\CollectableEntity $entity)
 	{
 		if ($entity instanceof Sale\Shipment)

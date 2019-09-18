@@ -627,7 +627,8 @@ class FileOptions extends \Protobuf\AbstractMessage
     /**
      * Set 'uninterpreted_option' value
      *
-     * @param \Protobuf\Collection<\google\protobuf\UninterpretedOption> $value
+     * @param \Protobuf\Collection|null $value
+     * @internal param $ \Protobuf\Collection<\google\protobuf\UninterpretedOption> $value
      */
     public function setUninterpretedOptionList(\Protobuf\Collection $value = null)
     {

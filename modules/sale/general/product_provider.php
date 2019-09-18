@@ -126,14 +126,12 @@ interface IBXSaleProductProvider
 	*/
 	public static function GetProductStores($arFields);
 
-	/**
-	* Method is called when the product should be reserved
-	*
-	* @param int $arFields["PRODUCT_ID"]
-	* @param int $arFields["QUANTITY_ADD"] - quantity which should be added to the QUANTITY_RESERVED value of the product during reservation
-	* @param string $arFields["UNDO_RESERVATION"] Y/N
-	* @return array
-	*/
+    /**
+     * Method is called when the product should be reserved
+     *
+     * @param int $arFields ["UNDO_RESERVATION"] Y/N
+     * @return array
+     */
 	public static function ReserveProduct($arFields);
 
 	/**
@@ -144,16 +142,12 @@ interface IBXSaleProductProvider
 	*/
 	public static function CheckProductBarcode($arFields);
 
-	/**
-	* Method is called when the product is actually deducted from store
-	*
-	* @param int $arFields["PRODUCT_ID"]
-	* @param int $arFields["QUANTITY"]
-	* @param string $arFields["EMULATE"] Y/N
-	* @param string $arFields["UNDO_DEDUCTION"] Y/N
-	* @param string $arFields["PRODUCT_RESERVED"] Y/N
-	* @param array $arFields["STORE_DATA"]
-	*/
+    /**
+     * Method is called when the product is actually deducted from store
+     *
+     * @param int $arFields ["STORE_DATA"]
+     * @return
+     */
 	public static function DeductProduct($arFields);
 }
 ?>

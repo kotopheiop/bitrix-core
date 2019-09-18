@@ -91,18 +91,17 @@ class Collection
 		}
 	}
 
-	/**
-	 * Takes all arguments by pairs..
-	 * Odd arguments are arrays.
-	 * Even arguments are keys to lookup in these arrays.
-	 * Keys may be arrays. In this case function will try to dig deeper.
-	 * Returns first not empty element of a[k] pair.
-	 *
-	 * @param array $a array to analyze
-	 * @param string|int $k key to lookup
-	 * @param mixed $a,... unlimited array/key pairs to go through
-	 * @return mixed|string
-	 */
+    /**
+     * Takes all arguments by pairs..
+     * Odd arguments are arrays.
+     * Even arguments are keys to lookup in these arrays.
+     * Keys may be arrays. In this case function will try to dig deeper.
+     * Returns first not empty element of a[k] pair.
+     * @return mixed|string
+     * @internal param array $a array to analyze
+     * @internal param int|string $k key to lookup
+     * @internal param mixed $a unlimited array/key pairs to go through
+     */
 	public static function firstNotEmpty()
 	{
 		$argCount = func_num_args();

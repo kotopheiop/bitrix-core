@@ -818,10 +818,11 @@ class Controller implements Errorable, Controllerable
 		return new Error($error->getMessage(), $error->getCode());
 	}
 
-	/**
-	 * Runs processing if user is not authorized.
-	 * @return void
-	 */
+    /**
+     * Runs processing if user is not authorized.
+     * @return void
+     * @throws SystemException
+     */
 	protected function runProcessingIfUserNotAuthorized()
 	{
 		$this->errorCollection[] = new Error('User is not authorized');
@@ -829,10 +830,11 @@ class Controller implements Errorable, Controllerable
 		throw new SystemException('User is not authorized');
 	}
 
-	/**
-	 * Runs processing if csrf token is invalid.
-	 * @return void
-	 */
+    /**
+     * Runs processing if csrf token is invalid.
+     * @return void
+     * @throws SystemException
+     */
 	protected function runProcessingIfInvalidCsrfToken()
 	{
 		$this->errorCollection[] = new Error('Invalid csrf token');

@@ -502,9 +502,13 @@ class CSmile
 		}
 	}
 
-	/**
-	 * @deprecated Use CSmile::getBySetId
-	 */
+    /**
+     * @deprecated Use CSmile::getBySetId
+     * @param string $type
+     * @param int $setId
+     * @param string $lang
+     * @return array|CDBResult|mixed
+     */
 	public static function getByType($type = self::TYPE_ALL, $setId = CSmileSet::SET_ID_BY_CONFIG, $lang = LANGUAGE_ID)
 	{
 		return self::getBySetId($type, $setId, $lang);
@@ -1549,9 +1553,12 @@ class CSmileSet
 		return $arResult;
 	}
 
-	/**
-	 * @deprecated Use CSmileSet::getListForForm
-	 */
+    /**
+     * @deprecated Use CSmileSet::getListForForm
+     * @param bool $bWithOptionAll
+     * @param string $lang
+     * @return array
+     */
 	public static function getFormList($bWithOptionAll = false, $lang = LANGUAGE_ID)
 	{
 		return self::getListForForm(0, $lang);

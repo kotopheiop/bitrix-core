@@ -14,6 +14,15 @@ use Bitrix\Main\UI\Extension;
 
 /**
  * Returns HTML "input"
+ * @param $strType
+ * @param $strName
+ * @param $strValue
+ * @param $strCmp
+ * @param bool $strPrintValue
+ * @param string $strPrint
+ * @param string $field1
+ * @param string $strId
+ * @return string
  */
 function InputType($strType, $strName, $strValue, $strCmp, $strPrintValue=false, $strPrint="", $field1="", $strId="")
 {
@@ -161,6 +170,14 @@ function SelectBoxMFromArray($strBoxName, $a, $arr, $strDetText = "", $strDetTex
 
 /**
  * Returns HTML "select" from array data
+ * @param $strBoxName
+ * @param $db_array
+ * @param string $strSelectedVal
+ * @param string $strDetText
+ * @param string $field1
+ * @param bool $go
+ * @param string $form
+ * @return string
  */
 function SelectBoxFromArray(
 	$strBoxName,
@@ -223,6 +240,11 @@ function SelectBoxFromArray(
 
 /**
  * Date functions
+ * @param $sFieldName
+ * @param string $sFormName
+ * @param string $sFromName
+ * @param string $sToName
+ * @return string
  */
 
 function Calendar($sFieldName, $sFormName="skform", $sFromName="", $sToName="")
@@ -325,6 +347,9 @@ function ".$sFromName."_SetDate()
 
 /**
  * Checks date by format
+ * @param $datetime
+ * @param bool $format
+ * @return bool
  */
 function CheckDateTime($datetime, $format=false)
 {
@@ -418,6 +443,8 @@ function CheckDateTime($datetime, $format=false)
 
 /**
  * Returns the number of a month
+ * @param $month
+ * @return bool|int
  */
 function GetNumMonth ($month)
 {
@@ -435,6 +462,9 @@ function GetNumMonth ($month)
 
 /**
  * Returns unix timestamp from date string
+ * @param $datetime
+ * @param bool $format
+ * @return bool|false|int
  */
 function MakeTimeStamp($datetime, $format=false)
 {
@@ -525,6 +555,9 @@ function MakeTimeStamp($datetime, $format=false)
 
 /**
  * Parse a date into an array
+ * @param $datetime
+ * @param bool $format
+ * @return array|bool
  */
 function ParseDateTime($datetime, $format=false)
 {
@@ -565,6 +598,9 @@ function ParseDateTime($datetime, $format=false)
 
 /**
  * Adds value to the date in timestamp
+ * @param $arrAdd
+ * @param bool $stmp
+ * @return bool|false|int
  */
 function AddToTimeStamp($arrAdd, $stmp=false)
 {
@@ -619,6 +655,11 @@ function ConvertTimeStamp($timestamp=false, $type="SHORT", $site=false, $bSearch
 
 /**
  * Converts a date from site format to specified one
+ * @param $str_date
+ * @param bool $format
+ * @param bool $site
+ * @param bool $bSearchInSitesOnly
+ * @return
  */
 function FmtDate($str_date, $format=false, $site=false, $bSearchInSitesOnly = false)
 {
@@ -1482,7 +1523,7 @@ function FormatDateFromDB ($date, $format = 'FULL', $phpFormat = false)
 		return FormatDate(($phpFormat ? $format : $DB->DateFormatToPHP($format)), MakeTimeStamp($date));
 }
 
-// возвращает время в формате текущего языка по заданному Unix Timestamp
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ Unix Timestamp
 function GetTime($timestamp, $type="SHORT", $site=false, $bSearchInSitesOnly = false)
 {
 	global $DB;
@@ -1491,7 +1532,7 @@ function GetTime($timestamp, $type="SHORT", $site=false, $bSearchInSitesOnly = f
 	return date($DB->DateFormatToPHP(CSite::GetDateFormat($type, $site, $bSearchInSitesOnly)), $timestamp);
 }
 
-// устаревшая функция
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 function AddTime($stmp, $add, $type="D")
 {
 	$ret = $stmp;
@@ -1533,6 +1574,9 @@ function AddTime($stmp, $add, $type="D")
 
 /**
  * @deprecated
+ * @param $strDate
+ * @param string $format
+ * @return array|int
  */
 function ParseDate($strDate, $format="dmy")
 {
@@ -1550,6 +1594,9 @@ function ParseDate($strDate, $format="dmy")
 
 /**
  * @deprecated
+ * @param $strDT
+ * @param string $format
+ * @return bool|false|int
  */
 function MkDateTime($strDT, $format="d.m.Y H:i:s")
 {
@@ -1583,6 +1630,9 @@ function MkDateTime($strDT, $format="d.m.Y H:i:s")
 
 /**
  * @deprecated
+ * @param $strDateTime
+ * @param string $format
+ * @return false|string
  */
 function PHPFormatDateTime($strDateTime, $format="d.m.Y H:i:s")
 {
@@ -1591,11 +1641,12 @@ function PHPFormatDateTime($strDateTime, $format="d.m.Y H:i:s")
 
 /**
  * Array functions
+ * @param $arSort
  */
 
 /*
-удаляет дубли в массиве сортировки
-массив
+пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+пїЅпїЅпїЅпїЅпїЅпїЅ
 Array
 (
 	[0] => T.NAME DESC
@@ -1604,7 +1655,7 @@ Array
 	[3] => T.ID DESC
 	[4] => T.DESC
 )
-преобразует в
+пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ
 Array
 (
 	[0] => T.NAME DESC
@@ -1697,8 +1748,12 @@ function is_set(&$a, $k=false)
 }
 
 /*********************************************************************
-Строки
-*********************************************************************/
+ * пїЅпїЅпїЅпїЅпїЅпїЅ
+ ********************************************************************
+ * @param int $pass_len
+ * @param bool $pass_chars
+ * @return bool|string
+ */
 
 function randString($pass_len=10, $pass_chars=false)
 {
@@ -1865,7 +1920,7 @@ function ToLower($str, $lang = false)
 }
 
 /**********************************
-Конвертация текста для EMail
+пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ EMail
 **********************************/
 class CConvertorsPregReplaceHelper
 {
@@ -2139,14 +2194,14 @@ function PrepareTxtForEmail($text, $lang=false, $convert_url_tag=true, $convert_
 function delete_special_symbols($text, $replace="")
 {
 	static $arr = array(
-		"\x1",		// спецсимвол для преобразования URL'ов протокола http, https, ftp
-		"\x2",		// спецсимвол для пробела ($iMaxStringLen)
-		"\x3",		// спецсимвол для преобразования URL'ов протокола mailto
-		"\x4",		// спецсимвол заменяющий \n (используется для преобразования <code>)
-		"\x5",		// спецсимвол заменяющий \r (используется для преобразования <code>)
-		"\x6",		// спецсимвол заменяющий пробел (используется для преобразования <code>)
-		"\x7",		// спецсимвол заменяющий табуляцию (используется для преобразования <code>)
-		"\x8",		// спецсимвол заменяющий слэш "\"
+		"\x1",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ URL'пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ http, https, ftp
+		"\x2",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ ($iMaxStringLen)
+		"\x3",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ URL'пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ mailto
+		"\x4",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ \n (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ <code>)
+		"\x5",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ \r (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ <code>)
+		"\x6",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ <code>)
+		"\x7",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ <code>)
+		"\x8",		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ "\"
 	);
 	return str_replace($arr, $replace, $text);
 }
@@ -2237,7 +2292,7 @@ function convert_to_href($url, $link_class="", $event1="", $event2="", $event3="
 	return $s;
 }
 
-// используется как вспомогательная функция для TxtToHTML
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ TxtToHTML
 function convert_to_mailto($s, $link_class="")
 {
 	$s = stripslashes($s);
@@ -2246,23 +2301,23 @@ function convert_to_mailto($s, $link_class="")
 }
 
 function TxtToHTML(
-	$str,                                    // текст для преобразования
-	$bMakeUrls             = true,           // true - преобразовавыть URL в <a href="URL">URL</a>
-	$iMaxStringLen         = 0,              // максимальная длина фразы без пробелов или символов перевода каретки
-	$QUOTE_ENABLED         = "N",            // Y - преобразовать <QUOTE>...</QUOTE> в рамку цитаты
-	$NOT_CONVERT_AMPERSAND = "Y",            // Y - не преобразовывать символ "&" в "&amp;"
-	$CODE_ENABLED          = "N",            // Y - преобразовать <CODE>...</CODE> в readonly textarea
-	$BIU_ENABLED           = "N",            // Y - преобразовать <B>...</B> и т.д. в соответствующие HTML тэги
-	$quote_table_class     = "quotetable",   // css класс на таблицу цитаты
-	$quote_head_class      = "tdquotehead",  // css класс на первую TD таблицы цитаты
-	$quote_body_class      = "tdquote",      // css класс на вторую TD таблицы цитаты
-	$code_table_class      = "codetable",    // css класс на таблицу кода
-	$code_head_class       = "tdcodehead",   // css класс на первую TD таблицы кода
-	$code_body_class       = "tdcodebody",   // css класс на вторую TD таблицы кода
-	$code_textarea_class   = "codetextarea", // css класс на textarea в таблице кода
-	$link_class            = "txttohtmllink",// css класс на ссылках
-	$arUrlEvent            = array(),        // массив в нем если заданы ключи EVENT1, EVENT2, EVENT3 то ссылки будут через $arUrlEvent["SCRIPT"] (по умолчанию равен "/bitrix/redirect.php")
-	$link_target           = "_self"         // tagret открытия страницы
+	$str,                                    // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	$bMakeUrls             = true,           // true - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ URL пїЅ <a href="URL">URL</a>
+	$iMaxStringLen         = 0,              // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	$QUOTE_ENABLED         = "N",            // Y - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ <QUOTE>...</QUOTE> пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	$NOT_CONVERT_AMPERSAND = "Y",            // Y - пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ "&" пїЅ "&amp;"
+	$CODE_ENABLED          = "N",            // Y - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ <CODE>...</CODE> пїЅ readonly textarea
+	$BIU_ENABLED           = "N",            // Y - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ <B>...</B> пїЅ пїЅ.пїЅ. пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ HTML пїЅпїЅпїЅпїЅ
+	$quote_table_class     = "quotetable",   // css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	$quote_head_class      = "tdquotehead",  // css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TD пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	$quote_body_class      = "tdquote",      // css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TD пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	$code_table_class      = "codetable",    // css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	$code_head_class       = "tdcodehead",   // css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TD пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	$code_body_class       = "tdcodebody",   // css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TD пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	$code_textarea_class   = "codetextarea", // css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ textarea пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+	$link_class            = "txttohtmllink",// css пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	$arUrlEvent            = array(),        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ EVENT1, EVENT2, EVENT3 пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ $arUrlEvent["SCRIPT"] (пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ "/bitrix/redirect.php")
+	$link_target           = "_self"         // tagret пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 )
 {
 	global $QUOTE_ERROR, $QUOTE_OPENED, $QUOTE_CLOSED;
@@ -2270,12 +2325,12 @@ function TxtToHTML(
 
 	$str = delete_special_symbols($str);
 
-	// вставим спецсимвол chr(2) там где в дальнейшем необходимо вставить пробел
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ chr(2) пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	if($iMaxStringLen>0)
 		$str = InsertSpaces($str, $iMaxStringLen, chr(2), true);
 
 	// \ => chr(8)
-	$str = str_replace("\\", chr(8), $str); // спецсимвол заменяющий слэш "\"
+	$str = str_replace("\\", chr(8), $str); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ "\"
 
 	// <quote>...</quote> => [quote]...[/quote]
 	if ($QUOTE_ENABLED=="Y")
@@ -2312,7 +2367,7 @@ function TxtToHTML(
 		$str = str_replace(chr(11), '@', $str);
 	}
 
-	// конвертация критичных символов
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	if ($NOT_CONVERT_AMPERSAND!="Y") $str = str_replace("&", "&amp;", $str);
 	static $search=array("<",">","\"","'","%",")","(","+");
 	static $replace=array("&lt;","&gt;","&quot;","&#39;","&#37;","&#41;","&#40;","&#43;");
@@ -2385,8 +2440,14 @@ function TxtToHTML(
 }
 
 /*********************************
-Convertation of HTML to text
-*********************************/
+ * Convertation of HTML to text
+ ********************************
+ * @param $str
+ * @param string $strSiteUrl
+ * @param array $aDelete
+ * @param int $maxlen
+ * @return string
+ */
 
 function HTMLToTxt($str, $strSiteUrl="", $aDelete=array(), $maxlen=70)
 {
@@ -2422,32 +2483,32 @@ function HTMLToTxt($str, $strSiteUrl="", $aDelete=array(), $maxlen=70)
 	$str = preg_replace("#<div[^>]*>#i", "\r\n", $str);
 	$str = preg_replace("#<[/]{0,1}(font|div|span)[^>]*>#i", "", $str);
 
-	//ищем списки
+	//пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	$str = preg_replace("#<ul[^>]*>#i", "\r\n", $str);
 	$str = preg_replace("#<li[^>]*>#i", "\r\n  - ", $str);
 
-	//удалим то что заданно
+	//пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	foreach($aDelete as $del_reg)
 		$str = preg_replace($del_reg, "", $str);
 
-	//ищем картинки
+	//пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	$str = preg_replace("/(<img\\s.*?src\\s*=\\s*)([\"']?)(\\/.*?)(\\2)(\\s.+?>|\\s*>)/is", "[".chr(1).$strSiteUrl."\\3".chr(1)."] ", $str);
 	$str = preg_replace("/(<img\\s.*?src\\s*=\\s*)([\"']?)(.*?)(\\2)(\\s.+?>|\\s*>)/is", "[".chr(1)."\\3".chr(1)."] ", $str);
 
-	//ищем ссылки
+	//пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	$str = preg_replace("/(<a\\s.*?href\\s*=\\s*)([\"']?)(\\/.*?)(\\2)(.*?>)(.*?)<\\/a>/is", "\\6 [".chr(1).$strSiteUrl."\\3".chr(1)."] ", $str);
 	$str = preg_replace("/(<a\\s.*?href\\s*=\\s*)([\"']?)(.*?)(\\2)(.*?>)(.*?)<\\/a>/is", "\\6 [".chr(1)."\\3".chr(1)."] ", $str);
 
-	//ищем <br>
+	//пїЅпїЅпїЅпїЅ <br>
 	$str = preg_replace("#<br[^>]*>#i", "\r\n", $str);
 
-	//ищем <p>
+	//пїЅпїЅпїЅпїЅ <p>
 	$str = preg_replace("#<p[^>]*>#i", "\r\n\r\n", $str);
 
-	//ищем <hr>
+	//пїЅпїЅпїЅпїЅ <hr>
 	$str = preg_replace("#<hr[^>]*>#i", "\r\n----------------------\r\n", $str);
 
-	//ищем таблицы
+	//пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	$str = preg_replace("#<[/]{0,1}(thead|tbody)[^>]*>#i", "", $str);
 	$str = preg_replace("#<([/]{0,1})th[^>]*>#i", "<\\1td>", $str);
 
@@ -2457,13 +2518,13 @@ function HTMLToTxt($str, $strSiteUrl="", $aDelete=array(), $maxlen=70)
 
 	$str = preg_replace("#\r\n[ ]+#", "\r\n", $str);
 
-	//мочим вообще все оставшиеся тэги
+	//пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 	$str = preg_replace("#<[/]{0,1}[^>]+>#i", "", $str);
 
 	$str = preg_replace("#[ ]+ #", " ", $str);
 	$str = str_replace("\t", "    ", $str);
 
-	//переносим длинные строки
+	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	if($maxlen > 0)
 		$str = preg_replace("#(^|[\\r\\n])([^\\n\\r]{".intval($maxlen)."}[^ \\r\\n]*[\\] ])([^\\r])#", "\\1\\2\r\n\\3", $str);
 
@@ -3045,8 +3106,12 @@ function removeDocRoot($path)
 }
 
 /*********************************************************************
-Language files
-*********************************************************************/
+ * Language files
+ ********************************************************************
+ * @param $name
+ * @param bool $aReplace
+ * @return mixed
+ */
 
 function GetMessageJS($name, $aReplace=false)
 {
@@ -3076,6 +3141,8 @@ function GetMessage($name, $aReplace=null)
 
 /**
  * @deprecated
+ * @param $name
+ * @return bool
  */
 function HasMessage($name)
 {
@@ -3086,7 +3153,12 @@ function HasMessage($name)
 global $ALL_LANG_FILES;
 $ALL_LANG_FILES = array();
 
-/** @deprecated */
+/** @deprecated
+ * @param $before
+ * @param $after
+ * @param bool $lang
+ * @return string
+ */
 function GetLangFileName($before, $after, $lang=false)
 {
 	if ($lang===false)
@@ -3125,6 +3197,10 @@ function GetLangFileName($before, $after, $lang=false)
 
 /**
  * @deprecated Use \Bitrix\Main\Localization\Loc
+ * @param $path
+ * @param bool $bReturnArray
+ * @param bool $bFileChecked
+ * @return array|bool
  */
 function __IncludeLang($path, $bReturnArray=false, $bFileChecked=false)
 {
@@ -3248,6 +3324,9 @@ function __IncludeLang($path, $bReturnArray=false, $bFileChecked=false)
 
 /**
  * @deprecated Use \Bitrix\Main\Localization\Loc
+ * @param $filepath
+ * @param bool $lang
+ * @return null
  */
 function IncludeTemplateLangFile($filepath, $lang=false)
 {
@@ -3473,6 +3552,8 @@ function IncludeModuleLangFile($filepath, $lang=false, $bReturnArray=false)
 
 /**
  * @deprecated Use \Bitrix\Main\Localization\Loc
+ * @param $lang
+ * @return mixed|string
  */
 function LangSubst($lang)
 {
@@ -3483,8 +3564,13 @@ function LangSubst($lang)
 }
 
 /*********************************************************************
-Debugging
-*********************************************************************/
+ * Debugging
+ ********************************************************************
+ * @param $thing
+ * @param int $maxdepth
+ * @param int $depth
+ * @return string
+ */
 
 function mydump($thing, $maxdepth=-1, $depth=0)
 {
@@ -3624,8 +3710,13 @@ function AddMessage2Log($sText, $sModule = "", $traceDepth = 6, $bShowArgs = fal
 }
 
 /*********************************************************************
-	Quoting reverse (to be removed with 5.4.0)
-*********************************************************************/
+ * Quoting reverse (to be removed with 5.4.0)
+ ********************************************************************
+ * @param $str
+ * @param $type
+ * @param bool $preserve_nulls
+ * @return mixed
+ */
 
 function UnQuote($str, $type, $preserve_nulls = false)
 {
@@ -3781,8 +3872,12 @@ function UnQuoteAll()
 }
 
 /*********************************************************************
-Other functions
-*********************************************************************/
+ * Other functions
+ ********************************************************************
+ * @param $url
+ * @param bool $skip_security_check
+ * @param string $status
+ */
 function LocalRedirect($url, $skip_security_check=false, $status="302 Found")
 {
 	/** @global CMain $APPLICATION */
@@ -4083,6 +4178,16 @@ function FormDecode()
 
 /**
  * @deprecated Use Bitrix\Main\Web\HttpClient
+ * @param $SITE
+ * @param $PORT
+ * @param $PATH
+ * @param $QUERY_STR
+ * @param $errno
+ * @param $errstr
+ * @param string $sMethod
+ * @param string $sProto
+ * @param string $sContentType
+ * @return string
  */
 function QueryGetData($SITE, $PORT, $PATH, $QUERY_STR, &$errno, &$errstr, $sMethod="GET", $sProto="", $sContentType = 'N')
 {
@@ -5917,9 +6022,11 @@ class CHTTP
 		return false;
 	}
 
-	/**
-	 * @deprecated Use Bitrix\Main\Web\HttpClient
-	 */
+    /**
+     * @deprecated Use Bitrix\Main\Web\HttpClient
+     * @param $url
+     * @return bool|string
+     */
 	public function Get($url)
 	{
 		if ($this->HTTPQuery('GET', $url))
@@ -5929,9 +6036,12 @@ class CHTTP
 		return false;
 	}
 
-	/**
-	 * @deprecated Use Bitrix\Main\Web\HttpClient
-	 */
+    /**
+     * @deprecated Use Bitrix\Main\Web\HttpClient
+     * @param $url
+     * @param $arPostData
+     * @return bool|string
+     */
 	public function Post($url, $arPostData)
 	{
 		$postdata = CHTTP::PrepareData($arPostData);
@@ -5976,9 +6086,13 @@ class CHTTP
 		return $str;
 	}
 
-	/**
-	 * @deprecated Use Bitrix\Main\Web\HttpClient
-	 */
+    /**
+     * @deprecated Use Bitrix\Main\Web\HttpClient
+     * @param $method
+     * @param $url
+     * @param string $postdata
+     * @return bool
+     */
 	public function HTTPQuery($method, $url, $postdata = '')
 	{
 		if(is_resource($this->fp))
@@ -6029,9 +6143,18 @@ class CHTTP
 		return true;
 	}
 
-	/**
-	 * @deprecated Use Bitrix\Main\Web\HttpClient
-	 */
+    /**
+     * @deprecated Use Bitrix\Main\Web\HttpClient
+     * @param $method
+     * @param $host
+     * @param $port
+     * @param $path
+     * @param bool $postdata
+     * @param string $proto
+     * @param string $post_content_type
+     * @param bool $dont_wait_answer
+     * @return bool
+     */
 	public function Query($method, $host, $port, $path, $postdata = false, $proto = '', $post_content_type = 'N', $dont_wait_answer = false)
 	{
 		$this->status = 0;
@@ -6144,9 +6267,11 @@ class CHTTP
 		$this->additional_headers['Authorization'] = "Basic ".base64_encode($user.":".$pass);
 	}
 
-	/**
-	 * @deprecated Use Bitrix\Main\Web\Uri
-	 */
+    /**
+     * @deprecated Use Bitrix\Main\Web\Uri
+     * @param $url
+     * @return mixed
+     */
 	public static function ParseURL($url)
 	{
 		$arUrl = parse_url($url);
@@ -6233,9 +6358,12 @@ class CHTTP
 		$this->redirectMax = $n;
 	}
 
-	/**
-	 * @deprecated Use Bitrix\Main\Web\HttpClient
-	 */
+    /**
+     * @deprecated Use Bitrix\Main\Web\HttpClient
+     * @param $url
+     * @param bool $follow_redirect
+     * @return bool|string
+     */
 	public static function sGet($url, $follow_redirect = false) //static get
 	{
 		$ob = new CHTTP();
@@ -6243,9 +6371,13 @@ class CHTTP
 		return $ob->Get($url);
 	}
 
-	/**
-	 * @deprecated Use Bitrix\Main\Web\HttpClient
-	 */
+    /**
+     * @deprecated Use Bitrix\Main\Web\HttpClient
+     * @param $url
+     * @param $arPostData
+     * @param bool $follow_redirect
+     * @return bool|string
+     */
 	public static function sPost($url, $arPostData, $follow_redirect = false) //static post
 	{
 		$ob = new CHTTP();

@@ -307,12 +307,13 @@ abstract class DiscountBase
 		return static::getInstance($instanceIndex);
 	}
 
-	/**
-	 * Get discount by order basket.
-	 *
-	 * @param BasketBase $basket		Basket.
-	 * @return DiscountBase
-	 */
+    /**
+     * Get discount by order basket.
+     *
+     * @param BasketBase $basket Basket.
+     * @return DiscountBase
+     * @throws Main\InvalidOperationException
+     */
 	public static function setOrder(BasketBase $basket)
 	{
 		$order = $basket->getOrder();

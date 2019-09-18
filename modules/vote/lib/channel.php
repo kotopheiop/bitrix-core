@@ -372,10 +372,12 @@ class Channel extends BaseObject implements \ArrayAccess
 	{
 		throw new \Bitrix\Main\NotSupportedException('Model provide ArrayAccess only for reading');
 	}
-	/**
-	 * @param mixed $offset The offset to unset.
-	 * @return void
-	 */
+
+    /**
+     * @param mixed $offset The offset to unset.
+     * @return void
+     * @throws \Bitrix\Main\NotSupportedException
+     */
 	public function offsetUnset($offset)
 	{
 		throw new \Bitrix\Main\NotSupportedException('Model provide ArrayAccess only for reading');

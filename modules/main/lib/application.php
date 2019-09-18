@@ -134,10 +134,12 @@ abstract class Application
 		return clone $this->dispatcher;
 	}
 
-	/**
-	 * Initializes context of the current request.
-	 * Should be implemented in subclass.
-	 */
+    /**
+     * Initializes context of the current request.
+     * Should be implemented in subclass.
+     * @param array $params
+     * @return
+     */
 	abstract protected function initializeContext(array $params);
 
 	/**

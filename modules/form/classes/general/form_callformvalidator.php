@@ -12,26 +12,30 @@ class CAllFormValidator
 		return "<br>Module: ".$module_id." (".$arModuleVersion["VERSION"].")<br>Class: CAllFormValidator<br>File: ".__FILE__;
 	}
 
-	/**
-	 * Get filtered list of validators assigned to current field
-	 *
-	 * @param int $FIELD_ID
-	 * @param array $arFilter
-	 * @return CDBResult
-	 */
+    /**
+     * Get filtered list of validators assigned to current field
+     *
+     * @param int $FIELD_ID
+     * @param array $arFilter
+     * @param $by
+     * @param $order
+     * @return CDBResult
+     */
 	function GetList($FIELD_ID, $arFilter = array(), &$by, &$order)
 	{
 		$arFilter["FIELD_ID"] = $FIELD_ID;
 		return CFormValidator::__getList($arFilter, $by, $order);
 	}
-	
-	/**
-	 * Get filtered list of validators assigned to current form
-	 *
-	 * @param int $WEB_FORM_ID
-	 * @param array $arFilter
-	 * @return CDBResult
-	 */
+
+    /**
+     * Get filtered list of validators assigned to current form
+     *
+     * @param int $WEB_FORM_ID
+     * @param array $arFilter
+     * @param $by
+     * @param $order
+     * @return CDBResult
+     */
 	function GetListForm($WEB_FORM_ID, $arFilter = array(), &$by, &$order)
 	{
 		$arFilter["WEB_FORM_ID"] = $WEB_FORM_ID;
@@ -168,15 +172,19 @@ class CAllFormValidator
 		
 		return $rsValList;
 	}
-	
-	/**
-	 * Apply validator to value
-	 *
-	 * @param string $sValSID
-	 * @param array $arParams
-	 * @param mixed $arValue
-	 * @return bool
-	 */
+
+    /**
+     * Apply validator to value
+     *
+     * @param $arValidator
+     * @param $arQuestion
+     * @param $arAnswers
+     * @param $arAnswerValues
+     * @return bool
+     * @internal param string $sValSID
+     * @internal param array $arParams
+     * @internal param mixed $arValue
+     */
 	function Execute($arValidator, $arQuestion, $arAnswers, $arAnswerValues)
 	{
 		$rsValidators = CFormValidator::GetAllList();
@@ -196,16 +204,17 @@ class CAllFormValidator
 		
 		return true;
 	}
-	
-	/**
-	 * Assign validator to the field
-	 *
-	 * @param int $WEB_FORM_ID
-	 * @param int $FIELD_ID
-	 * @param string $sValSID
-	 * @param array $arParams
-	 * @return int|bool
-	 */
+
+    /**
+     * Assign validator to the field
+     *
+     * @param int $WEB_FORM_ID
+     * @param int $FIELD_ID
+     * @param string $sValSID
+     * @param array $arParams
+     * @param int $C_SORT
+     * @return bool|int
+     */
 	function Set($WEB_FORM_ID, $FIELD_ID, $sValSID, $arParams = array(), $C_SORT = 100)
 	{
 		global $DB;

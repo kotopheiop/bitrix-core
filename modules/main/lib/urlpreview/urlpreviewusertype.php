@@ -116,12 +116,14 @@ class UrlPreviewUserType
 		return "&nbsp;";
 	}
 
-	/**
-	 * @param array $userField Array containing parameters of the user field.
-	 * @param array $params
-	 * @param array $setting
-	 * @return string
-	 */
+    /**
+     * @param array $userField Array containing parameters of the user field.
+     * @param $id
+     * @param array|string $params
+     * @param array $settings
+     * @return string
+     * @internal param array $setting
+     */
 	public static function getPublicViewHTML($userField, $id, $params = "", $settings = array())
 	{
 		return UrlPreview::showView($userField, $params, $cacheTag);

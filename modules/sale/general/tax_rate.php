@@ -154,12 +154,13 @@ class CAllSaleTaxRate
 		return false;
 	}
 
-	/**
-	 * Get locations connected with tax rate.
-	 * This method is deprecated. It will be removed in future releases.
-	 * 
-	 * 
-	 */
+    /**
+     * Get locations connected with tax rate.
+     * This method is deprecated. It will be removed in future releases.
+     *
+     * @param array $arFilter
+     * @return
+     */
 	function GetLocationList($arFilter=Array())
 	{
 		if(CSaleLocation::isLocationProMigrated())

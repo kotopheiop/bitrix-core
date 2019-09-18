@@ -10,8 +10,11 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/save_colors.php");
 
 
 /*******************************************************
-Converts ISO to UNICODE
-********************************************************/
+ * Converts ISO to UNICODE
+ *******************************************************
+ * @param $isoline
+ * @return string
+ */
 
 function iso2uni ($isoline)
 {
@@ -26,8 +29,14 @@ function iso2uni ($isoline)
 }
 
 /*******************************************************
-Creates image to draw on
-********************************************************/
+ * Creates image to draw on
+ *******************************************************
+ * @param $width
+ * @param $height
+ * @param string $background
+ * @param bool $truecolor
+ * @return resource
+ */
 
 function CreateImageHandle($width, $height, $background="FFFFFF", $truecolor=true)
 {
@@ -52,8 +61,10 @@ function CreateImageHandle($width, $height, $background="FFFFFF", $truecolor=tru
 }
 
 /******************************************************
-Send proper headers for image
-*******************************************************/
+ * Send proper headers for image
+ ******************************************************
+ * @param $ImageHandle
+ */
 function ShowImageHeader($ImageHandle)
 {
 	if (ImageTypes() & IMG_PNG)
@@ -79,8 +90,11 @@ function ShowImageHeader($ImageHandle)
 }
 
 /******************************************************
-Returns some color
-*******************************************************/
+ * Returns some color
+ ******************************************************
+ * @param $arr
+ * @return array
+ */
 
 function GetArrSaveDecColor($arr)
 {
@@ -162,8 +176,18 @@ function GetBNextRGB($base_color, $total, $start_color = "999900", $end_color = 
 }
 
 /*******************************************************
-Graph data debug
-*******************************************************/
+ * Graph data debug
+ ******************************************************
+ * @param $arrayX
+ * @param $MinX
+ * @param $MaxX
+ * @param $arrayY
+ * @param $MinY
+ * @param $MaxY
+ * @param $arrX
+ * @param $arrY
+ * @param bool $die
+ */
 
 function EchoGraphData($arrayX, $MinX, $MaxX, $arrayY, $MinY, $MaxY, $arrX, $arrY, $die=true)
 {
@@ -200,8 +224,15 @@ function EchoGraphData($arrayX, $MinX, $MaxX, $arrayY, $MinY, $MaxY, $arrX, $arr
 }
 
 /*******************************************************
-Makes proper X axis (date)
-*******************************************************/
+ * Makes proper X axis (date)
+ ******************************************************
+ * @param $arrX
+ * @param $MinX
+ * @param $MaxX
+ * @param int $max_grid
+ * @param int $min_grid
+ * @return array
+ */
 function GetArrayX($arrX, &$MinX, &$MaxX, $max_grid=15, $min_grid=10)
 {
 	$h = 2;
@@ -320,9 +351,12 @@ function GetArrayY($arrY, &$MinY, &$MaxY, $max_grid=15, $first_null="Y", $intege
 }
 
 /******************************************************************************
-* $colorString - Color. Example 'FFFFFF' or '#FF0000'
-* ReColor - function converting HEX to DEC color
-******************************************************************************/
+ * $colorString - Color. Example 'FFFFFF' or '#FF0000'
+ * ReColor - function converting HEX to DEC color
+ *****************************************************************************
+ * @param $colorString
+ * @return array|int
+ */
 function ReColor($colorString)
 {
 	if (!is_string($colorString))

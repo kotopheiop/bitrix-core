@@ -958,9 +958,10 @@ class CSaleExport
 		return $result;
     }
 
-	/**
-	 * @return array
-	 */
+    /**
+     * @param array $arFilter
+     * @return array
+     */
     protected static function prepareFilter($arFilter=array())
     {
 		if(IntVal($_SESSION["BX_CML2_EXPORT"][self::getOrderPrefix()]) > 0)
@@ -3097,7 +3098,11 @@ class CSaleExport
 		return False;
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $itemId
+     * @param $message
+     * @param \Bitrix\Main\Result|null $result
+     */
 	private static function logError($itemId, $message, Bitrix\Main\Result $result = null)
 	{
 		if ($result)
@@ -3112,7 +3117,11 @@ class CSaleExport
 		));
 	}
 
-	/** @deprecated */
+    /** @deprecated
+     * @param $personTypeId
+     * @param array $map1C
+     * @param $itemId
+     */
 	private static function setMap($personTypeId, array $map1C, $itemId)
 	{
 		BusinessValue::INDIVIDUAL_DOMAIN; // make sure BusinessValueCode1CTable loaded since it in the same file as BusinessValue

@@ -205,22 +205,21 @@ abstract class Connector extends Entity\DataManager
 	{
 	}
 
-	/**
-	* Establishes several connections between entity and locations. Could be used to add and delete selected relations.
-	* 
-	* @param mixed $entityPrimary primary key for an entity
-	* @param integer[][]|string[][] $links array of locations and groups to link an entity with
-	* 
-	* 	Argument format:
-	* 	array(
-	* 		'L' => array(), // an array of IDs or CODEs of locations
-	* 		'G' => array() // an array of IDs or CODEs of location groups
-	* 	)
-	* 
-	* @throws Bitrix\Main\ArgumentNullException
-	* 
-	* @return boolean
-	*/
+    /**
+     * Establishes several connections between entity and locations. Could be used to add and delete selected relations.
+     *
+     * @param mixed $entityPrimary primary key for an entity
+     * @param integer[][]|string[][] $links array of locations and groups to link an entity with
+     *
+     *    Argument format:
+     *    array(
+     *        'L' => array(), // an array of IDs or CODEs of locations
+     *        'G' => array() // an array of IDs or CODEs of location groups
+     *    )
+     *
+     * @param array $behaviour
+     * @return bool
+     */
 	public static function updateMultipleForOwner($entityPrimary, $links = array(), $behaviour = array('REMOVE_ABSENT' => true))
 	{
 		$entityPrimary = 	Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
@@ -303,10 +302,11 @@ abstract class Connector extends Entity\DataManager
 		static::onAfterModifiy();
 	}
 
-	/**
-	 * Removes all links and creates new ones
-	 * 
-	 */
+    /**
+     * Removes all links and creates new ones
+     * @param $entityPrimary
+     * @param array $links
+     */
 	public static function resetMultipleForOwner($entityPrimary, $links = array())
 	{
 		$entityPrimary = 	Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
@@ -622,9 +622,13 @@ abstract class Connector extends Entity\DataManager
 		return static::unionize($sqls);
 	}
 
-	/**
-	 * More preferable alias for getConnectedLocationsQuery()
-	 */
+    /**
+     * More preferable alias for getConnectedLocationsQuery()
+     * @param $entityPrimary
+     * @param array $parameters
+     * @param array $behaviour
+     * @return String
+     */
 	public static function getConnectedLocationsSql($entityPrimary, $parameters = array(), $behaviour = array('GET_LINKED_THROUGH_GROUPS' => false))
 	{
 		return static::getConnectedLocationsQuery($entityPrimary, $parameters, $behaviour);
@@ -907,11 +911,14 @@ abstract class Connector extends Entity\DataManager
 		return $existed;
 	}
 
-	/**
-	 * Functions for massive check for link type
-	 * 
-	 * 
-	 */
+    /**
+     * Functions for massive check for link type
+     *
+     * @param array $nodeInfo
+     * @param $entityPrimary
+     * @param bool $connectors
+     * @return array
+     */
 	public static function getLinkStatusForMultipleNodes($nodeInfo = array(), $entityPrimary, $connectors = false) // rename to: getConnectionStatusForMultipleNodes
 	{
 		$nodeInfo = Assert::expectArray($nodeInfo, '$nodeInfo');
@@ -966,18 +973,18 @@ abstract class Connector extends Entity\DataManager
 		return $result;
 	}
 
-	/**
-	 * Check if location is connected with entity
-	 * 
-	 * @param $entityPrimary mixed Entity being checked
-	 * @param $locationPrimary mixed Location being checked. Could be a value of ID or CODE depending on what connection type is selected (see below)
-	 * @param $behaviour mixed[] A set of flags that modify function behaviour
-	 * 		<li> LOCATION_LINK_TYPE string One of: ID, CODE, AUTO. 
-	 * 			If ID, than match by ID is used (default, for compatibility), if CODE than match by CODE. 
-	 * 			In case of AUTO the target field value depends on entity connect type.
-	 * 
-	 * @return boolean
-	 */
+    /**
+     * Check if location is connected with entity
+     *
+     * @param $entityPrimary mixed Entity being checked
+     * @param $locationPrimary mixed Location being checked. Could be a value of ID or CODE depending on what connection type is selected (see below)
+     * @param $behaviour mixed[] A set of flags that modify function behaviour
+     *        <li> LOCATION_LINK_TYPE string One of: ID, CODE, AUTO.
+     *            If ID, than match by ID is used (default, for compatibility), if CODE than match by CODE.
+     *            In case of AUTO the target field value depends on entity connect type.
+     * @return bool
+     * @throws Tree\NodeNotFoundException
+     */
 	public static function checkConnectionExists($entityPrimary, $locationPrimary, array $behaviour = array('LOCATION_LINK_TYPE' => 'ID'))
 	{
 		$entityPrimary = Assert::expectStringNotNull($entityPrimary, '$entityPrimary');
@@ -1114,10 +1121,12 @@ abstract class Connector extends Entity\DataManager
 		return $usageFlags[$entityPrimary];
 	}
 
-	/**
-	* Function switches link usage to "on\off" position, for a certain entity and connection type (to location or to group)
-	*
-	*/
+    /**
+     * Function switches link usage to "on\off" position, for a certain entity and connection type (to location or to group)
+     * @param $entityPrimary
+     * @param string $linkType
+     * @param bool $way
+     */
 	private static function setLinkUsage($entityPrimary, $linkType = self::DB_LOCATION_FLAG, $way = true)
 	{
 		if(!static::getUseLinkTracking())
@@ -1132,10 +1141,10 @@ abstract class Connector extends Entity\DataManager
 		static::setLinkUsageOptionValue($usageFlags);
 	}
 
-	/**
-	* Function re-reads link existence and set options correctly
-	*
-	*/
+    /**
+     * Function re-reads link existence and set options correctly
+     * @param $entityPrimary
+     */
 	private static function resetLinkUsage($entityPrimary)
 	{
 		if(!static::getUseLinkTracking())
@@ -1181,10 +1190,10 @@ abstract class Connector extends Entity\DataManager
 		return $usageFlags;
 	}
 
-	/**
-	* Function sets option value
-	*
-	*/
+    /**
+     * Function sets option value
+     * @param $usageFlags
+     */
 	private static function setLinkUsageOptionValue($usageFlags)
 	{
 		Config\Option::set("sale", static::getLinkOptionName(), serialize($usageFlags), '');

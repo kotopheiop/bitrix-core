@@ -140,7 +140,12 @@ class CAllBlog
 		return $arAvailPerms[0];
 	}
 
-	/*************** ADD, UPDATE, DELETE *****************/
+    /*************** ADD, UPDATE, DELETE ****************
+     * @param $ACTION
+     * @param $arFields
+     * @param int $ID
+     * @return bool
+     */
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $APPLICATION, $DB;
