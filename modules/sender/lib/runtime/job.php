@@ -14,22 +14,22 @@ namespace Bitrix\Sender\Runtime;
  */
 abstract class Job
 {
-    /**
-     * Actualize jobs by campaign ID.
-     * @param $campaignId
-     * @return void
-     */
+	/**
+	 * Actualize jobs by campaign ID.
+
+	 * @return void
+	 */
 	public static function actualizeByCampaignId($campaignId)
 	{
 		(new SenderJob())->withCampaignId($campaignId)->actualize();
 		(new ReiteratedJob())->actualize();
 	}
 
-    /**
-     * Actualize jobs by letter ID.
-     * @param $letterId
-     * @return void
-     */
+	/**
+	 * Actualize jobs by letter ID.
+
+	 * @return void
+	 */
 	public static function actualizeByLetterId($letterId)
 	{
 		(new SenderJob())->withLetterId($letterId)->actualize();

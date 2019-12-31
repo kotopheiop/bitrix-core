@@ -1227,11 +1227,10 @@ class CBPVirtualDocument
 		return (is_array($value) ? $arReturn : ((count($arReturn) > 0) ? $arReturn[0] : array()));
 	}
 
-    /**
-     * @param string $documentId
-     * @return string - document admin page url.
-     * @throws CBPArgumentNullException
-     */
+	/**
+	* @param string $documentId
+	* @return string - document admin page url.
+	*/
 	public function GetDocumentAdminPage($documentId)
 	{
 		return null;
@@ -2064,9 +2063,16 @@ class CBPVirtualDocument
 
 		$arResult = array();
 
-		$dbUsersList = CUser::GetList(($b = "ID"), ($o = "ASC"), array("GROUPS_ID" => $group, "ACTIVE" => "Y"));
+		$dbUsersList = CUser::GetList(
+			($b = "ID"),
+			($o = "ASC"),
+			['GROUPS_ID' => $group, 'ACTIVE' => 'Y', 'IS_REAL_USER' => true],
+			['FIELDS' => ['ID']]
+		);
 		while ($arUser = $dbUsersList->Fetch())
+		{
 			$arResult[] = $arUser["ID"];
+		}
 		return $arResult;
 	}
 

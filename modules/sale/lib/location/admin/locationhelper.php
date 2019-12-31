@@ -696,11 +696,9 @@ final class LocationHelper extends NameHelper
 		}
 	}
 
-    /**
-     * @deprecated
-     * @param $primary
-     * @return string
-     */
+	/**
+	 * @deprecated
+	 */
 	public static function getLocationPathDisplay($primary)
 	{
 		if(!strlen($primary))

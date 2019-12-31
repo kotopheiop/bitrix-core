@@ -90,21 +90,17 @@ class Dictionary
 		return reset($this->values);
 	}
 
-    /**
-     * Whether a offset exists
-     * @param mixed $offset
-     * @return bool
-     */
+	/**
+	 * Whether a offset exists
+	 */
 	public function offsetExists($offset)
 	{
 		return isset($this->values[$offset]) || array_key_exists($offset, $this->values);
 	}
 
-    /**
-     * Offset to retrieve
-     * @param mixed $offset
-     * @return mixed|null
-     */
+	/**
+	 * Offset to retrieve
+	 */
 	public function offsetGet($offset)
 	{
 		if (isset($this->values[$offset]) || array_key_exists($offset, $this->values))
@@ -115,11 +111,9 @@ class Dictionary
 		return null;
 	}
 
-    /**
-     * Offset to set
-     * @param mixed $offset
-     * @param mixed $value
-     */
+	/**
+	 * Offset to set
+	 */
 	public function offsetSet($offset, $value)
 	{
 		if($offset === null)
@@ -132,10 +126,9 @@ class Dictionary
 		}
 	}
 
-    /**
-     * Offset to unset
-     * @param mixed $offset
-     */
+	/**
+	 * Offset to unset
+	 */
 	public function offsetUnset($offset)
 	{
 		unset($this->values[$offset]);

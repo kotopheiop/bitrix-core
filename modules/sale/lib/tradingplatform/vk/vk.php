@@ -102,14 +102,15 @@ class Vk extends Platform
 		
 		return $settings;
 	}
-
-    /**
-     * Formatted export profile settings and save them in own table.
-     *
-     * @param array $settings
-     * @return bool|int
-     * @internal param null $exportId
-     */
+	
+	/**
+	 * Formatted export profile settings and save them in own table.
+	 *
+	 * @param array $settings
+	 * @param null $exportId
+	 * @return bool|int
+	 * @throws \Exception
+	 */
 	public function saveSettings(array $settings)
 	{
 		$exportId = isset($settings['EXPORT_ID']) ? $settings['EXPORT_ID'] : NULL;
@@ -248,7 +249,7 @@ class Vk extends Platform
 
 //		uninstall vk-categories update agent
 		$vkCategories = new VkCategories($exportId);
-		$vkCategories->deleteAgent($exportId);
+		$vkCategories->deleteAgent();
 
 //		clear log
 		$logger = new Logger($exportId);
@@ -299,15 +300,14 @@ class Vk extends Platform
 		
 		return $result;
 	}
-
-
-    /**
-     * Check existing user field in section by code
-     *
-     * @param $iblockId
-     * @param $code
-     * @return bool
-     */
+	
+	
+	/**
+	 * Check existing user field in section by code
+	 *
+	 * @param $iblockId
+	 * @return bool
+	 */
 	private function checkExistingCatalogField($iblockId, $code)
 	{
 		$existingProps = \CIBlockProperty::GetList(
@@ -445,15 +445,14 @@ class Vk extends Platform
 		
 		return $this->executer[$exportId];
 	}
-
-
-    /**
-     * Return access token from settings
-     *
-     * @param $exportId
-     * @return bool
-     * @throws ArgumentNullException
-     */
+	
+	
+	/**
+	 * Return access token from settings
+	 *
+	 * @param $exportId
+	 * @return bool
+	 */
 	private function getAccessToken($exportId)
 	{
 		if (!isset($this->accessToken[$exportId]))
@@ -778,15 +777,15 @@ class Vk extends Platform
 		else
 			return true;
 	}
-
-
-    /**
-     * Return array of existings profiles IDs
-     *
-     * @$onlyActive - if true - return only active profiles. If false - return all
-     * @param bool $onlyActive
-     * @return array
-     */
+	
+	
+	/**
+	 * Return array of existings profiles IDs
+	 *
+	 * @$onlyActive - if true - return only active profiles. If false - return all
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
 	public function getExportProfilesList($onlyActive = true)
 	{
 		$exportIds = array();

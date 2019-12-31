@@ -8,12 +8,11 @@ use Bitrix\Main\SiteDomainTable;
  */
 class SitesData
 {
-    /**
-     * @param $siteName
-     * @param bool $dbName
-     * @return array site's param
-     * @throws \Bitrix\Main\ArgumentNullException
-     */
+	/**
+	 * @param $siteName
+	 * @return array site's param
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
 	public static function getSite($siteName, $dbName = false)
 	{
 		if(strlen($siteName) <= 0)
@@ -66,10 +65,10 @@ class SitesData
 		return '';
 	}
 
-    /**
-     * @param bool|string $dbName
-     * @return array List of all sites & their params
-     */
+	/**
+	 * @param string $dbName
+	 * @return array List of all sites & their params
+	 */
 	public static function getList($dbName = false)
 	{
 		static $hitCache = null;

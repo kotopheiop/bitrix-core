@@ -2,10 +2,8 @@
 
 namespace Bitrix\Main\UrlPreview;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Main\Web\HttpClient;
@@ -180,16 +178,15 @@ class UrlPreview
 		return (static::isUrlLocal(new Uri($url)) || !!UrlMetadataTable::getByUrl($url));
 	}
 
-    /**
-     * If url is remote - returns metadata for this url. If url is local - checks current user access to the entity
-     * behind the url, and returns html preview for this entity.
-     *
-     * @param string $url Document's URL.
-     * @param bool $addIfNew Should method fetch and store metadata for the document, if it is not found in database.
-     * @param bool $reuseExistingMetadata
-     * @return array|false Metadata for the document, or false if metadata could not be fetched/parsed.
-     * @params bool $reuseExistingMetadata Allow reading of the cached metadata.
-     */
+	/**
+	 * If url is remote - returns metadata for this url. If url is local - checks current user access to the entity
+	 * behind the url, and returns html preview for this entity.
+	 *
+	 * @param string $url Document's URL.
+	 * @param bool $addIfNew Should method fetch and store metadata for the document, if it is not found in database.
+	 * @params bool $reuseExistingMetadata Allow reading of the cached metadata.
+	 * @return array|false Metadata for the document, or false if metadata could not be fetched/parsed.
+	 */
 	public static function getMetadataAndHtmlByUrl($url, $addIfNew = true, $reuseExistingMetadata = true)
 	{
 		$metadata = static::getMetadataByUrl($url, $addIfNew, $reuseExistingMetadata);
@@ -213,15 +210,14 @@ class UrlPreview
 		return false;
 	}
 
-    /**
-     * Returns stored metadata for array of IDs
-     *
-     * @param array $ids Array of record's IDs.
-     * @param bool $checkAccess Should method check current user's access to the internal entities, or not.
-     * @param int $userId
-     * @return array|false Array with provided IDs as the keys.
-     * @params int $userId. Id of the users to check access. If == 0, will check access for current user.
-     */
+	/**
+	 * Returns stored metadata for array of IDs
+	 *
+	 * @param array $ids Array of record's IDs.
+	 * @param bool $checkAccess Should method check current user's access to the internal entities, or not.
+	 * @params int $userId. Id of the users to check access. If == 0, will check access for current user.
+	 * @return array|false Array with provided IDs as the keys.
+	 */
 	public static function getMetadataAndHtmlByIds(array $ids, $checkAccess = true, $userId = 0)
 	{
 		if(!static::isEnabled())
@@ -274,15 +270,14 @@ class UrlPreview
 		return $id;
 	}
 
-    /**
-     * Fetches and stores metadata for temporary record, created by UrlPreview::reserveIdForUrl. If metadata could
-     * not be fetched, deletes record.
-     * @param int $id Metadata record's id.
-     * @param bool $checkAccess Should method check current user's access to the entity, or not.
-     * @param int $userId
-     * @return array|false Metadata if fetched, false otherwise.
-     * @params int $userId. Id of the users to check access. If == 0, will check access for current user.
-     */
+	/**
+	 * Fetches and stores metadata for temporary record, created by UrlPreview::reserveIdForUrl. If metadata could
+	 * not be fetched, deletes record.
+	 * @param int $id Metadata record's id.
+	 * @param bool $checkAccess Should method check current user's access to the entity, or not.
+	 * @params int $userId. Id of the users to check access. If == 0, will check access for current user.
+	 * @return array|false Metadata if fetched, false otherwise.
+	 */
 	public static function resolveTemporaryMetadata($id, $checkAccess = true, $userId = 0)
 	{
 		$metadata = UrlMetadataTable::getById($id)->fetch();
@@ -318,14 +313,13 @@ class UrlPreview
 		return false;
 	}
 
-    /**
-     * Returns HTML code for the dynamic (internal url) preview.
-     * @param string $url URL of the internal document.
-     * @param bool $checkAccess Should method check current user's access to the entity, or not.
-     * @param int $userId
-     * @return false|string HTML code of the preview, or false if case of any errors (including access denied)/
-     * @params int $userId. Id of the users to check access. If userId == 0, will check access for current user.
-     */
+	/**
+	 * Returns HTML code for the dynamic (internal url) preview.
+	 * @param string $url URL of the internal document.
+	 * @param bool $checkAccess Should method check current user's access to the entity, or not.
+	 * @params int $userId. Id of the users to check access. If userId == 0, will check access for current user.
+	 * @return string|false HTML code of the preview, or false if case of any errors (including access denied)/
+	 */
 	public static function getDynamicPreview($url, $checkAccess = true, $userId = 0)
 	{
 		$routeRecord = Router::dispatch(new Uri(static::unfoldShortLink($url)));
@@ -353,14 +347,13 @@ class UrlPreview
 		return false;
 	}
 
-    /**
-     * Returns attach for the IM message with the requested internal entity content.
-     * @param string $url URL of the internal document.
-     * @param bool $checkAccess Should method check current user's access to the entity, or not.
-     * @param int $userId
-     * @return \CIMMessageParamAttach|false
-     * @params int $userId. Id of the users to check access. If userId == 0, will check access for current user.
-     */
+	/**
+	 * Returns attach for the IM message with the requested internal entity content.
+	 * @param string $url URL of the internal document.
+	 * @param bool $checkAccess Should method check current user's access to the entity, or not.
+	 * @params int $userId. Id of the users to check access. If userId == 0, will check access for current user.
+	 * @return \CIMMessageParamAttach | false
+	 */
 	public static function getImAttach($url, $checkAccess = true, $userId = 0)
 	{
 		//todo: caching
@@ -388,13 +381,12 @@ class UrlPreview
 		return false;
 	}
 
-    /**
-     * Returns true if current user has read access to the content behind internal url.
-     * @param string $url URL of the internal document.
-     * @param int $userId
-     * @return bool True if current user has read access to the main entity of the document, or false otherwise.
-     * @params int $userId. Id of the users to check access. If userId == 0, will check access for current user.
-     */
+	/**
+	 * Returns true if current user has read access to the content behind internal url.
+	 * @param string $url URL of the internal document.
+	 * @params int $userId. Id of the users to check access. If userId == 0, will check access for current user.
+	 * @return bool True if current user has read access to the main entity of the document, or false otherwise.
+	 */
 	public static function checkDynamicPreviewAccess($url, $userId = 0)
 	{
 		$routeRecord = Router::dispatch(new Uri(static::unfoldShortLink($url)));
@@ -556,10 +548,11 @@ class UrlPreview
 			return false;
 
 		$htmlContentType = strtolower($httpClient->getHeaders()->getContentType());
+		$xFrameOptions = $httpClient->getHeaders()->get('X-Frame-Options', true);
+		$effectiveUrl = $httpClient->getEffectiveUrl();
 		$peerIpAddress = $httpClient->getPeerAddress();
 		if($htmlContentType !== 'text/html')
 		{
-
 			$metadata = static::getFileMetadata($httpClient->getEffectiveUrl(), $httpClient->getHeaders());
 			$metadata['EXTRA']['PEER_IP_ADDRESS'] = $peerIpAddress;
 			$metadata['EXTRA']['PEER_IP_PRIVATE'] = static::isIpAddressPrivate($peerIpAddress);
@@ -595,7 +588,9 @@ class UrlPreview
 			}
 			$metadata['EXTRA'] = array_merge($metadata['EXTRA'], array(
 				'PEER_IP_ADDRESS' => $peerIpAddress,
-				'PEER_IP_PRIVATE' => static::isIpAddressPrivate($peerIpAddress)
+				'PEER_IP_PRIVATE' => static::isIpAddressPrivate($peerIpAddress),
+				'X_FRAME_OPTIONS' => $xFrameOptions,
+				'EFFECTIVE_URL' => $effectiveUrl,
 			));
 
 			return $metadata;

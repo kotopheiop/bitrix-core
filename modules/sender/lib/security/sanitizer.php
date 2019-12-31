@@ -97,14 +97,13 @@ class Sanitizer
 		return $html;
 	}
 
-    /**
-     * Remove php from string with checking operations `edit_php` and `lpa_template_edit`.
-     *
-     * @param string $string String.
-     * @param $previousString
-     * @param User $user User instance.
-     * @return bool
-     */
+	/**
+	 * Remove php from string with checking operations `edit_php` and `lpa_template_edit`.
+	 *
+	 * @param string $string String.
+	 * @param User $user User instance.
+	 * @return bool
+	 */
 	public static function removePhp($string = '', $previousString, User $user = null)
 	{
 		$user = $user ?: User::current();

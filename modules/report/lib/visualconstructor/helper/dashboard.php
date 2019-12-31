@@ -101,11 +101,10 @@ class Dashboard
 	}
 
 
-    /**
-     * @param $boardKey
-     * @return bool
-     * @internal param string $board Key Board key.
-     */
+	/**
+	 * @param string $board Key Board key.
+	 * @return bool
+	 */
 	public static function getBoardModeIsDemo($boardKey)
 	{
 		$boardModes = \CUserOptions::GetOption('report_dashboard', 'IS_DEMO_MODE_MARKERS', array());

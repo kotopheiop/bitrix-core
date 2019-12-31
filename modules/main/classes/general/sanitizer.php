@@ -18,12 +18,11 @@
 	* $Sanitizer->SanitizeHtml($html);
 	* </code>
 	*
-	* @version $rev 021
 	*/
 	class CBXSanitizer
 	{
 		/**
-		 * @var All possible Sanitizer security levels
+		 * Security levels
 		 */
 		const SECURE_LEVEL_CUSTOM	= 0;
 		const SECURE_LEVEL_HIGH		= 1;
@@ -36,9 +35,13 @@
 		const TABLE_ROWS 	= 3;
 		const TABLE_COLS 	= 4;
 
+		const ACTION_DEL = 'del';
+		const ACTION_ADD = 'add';
+		const ACTION_DEL_WITH_CONTENT = 'del_with_content';
+
 		/**
 		 * @deprecated For compability only will be erased next versions
-		 * @var mix
+		 * @var mixed
 		 */
 		protected static $arOldTags = array();
 
@@ -49,23 +52,32 @@
 		protected $secLevel = self::SECURE_LEVEL_HIGH;
 		protected $additionalAttrs = array();
 		protected $arNoClose = array(
-								'br','hr','img','area','base',
-								'basefont','col','frame','input',
-								'isindex','link','meta','param'
-								);
+			'br','hr','img','area','base',
+			'basefont','col','frame','input',
+			'isindex','link','meta','param'
+		);
 		protected $localAlph;
 
 		protected $arTableTags = array(
-								'table' 	=> self::TABLE_TOP,
-								'caption'	=> self::TABLE_CAPT,
-								'thead' 	=> self::TABLE_GROUP,
-								'tfoot' 	=> self::TABLE_GROUP,
-								'tbody' 	=> self::TABLE_GROUP,
-								'tr'		=> self::TABLE_ROWS,
-								'th'		=> self::TABLE_COLS,
-								'td'		=> self::TABLE_COLS
-								);
+			'table' 	=> self::TABLE_TOP,
+			'caption'	=> self::TABLE_CAPT,
+			'thead' 	=> self::TABLE_GROUP,
+			'tfoot' 	=> self::TABLE_GROUP,
+			'tbody' 	=> self::TABLE_GROUP,
+			'tr'		=> self::TABLE_ROWS,
+			'th'		=> self::TABLE_COLS,
+			'td'		=> self::TABLE_COLS
+		);
 
+		/**
+		 * Tags witch will be cut with their content
+		 * @var array
+		 */
+		protected $delTagsWithContent = ['script', 'style'];
+
+		/**
+		 * CBXSanitizer constructor.
+		 */
 		public function __construct()
 		{
 			if(SITE_CHARSET == "UTF-8")
@@ -140,11 +152,9 @@
 			return $counter;
 		}
 
-        /**
-         * @see AddTags()
-         * @param $arTags
-         * @return int
-         */
+		/**
+		 * @see AddTags()
+		 */
 		public function UpdateTags($arTags)
 		{
 			return $this->AddTags($arTags);
@@ -175,6 +185,9 @@
 			return $counter;
 		}
 
+		/**
+		 * @param array $arDeleteAttrs
+		 */
 		public function DeleteAttributes(array $arDeleteAttrs)
 		{
 			$this->secLevel = self::SECURE_LEVEL_CUSTOM;
@@ -513,10 +526,9 @@
 			return $confStr;
 		}
 
-        /**
-         * @deprecated For compability only will be erased next versions
-         * @param $arTags
-         */
+		/**
+		 * @deprecated For compability only will be erased next versions
+		 */
 		public static function SetTags($arTags)
 		{
 			self::$arOldTags = $arTags;
@@ -528,14 +540,9 @@
 			*/
 		}
 
-        /**
-         * @deprecated For compability only will be erased next versions
-         * @param $html
-         * @param string $secLevel
-         * @param bool $htmlspecialchars
-         * @param bool $delTags
-         * @return string
-         */
+		/**
+		 * @deprecated For compability only will be erased next versions
+		 */
 		public static function Sanitize($html, $secLevel='HIGH', $htmlspecialchars=true, $delTags=true)
 		{
 			$Sanitizer = new self;
@@ -556,6 +563,33 @@
 		}
 
 		/**
+		 * Split html to tags and simple text chunks
+		 * @param string $html
+		 * @return array
+		 */
+		protected function splitHtml($html)
+		{
+			$result = [];
+			$arData = preg_split('/(<[^<>]+>)/si'.BX_UTF_PCRE_MODIFIER, $html, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+			foreach($arData as $i => $chunk)
+			{
+				$isTag = $i % 2 || (substr($chunk, 0, 1) == '<' && substr($chunk, -1) == '>');
+
+				if ($isTag)
+				{
+					$result[] = array('segType'=>'tag', 'value'=>$chunk);
+				}
+				elseif ($chunk != "")
+				{
+					$result[]=array('segType'=>'text', 'value'=> $chunk);
+				}
+			}
+
+			return $result;
+		}
+
+		/**
 		 * Erases, or HtmlSpecChares Tags and attributies wich not contained in white list
 		 * from inputted HTML
 		 * @param string $html Dirty HTML
@@ -569,16 +603,7 @@
 			$openTagsStack = array();
 			$isCode = false;
 
-			//split html to tag and simple text
-			$seg = array();
-			$arData = preg_split('/(<[^<>]+>)/si'.BX_UTF_PCRE_MODIFIER, $html, -1, PREG_SPLIT_DELIM_CAPTURE);
-			foreach($arData as $i => $chunk)
-			{
-				if ($i % 2)
-					$seg[] = array('segType'=>'tag', 'value'=>$chunk);
-				elseif ($chunk != "")
-					$seg[]=array('segType'=>'text', 'value'=> $chunk);
-			}
+			$seg = $this->splitHtml($html);
 
 			//process segments
 			$segCount = count($seg);
@@ -624,7 +649,10 @@
 						// if tag unallowed screen it, or erase
 						if(!array_key_exists($seg[$i]['tagName'], $this->arHtmlTags))
 						{
-							if($this->bDelSanitizedTags) $seg[$i]['action'] = 'del';
+							if($this->bDelSanitizedTags)
+							{
+								$seg[$i]['action'] = self::ACTION_DEL;
+							}
 							else
 							{
 								$seg[$i]['segType'] = 'text';
@@ -641,7 +669,7 @@
 								{
 									if (array_key_exists('tr', $this->arHtmlTags) && !in_array($seg[$i]['tagName'], array('thead', 'tfoot', 'tbody', 'tr')))
 									{
-										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'open', 'tagName' => 'tr', 'action' => 'add')));
+										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'open', 'tagName' => 'tr', 'action' => self::ACTION_ADD)));
 										$i++; $segCount++;
 
 										$openTagsStack[] = 'tr';
@@ -652,7 +680,7 @@
 								{
 									if (array_key_exists('tr', $this->arHtmlTags) && $seg[$i]['tagName'] != 'tr')
 									{
-										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'open', 'tagName' => 'tr', 'action' => 'add')));
+										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'open', 'tagName' => 'tr', 'action' => self::ACTION_ADD)));
 										$i++; $segCount++;
 
 										$openTagsStack[] = 'tr';
@@ -666,7 +694,7 @@
 										if (in_array($openTagsStack[$j], array('table', 'thead', 'tfoot', 'tbody')))
 											break;
 
-										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'close', 'tagName' => $openTagsStack[$j], 'action' => 'add')));
+										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'close', 'tagName' => $openTagsStack[$j], 'action' => self::ACTION_ADD)));
 										$i++; $segCount++;
 
 										array_splice($openTagsStack, $j, 1);
@@ -678,7 +706,7 @@
 									$cellTags = array_intersect(array('td', 'th'), array_keys($this->arHtmlTags));
 									if ($cellTags && !in_array($seg[$i]['tagName'], $cellTags))
 									{
-										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'open', 'tagName' => reset($cellTags), 'action' => 'add')));
+										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'open', 'tagName' => reset($cellTags), 'action' => self::ACTION_ADD)));
 										$i++; $segCount++;
 
 										$openTagsStack[] = 'td';
@@ -692,7 +720,7 @@
 										if ($openTagsStack[$j] == 'tr')
 											break;
 
-										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'close', 'tagName' => $openTagsStack[$j], 'action' => 'add')));
+										array_splice($seg, $i, 0, array(array('segType' => 'tag', 'tagType' => 'close', 'tagName' => $openTagsStack[$j], 'action' => self::ACTION_ADD)));
 										$i++; $segCount++;
 
 										array_splice($openTagsStack, $j, 1);
@@ -706,7 +734,7 @@
 							{
 								$this->CleanTable($seg, $openTagsStack, $i, false);
 
-								if($seg[$i]['action'] == 'del')
+								if($seg[$i]['action'] == self::ACTION_DEL)
 									continue;
 							}
 
@@ -760,12 +788,16 @@
 						if(array_key_exists($seg[$i]['tagName'], $this->arHtmlTags) && (!count($this->arHtmlTags[$seg[$i]['tagName']]) || ($this->arHtmlTags[$seg[$i]['tagName']][count($this->arHtmlTags[$seg[$i]['tagName']])-1] != false)))
 						{
 							if($seg[$i]['tagName'] == 'code')
+							{
 								$isCode = false;
+							}
 							//if open tags stack is empty, or not include it's name lets screen/erase it
 							if((count($openTagsStack) == 0) || (!in_array($seg[$i]['tagName'], $openTagsStack)))
 							{
 								if($this->bDelSanitizedTags || $this->arNoClose)
-									$seg[$i]['action'] = 'del';
+								{
+									$seg[$i]['action'] = self::ACTION_DEL;
+								}
 								else
 								{
 									$seg[$i]['segType'] = 'text';
@@ -779,7 +811,7 @@
 								$tagName = array_pop($openTagsStack);
 								if($seg[$i]['tagName'] != $tagName)
 								{
-									array_splice($seg, $i, 0, array(array('segType'=>'tag', 'tagType'=>'close', 'tagName'=>$tagName, 'action'=>'add')));
+									array_splice($seg, $i, 0, array(array('segType'=>'tag', 'tagType'=>'close', 'tagName'=>$tagName, 'action'=>self::ACTION_ADD)));
 									$segCount++;
 								}
 							}
@@ -787,7 +819,10 @@
 						//if tag unallowed erase it
 						else
 						{
-							if($this->bDelSanitizedTags) $seg[$i]['action'] = 'del';
+							if($this->bDelSanitizedTags)
+							{
+								$seg[$i]['action'] = self::ACTION_DEL;
+							}
 							else
 							{
 								$seg[$i]['segType'] = 'text';
@@ -801,16 +836,20 @@
 
 			//close tags stayed in stack
 			foreach(array_reverse($openTagsStack) as $val)
-				array_push($seg, array('segType'=>'tag', 'tagType'=>'close', 'tagName'=>$val, 'action'=>'add'));
+				array_push($seg, array('segType'=>'tag', 'tagType'=>'close', 'tagName'=>$val, 'action'=>self::ACTION_ADD));
 
 			//build filtered code and return it
 			$filteredHTML = '';
+			$flagDeleteContent = false;
+
 			foreach($seg as $segt)
 			{
-				if($segt['action'] != 'del')
+				if($segt['action'] != self::ACTION_DEL && !$flagDeleteContent)
 				{
 					if($segt['segType'] == 'text')
+					{
 						$filteredHTML .= $segt['value'];
+					}
 					elseif($segt['segType'] == 'tag')
 					{
 						if($segt['tagType'] == 'open')
@@ -830,21 +869,29 @@
 							$filteredHTML .= '</'.$segt['tagName'].'>';
 					}
 				}
+				else
+				{
+					if(in_array($segt['tagName'], $this->delTagsWithContent))
+					{
+						$flagDeleteContent = $segt['tagType'] == 'open';
+					}
+				}
 			}
+
+			if(!$this->bHtmlSpecChars && $html != $filteredHTML)
+			{
+				$filteredHTML = $this->SanitizeHtml($filteredHTML);
+			}
+
 			return $filteredHTML;
 		}
 
-        /**
-         * function CleanTable
-         * Check if table code is valid, and corrects. If need
-         * deletes all text and tags between diferent table tags if $delTextBetweenTags=true.
-         * Checks if where are open tags from upper level if not - self-distructs.
-         * @param $seg
-         * @param $openTagsStack
-         * @param $segIndex
-         * @param bool $delTextBetweenTags
-         * @return bool
-         */
+		/**
+		 * function CleanTable
+		 * Check if table code is valid, and corrects. If need
+		 * deletes all text and tags between diferent table tags if $delTextBetweenTags=true.
+		 * Checks if where are open tags from upper level if not - self-distructs.
+		 */
 		protected function CleanTable(&$seg, &$openTagsStack, $segIndex, $delTextBetweenTags=true)
 		{
 			//if we found up level or not
@@ -863,7 +910,7 @@
 					if ($seg[$j]['segType'] != 'tag' || !array_key_exists($seg[$j]['tagName'], $this->arTableTags))
 						continue;
 
-					if($seg[$j]['action'] == 'del')
+					if($seg[$j]['action'] == self::ACTION_DEL)
 						continue;
 
 					if($tElCategory == self::TABLE_COLS)
@@ -899,7 +946,7 @@
 						if($seg[$k]['segType'] == 'text' && !preg_match("#[^\n\r\s]#i".BX_UTF_PCRE_MODIFIER, $seg[$k]['value']))
 							continue;
 
-						$seg[$k]['action'] = 'del';
+						$seg[$k]['action'] = self::ACTION_DEL;
 						if(isset($seg[$k]['closeIndex']))
 							unset($openTagsStack[$seg[$k]['closeIndex']]);
 					}
@@ -909,7 +956,7 @@
 				}
 				//if we didn't find up levels,lets mark this block as del
 				if(!$bFindUp)
-					$seg[$segIndex]['action'] = 'del';
+					$seg[$segIndex]['action'] = self::ACTION_DEL;
 
 				break;
 
@@ -920,7 +967,7 @@
 		/**
 		 * Decodes text from codes like &#***, html-entities wich may be coded several times;
 		 * @param string $str
-		 * @return decoded string
+		 * @return string decoded
 		 * */
 		public function Decode($str)
 		{
@@ -974,5 +1021,19 @@
 			return str_replace(array("&colon;","&tab;","&newline;"), array(":","\t","\n"), $str);
 		}
 
+		/**
+		 * @param array $tags
+		 */
+		public function setDelTagsWithContent(array $tags)
+		{
+			$this->delTagsWithContent = $tags;
+		}
+
+		/**
+		 * @return array
+		 */
+		public function getDelTagsWithContent()
+		{
+			return $this->delTagsWithContent;
+		}
 	};
-?>

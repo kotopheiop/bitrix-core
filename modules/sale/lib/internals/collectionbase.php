@@ -29,21 +29,17 @@ abstract class CollectionBase
 	}
 
 
-    /**
-     * Whether a offset exists
-     * @param mixed $offset
-     * @return bool
-     */
+	/**
+	 * Whether a offset exists
+	 */
 	public function offsetExists($offset)
 	{
 		return isset($this->collection[$offset]) || array_key_exists($offset, $this->collection);
 	}
 
-    /**
-     * Offset to retrieve
-     * @param mixed $offset
-     * @return mixed|null
-     */
+	/**
+	 * Offset to retrieve
+	 */
 	public function offsetGet($offset)
 	{
 		if (isset($this->collection[$offset]) || array_key_exists($offset, $this->collection))
@@ -54,11 +50,9 @@ abstract class CollectionBase
 		return null;
 	}
 
-    /**
-     * Offset to set
-     * @param mixed $offset
-     * @param mixed $value
-     */
+	/**
+	 * Offset to set
+	 */
 	public function offsetSet($offset, $value)
 	{
 		if($offset === null)
@@ -71,10 +65,9 @@ abstract class CollectionBase
 		}
 	}
 
-    /**
-     * Offset to unset
-     * @param mixed $offset
-     */
+	/**
+	 * Offset to unset
+	 */
 	public function offsetUnset($offset)
 	{
 		unset($this->collection[$offset]);

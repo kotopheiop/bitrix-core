@@ -60,15 +60,12 @@ class Logger
 		
 		return $result;
 	}
-
-
-    /**
-     * Log is like error, but not error.
-     * It is equal entities, but we always set ErrorCode in "log".
-     * @param null $itemId
-     * @param null $params
-     * @return bool
-     */
+	
+	
+	/**
+	 * Log is like error, but not error.
+	 * It is equal entities, but we always set ErrorCode in "log".
+	 */
 	public function addLog($itemId = null, $params = null)
 	{
 		if ($this->ritchLog)
@@ -77,19 +74,19 @@ class Logger
 			return $this->addError("LOG", $itemId, print_r($params, true));
 		}
 	}
-
-
-    /**
-     * Add new error in log.
-     * If error by this code already exist - match time. Use newer error,
-     * If set Item - adding in items list, if not - set only text error.
-     *
-     * @param $errCode - string of error code, from predetermined list
-     * @param null $itemId
-     * @param null $errParams
-     * @return bool
-     * @throws ExecuteException
-     */
+	
+	
+	/**
+	 * Add new error in log.
+	 * If error by this code already exist - match time. Use newer error,
+	 * If set Item - adding in items list, if not - set only text error.
+	 *
+	 * @param $errCode - string of error code, from predetermined list
+	 * @param null $itemId
+	 * @return bool
+	 * @throws ExecuteException
+	 * @throws \Exception
+	 */
 	public function addError($errCode, $itemId = null, $errParams = null)
 	{
 		$errorDescription = $this->getErrorsDescriptions($errCode);
@@ -106,16 +103,17 @@ class Logger
 		
 		return true;
 	}
-
-
-    /**
-     * Write new error to table
-     *
-     * @param $errCode
-     * @param null $itemId
-     * @param null $errParams
-     * @return bool
-     */
+	
+	
+	/**
+	 * Write new error to table
+	 *
+	 * @param $errCode
+	 * @param null $itemId
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Exception
+	 */
 	private function addErrorToTable($errCode, $itemId = null, $errParams = null)
 	{
 		$fields = array(
@@ -186,14 +184,13 @@ class Logger
 		
 		return true;
 	}
-
-
-    /**
-     * Return existing errors in text format for view on page
-     *
-     * @param bool $flagCritical
-     * @return array|string
-     */
+	
+	
+	/**
+	 * Return existing errors in text format for view on page
+	 *
+	 * @return array|string
+	 */
 	public function getErrorsList($flagCritical = false)
 	{
 		$errorsConverted = array();
@@ -660,28 +657,28 @@ class Logger
 				"CODE" => "ALBUM_EMPTY_PHOTOS",
 				"ITEMS_TYPE" => 'ALBUM',
 			),
-			"ALBUM_PHOTOS_RESIZE_UP" => array(
+			"ALBUM_PHOTOS_10" => array(
 				"MESSAGE" => Loc::getMessage("SALE_VK_ERRORS__ALBUM_PHOTOS_RESIZE_UP"),
 				"CRITICAL" => false,
-				"CODE" => "ALBUM_PHOTOS_RESIZE_UP",
+				"CODE" => "ALBUM_PHOTOS_10",
 				"ITEMS_TYPE" => 'ALBUM',
 			),
-			"ALBUM_PHOTOS_RESIZE_DOWN" => array(
+			"ALBUM_PHOTOS_30" => array(
 				"MESSAGE" => Loc::getMessage("SALE_VK_ERRORS__ALBUM_PHOTOS_RESIZE_DOWN"),
 				"CRITICAL" => false,
-				"CODE" => "ALBUM_PHOTOS_RESIZE_DOWN",
+				"CODE" => "ALBUM_PHOTOS_30",
 				"ITEMS_TYPE" => 'ALBUM',
 			),
-			"ALBUM_PHOTOS_RESIZE_UP_CROP" => array(
+			"ALBUM_PHOTOS_20" => array(
 				"MESSAGE" => Loc::getMessage("SALE_VK_ERRORS__ALBUM_PHOTOS_RESIZE_CROP"),
 				"CRITICAL" => false,
-				"CODE" => "ALBUM_PHOTOS_RESIZE_UP_CROP",
+				"CODE" => "ALBUM_PHOTOS_20",
 				"ITEMS_TYPE" => 'ALBUM',
 			),
-			"ALBUM_PHOTOS_RESIZE_DOWN_CROP" => array(
+			"ALBUM_PHOTOS_40" => array(
 				"MESSAGE" => Loc::getMessage("SALE_VK_ERRORS__ALBUM_PHOTOS_RESIZE_CROP"),
 				"CRITICAL" => false,
-				"CODE" => "ALBUM_PHOTOS_RESIZE_DOWN_CROP",
+				"CODE" => "ALBUM_PHOTOS_40",
 				"ITEMS_TYPE" => 'ALBUM',
 			),
 			

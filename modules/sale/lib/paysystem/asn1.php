@@ -110,7 +110,6 @@ class ASN1 {
      * @param string $value the value to encode
      * @param bool $primitive whether the object is of a primitive or
      * constructed type
-     * @param int $class
      * @return string the encoded object
      */
     static function encodeDER($type, $value = '', $primitive = true, $class = 0) {
@@ -153,9 +152,8 @@ class ASN1 {
     /**
      * Decodes a DER-encoded object identifier into a string.
      *
-     * @param $oid
-     * @return string $string the decoded string
-     * @internal param oid $string the binary DER-encoded object identifier
+     * @param $string oid the binary DER-encoded object identifier
+     * @return $string the decoded string
      */
     static function decodeOID($oid) {
         $pos = 0;
@@ -183,9 +181,8 @@ class ASN1 {
     /**
      * Encodes a string into a DER-encoded object identifier.
      *
-     * @param $str
-     * @return string $string the binary DER-encoded object identifier
-     * @internal param $string $str the object identifier string
+     * @param $string $str the object identifier string
+     * @return $string the binary DER-encoded object identifier
      */
     static function encodeOID($str) {
         $numbers = explode('.', $str);

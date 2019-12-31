@@ -110,8 +110,7 @@ class CAdminSubList extends CAdminList
 	 * @param bool|CAdminSubSorting $sort
 	 * @param string $list_url
 	 * @param bool|array $arHideHeaders
-	 *@return CAdminSubList
-*/
+	 */
 	function CAdminSubList($table_id, $sort = false, $list_url, $arHideHeaders = false)
 	{
 		global $APPLICATION;
@@ -697,6 +696,9 @@ function ReloadOffers()
 	function CheckListMode()
 	{
 		global $APPLICATION;
+
+		if (!isset($_REQUEST["mode"]))
+			return;
 
 		if ($_REQUEST["mode"]=='list' || $_REQUEST["mode"]=='frame')
 		{

@@ -49,15 +49,14 @@ class Context
 		$this->application = $application;
 	}
 
-    /**
-     * Initializes context by request and response objects.
-     *
-     * @param Request $request
-     * @param Response $response
-     * @param Server $server
-     * @param array $params
-     * @internal param Environment $env
-     */
+	/**
+	 * Initializes context by request and response objects.
+	 *
+	 * @param Request $request
+	 * @param Response $response
+	 * @param Server $server
+	 * @param Environment $env
+	 */
 	public function initialize(Request $request, Response $response = null, Server $server, array $params = array())
 	{
 		$this->request = $request;

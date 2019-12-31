@@ -343,10 +343,9 @@ class Binder
 		return $value;
 	}
 
-    /**
-     * @param array $listSourceParameters
-     * @return $this
-     */
+	/**
+	 * @param array $listSourceParameters
+	 */
 	public function setListSourceParameters($listSourceParameters)
 	{
 		$this->listSourceParameters = $listSourceParameters;

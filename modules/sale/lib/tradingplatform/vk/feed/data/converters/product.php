@@ -19,12 +19,11 @@ class Product extends DataConverter
 	const DESCRIPTION_LENGHT_MAX = 3300;	// it is not entirely accurate value, but in doc i can't find true info
 	const NAME_LENGHT_MIN = 4;
 	const NAME_LENGHT_MAX = 100;
-
-    /**
-     * Product constructor.
-     * @param $exportId - int ID of export
-     * @throws ArgumentNullException
-     */
+	
+	/**
+	 * Product constructor.
+	 * @param $exportId - int ID of export
+	 */
 	public function __construct($exportId)
 	{
 		if (!isset($exportId) || strlen($exportId) <= 0)
@@ -115,11 +114,11 @@ class Product extends DataConverter
 		$this->result["description"] = html_entity_decode($this->result["description"]);
 		$this->result["description"] = preg_replace('/\t*/', '', $this->result["description"]);
 		$this->result["description"] = strip_tags($this->result["description"]);
+		
 //		VK don't understand specialchars-quotes. Change them to the yolochki
 		$this->result["description"] = self::convertQuotes($this->result["description"]);
-
-//		validate LENGTH
 		$this->result['description'] = $this->validateDescription($this->result['description'], $logger);
+		
 		$this->result['NAME'] = self::convertQuotes($this->result['NAME']);
 		$this->result['NAME'] = $this->validateName($this->result['NAME'], $logger);
 //		VK don't understand specialchars-quotes. Change them to the yolochki
@@ -139,18 +138,18 @@ class Product extends DataConverter
 	{
 		$newName = $name;
 		
-		if (strlen($name) < self::NAME_LENGHT_MIN)
+		if (($length = self::matchLength($name)) < self::NAME_LENGHT_MIN)
 		{
-			$newName = str_pad($name, self::NAME_LENGHT_MIN, "_");
+			$newName = self::extendString($name, $length, self::NAME_LENGHT_MIN);
 			if ($logger)
 			{
 				$logger->addError('PRODUCT_SHORT_NAME', $this->result["BX_ID"]);
 			}
 		}
 		
-		if (strlen($name) > self::NAME_LENGHT_MAX)
+		if (($length = self::matchLength($name)) > self::NAME_LENGHT_MAX)
 		{
-			$newName = substr($name, 0, self::NAME_LENGHT_MAX - 1 - 4) . ' ...';
+			$newName = self::reduceString($name, $length, self::NAME_LENGHT_MAX);
 			if ($logger)
 			{
 				$logger->addError('PRODUCT_LONG_NAME', $this->result["BX_ID"]);
@@ -159,16 +158,15 @@ class Product extends DataConverter
 		
 		return $newName;
 	}
-
-
-    /**
-     * Valid length of description
-     *
-     * @param $desc
-     * @param Vk\Logger|NULL $logger
-     * @return string
-     * @internal param $name
-     */
+	
+	
+	/**
+	 * Valid length of description
+	 *
+	 * @param $name
+	 * @param Vk\Logger|NULL $logger
+	 * @return string
+	 */
 	private function validateDescription($desc, Vk\Logger $logger = NULL)
 	{
 		$newDesc = $desc;
@@ -179,7 +177,7 @@ class Product extends DataConverter
 			if (strlen($newDesc) < self::DESCRIPTION_LENGHT_MIN)
 			{
 				$newDesc = self::mb_str_pad($newDesc, self::DESCRIPTION_LENGHT_MIN, self::PAD_STRING);
-//				ending spase trim fix
+//				ending space trim fix
 				if ($newDesc[strlen($newDesc) - 1] == ' ')
 				{
 					$newDesc .= self::PAD_STRING;
@@ -390,7 +388,7 @@ class Product extends DataConverter
 		$result = array();
 		$result["BX_ID"] = $data["ID"];
 		$result["IBLOCK_ID"] = $data["IBLOCK_ID"];
-		$result["NAME"] = $data["NAME"];
+		$result["NAME"] = $data["~NAME"];
 		$result["SECTION_ID"] = $data["IBLOCK_SECTION_ID"];
 		$result["CATEGORY_VK"] = $this->sectionsList->getVkCategory($data["IBLOCK_SECTION_ID"]);
 

@@ -323,8 +323,7 @@ class FileDescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'message_type' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\DescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\DescriptorProto> $value
      */
     public function setMessageTypeList(\Protobuf\Collection $value = null)
     {
@@ -368,8 +367,7 @@ class FileDescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'enum_type' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\EnumDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\EnumDescriptorProto> $value
      */
     public function setEnumTypeList(\Protobuf\Collection $value = null)
     {
@@ -413,8 +411,7 @@ class FileDescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'service' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\ServiceDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\ServiceDescriptorProto> $value
      */
     public function setServiceList(\Protobuf\Collection $value = null)
     {
@@ -458,8 +455,7 @@ class FileDescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'extension' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\FieldDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\FieldDescriptorProto> $value
      */
     public function setExtensionList(\Protobuf\Collection $value = null)
     {

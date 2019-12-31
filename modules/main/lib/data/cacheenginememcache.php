@@ -15,31 +15,34 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 	private $read = false;
 	// unfortunately is not available for memcache...
 
-	protected $useLock = true;
+	protected $useLock = false;
 	protected $ttlMultiplier = 2;
 	protected static $locks = array();
 	protected $old = false;
 
 	/**
 	 * Engine constructor.
-	 *
+	 * @param array $options Cache options.
 	 */
-	function __construct()
+	function __construct($options = [])
 	{
-		$cacheConfig = Config\Configuration::getValue("cache");
+		$config = Config\Configuration::getValue("cache");
 
 		if (self::$memcache == null)
 		{
 			self::$memcache = new \Memcache;
-
-			$v = (isset($cacheConfig["memcache"]))? $cacheConfig["memcache"]: null;
+			$v = (isset($config["memcache"]))? $config["memcache"]: null;
 
 			if ($v != null && isset($v["host"]) && $v["host"] != "")
 			{
 				if ($v != null && isset($v["port"]))
+				{
 					$port = intval($v["port"]);
+				}
 				else
+				{
 					$port = 11211;
+				}
 
 				if (self::$memcache->pconnect($v["host"], $port))
 				{
@@ -48,28 +51,36 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 			}
 		}
 
-		if ($cacheConfig && is_array($cacheConfig))
+		if ($config && is_array($config))
 		{
-			if (isset($cacheConfig["use_lock"]))
+			if (isset($config["use_lock"]))
 			{
-				$this->useLock = (bool)$cacheConfig["use_lock"];
+				$this->useLock = !((bool)$config["use_lock"]);
 			}
 
-			if (isset($cacheConfig["sid"]) && ($cacheConfig["sid"] != ""))
+			if (isset($config["sid"]) && ($config["sid"] != ""))
 			{
-				$this->sid = $cacheConfig["sid"];
+				$this->sid = $config["sid"];
 			}
 
-			if (isset($cacheConfig["ttl_multiplier"]) && $this->useLock)
+			if (isset($config["ttl_multiplier"]) && $this->useLock)
 			{
-				$this->ttlMultiplier = (integer)$cacheConfig["ttl_multiplier"];
+				$this->ttlMultiplier = (integer)$config["ttl_multiplier"];
 			}
 		}
 
-		$this->sid .= ($this->useLock? 2: 3);
-
-		if (!$this->useLock)
+		if (!empty($options) && isset($options['actual_data']))
 		{
+			$this->useLock = !((bool)$options['actual_data']);
+		}
+
+		if ($this->useLock)
+		{
+			$this->sid .= 2;
+		}
+		else
+		{
+			$this->sid .= 3;
 			$this->ttlMultiplier = 1;
 		}
 	}
@@ -167,15 +178,16 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 		return false;
 	}
 
-    /**
-     * Releases the lock obtained by lock method.
-     *
-     * @param string $baseDir Base cache directory (usually /bitrix/cache).
-     * @param bool|string $initDir Directory within base.
-     * @param bool|string $key Calculated cache key.
-     * @param integer $TTL Expiration period in seconds.
-     * @return void
-     */
+	/**
+	 * Releases the lock obtained by lock method.
+	 *
+	 * @param string $baseDir Base cache directory (usually /bitrix/cache).
+	 * @param string $initDir Directory within base.
+	 * @param string $key Calculated cache key.
+	 * @param integer $TTL Expiration period in seconds.
+	 *
+	 * @return void
+	 */
 	protected function unlock($baseDir, $initDir = false, $key = false, $TTL = 0)
 	{
 		if ($key !== false)
@@ -214,14 +226,15 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 		}
 	}
 
-    /**
-     * Cleans (removes) cache directory or file.
-     *
-     * @param string $baseDir Base cache directory (usually /bitrix/cache).
-     * @param bool|string $initDir Directory within base.
-     * @param bool|string $filename File name.
-     * @return void
-     */
+	/**
+	 * Cleans (removes) cache directory or file.
+	 *
+	 * @param string $baseDir Base cache directory (usually /bitrix/cache).
+	 * @param string $initDir Directory within base.
+	 * @param string $filename File name.
+	 *
+	 * @return void
+	 */
 	function clean($baseDir, $initDir = false, $filename = false)
 	{
 		$key = false;
@@ -252,7 +265,9 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 					$this->getBaseDirVersion($baseDir, true);
 
 					if (self::$baseDirVersion[$baseDir] === false || self::$baseDirVersion[$baseDir] === '')
+					{
 						return;
+					}
 
 					$initDirKey = self::$baseDirVersion[$baseDir]."|".$initDir;
 					$initDirVersion = self::$memcache->get($initDirKey);
@@ -294,7 +309,9 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 		$this->getBaseDirVersion($baseDir);
 
 		if (self::$baseDirVersion[$baseDir] === false || self::$baseDirVersion[$baseDir] === '')
+		{
 			return false;
+		}
 
 		$initDirVersion = $this->getInitDirVersion($baseDir, $initDir);
 
@@ -302,6 +319,7 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 		if ($this->useLock)
 		{
 			$cachedData = self::$memcache->get($key);
+
 			if (!is_array($cachedData))
 			{
 				$cachedData = self::$memcache->get($key.'|old');
@@ -316,13 +334,12 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 				return false;
 			}
 
-			if ($this->old && $this->lock($baseDir, $initDir, $key."|old|~", $TTL))
+			if ($this->lock($baseDir, $initDir, $key."~", $TTL))
 			{
-				return false;
-			}
-			elseif ($cachedData["datecreate"] < (time() - $TTL) && $this->lock($baseDir, $initDir, $key."~", $TTL))
-			{
-				return false;
+				if ($this->old || $cachedData["datecreate"] < (time() - $TTL))
+				{
+					return false;
+				}
 			}
 
 			$allVars = $cachedData["content"];
@@ -383,9 +400,8 @@ class CacheEngineMemcache implements ICacheEngine, ICacheEngineStat
 		if ($this->useLock)
 		{
 			self::$memcache->set($key, array("datecreate" => $time, "content" => $allVars), 0, $exp);
-
+			self::$memcache->delete($key.'|old');
 			$this->unlock($baseDir, $initDir, $key."~", $TTL);
-			$this->unlock($baseDir, $initDir, $key."|old|~");
 		}
 		else
 		{

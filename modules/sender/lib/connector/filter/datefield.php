@@ -18,12 +18,12 @@ use Bitrix\Main\UserFieldTable;
  */
 class DateField extends AbstractField
 {
-    /**
-     * Fetch field value.
-     *
-     * @param $filterFields
-     * @return array
-     */
+	/**
+	 * Fetch field value.
+	 *
+	 * @param array $filterFields Filter fields.
+	 * @return array
+	 */
 	public function fetchFieldValue($filterFields)
 	{
 		$result = FilterOptions::fetchDateFieldValue(
@@ -71,8 +71,8 @@ class DateField extends AbstractField
 	public function applyFilter(array &$filter = array())
 	{
 		$filterKey = $this->getFilterKey();
-		$from = $this->getFrom();
-		$to = $this->getTo();
+		$from = $this->isMoreThanDaysAgo() ? null : $this->getFrom();
+		$to = $this->isAfterDays() ? null : $this->getTo();
 
 		if ($from)
 		{
@@ -200,19 +200,8 @@ class DateField extends AbstractField
 
 	private function getCustomDateData($key)
 	{
-		$key = $this->getId() . '_' . $key;
-		$value = $this->getValue();
-		if (!is_array($value) || count($value) === 0)
-		{
-			return [];
-		}
-
-		if (empty($value[$key]))
-		{
-			return [];
-		}
-
-		if (!is_array($value[$key]))
+		$value = $this->getDateDataByKey($key);
+		if (!$value || !is_array($value))
 		{
 			return [];
 		}
@@ -222,8 +211,35 @@ class DateField extends AbstractField
 			{
 				return (int) $item;
 			},
-			$value[$key]
+			$value
 		);
+	}
+
+	private function isMoreThanDaysAgo()
+	{
+		return $this->getDateDataByKey('datesel') === AdditionalDateType::MORE_THAN_DAYS_AGO;
+	}
+
+	private function isAfterDays()
+	{
+		return $this->getDateDataByKey('datesel') === AdditionalDateType::AFTER_DAYS;
+	}
+
+	private function getDateDataByKey($key)
+	{
+		$key = $this->getId() . '_' . $key;
+		$value = $this->getValue();
+		if (!is_array($value) || count($value) === 0)
+		{
+			return null;
+		}
+
+		if (empty($value[$key]))
+		{
+			return null;
+		}
+
+		return $value[$key];
 	}
 
 	private function getDate($defaultValue = null, $isFrom = true)

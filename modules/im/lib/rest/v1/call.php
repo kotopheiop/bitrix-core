@@ -165,12 +165,10 @@ class Call extends Engine\Controller
 		}
 	}
 
-    /**
-     * @param $callId
-     * @param $requestId
-     * @param bool $retransmit
-     * @return bool
-     */
+	/**
+	 * @param $callId
+	 * @return bool
+	 */
 	public function pingAction($callId, $requestId, $retransmit = true)
 	{
 		$currentUserId = $this->getCurrentUser()->getId();

@@ -14,12 +14,11 @@ class MessageFolder
 	const INCOME = 'income';
 	const OUTCOME = 'outcome';
 
-    /**
-     * @param $messageFolderHash
-     * @param array $mailboxOptions
-     * @return string
-     * @internal param array $message
-     */
+	/**
+	 * @param array $message
+	 * @param array $mailboxOptions
+	 * @return string
+	 */
 	public static function getFolderNameByHash($messageFolderHash, $mailboxOptions)
 	{
 		$folderName = '';

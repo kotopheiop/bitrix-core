@@ -8,11 +8,10 @@ namespace Bitrix\Sale\TradingPlatform;
  */
 class Xml2Array
 {
-    /**
-     * @param string $xmlData XML.
-     * @param bool $convertCharset
-     * @return array Converted.
-     */
+	/**
+	 * @param string $xmlData XML.
+	 * @return array Converted.
+	 */
 	public static function convert($xmlData, $convertCharset = true)
 	{
 		if(strlen($xmlData) <= 0)

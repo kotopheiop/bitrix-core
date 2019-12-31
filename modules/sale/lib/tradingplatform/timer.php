@@ -11,11 +11,10 @@ class Timer
 	protected $finishTime;
 	protected $timeLimit;
 
-    /**
-     * Constructor.
-     * @param int $newTimeLimit Timelimit seconds.
-     * @param bool $increaseTimeLimit
-     */
+	/**
+	 * Constructor.
+	 * @param int $newTimeLimit Timelimit seconds.
+	 */
 	public function __construct($newTimeLimit = 0, $increaseTimeLimit = true)
 	{
 		$startTime = (int)time();

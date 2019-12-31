@@ -52,8 +52,9 @@ interface Message
     /**
      * Encodes and writes the message
      *
-     * @param \Protobuf\ReadContext|\Protobuf\WriteContext $context
-     * @return Stream
+     * @param \Protobuf\ReadContext $context
+     *
+     * @return \Protobuf\Stream
      */
     public function writeTo(WriteContext $context);
 

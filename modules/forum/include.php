@@ -1526,9 +1526,8 @@ function ForumMoveMessage($FID, $TID, $Message, $NewTID = 0, $arFields, &$strErr
 
 /**
  * @param $num_cols
- * @param string $value
- * @return string
  * @deprecated
+ * @return string
  */
 function ForumPrintIconsList($num_cols, $value = "")
 {

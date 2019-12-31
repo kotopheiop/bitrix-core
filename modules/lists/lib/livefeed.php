@@ -737,13 +737,12 @@ class CListsLiveFeed
 		}
 	}
 
-    /**
-     * Called from popup
-     * @param string $entityType
-     * @param int $entityId
-     * $param array $comment
-     * @param $comment
-     */
+	/**
+	 * Called from popup
+	 * @param string $entityType
+	 * @param int $entityId
+	 * $param array $comment
+	 */
 	public static function OnForumCommentIMNotify($entityType, $entityId, $comment)
 	{
 		if ($entityType != "WF")

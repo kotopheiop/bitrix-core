@@ -142,11 +142,10 @@ class Helper
 		return $arDeliveryList;
 	}
 
-    /**
-     * @param int $personTypeId Person type Id.
-     * @return array Orders properties.
-     * @throws ArgumentNullException
-     */
+	/**
+	 * @param int $personTypeId Person type Id.
+	 * @return array Orders properties.
+	 */
 	public static function getOrderPropsList($personTypeId)
 	{
 		if(intval($personTypeId) <= 0)
@@ -294,12 +293,9 @@ class Helper
 		return $result;
 	}
 
-    /**
-     * @param $siteId
-     * @return array Order's statuses & flags.
-     * @throws ArgumentNullException
-     * @throws SystemException
-     */
+	/**
+	 * @return array Order's statuses & flags.
+	 */
 	public static function getBitrixStatuses($siteId)
 	{
 		$result = array(

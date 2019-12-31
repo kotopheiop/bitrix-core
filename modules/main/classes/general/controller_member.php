@@ -122,7 +122,7 @@ class CControllerClient
 		}
 
 		////////////////////////////////////////////////////////
-		/// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ\пїЅпїЅпїЅпїЅпїЅ
+		/// сравнивать не просто логин, а полностью\логин
 		/////////////////////////
 		if(is_array($arUser) && strtolower($arUser['LOGIN']) == strtolower($login))
 		{
@@ -995,12 +995,13 @@ class __CControllerPacket
 		}
 	}
 
-    /**
-     * Checks given parameters signature against $hash member.
-     * @return bool
-     * @internal param string $parameter Parameter to be checked
-     *
-     */
+	/**
+	 * Checks given parameters signature against $hash member.
+	 *
+	 * @param string $parameter,... Parameter to be checked
+	 *
+	 * @return boolean
+	 */
 	public function Check()
 	{
 		global $APPLICATION;
@@ -1021,13 +1022,14 @@ class __CControllerPacket
 		return true;
 	}
 
-    /**
-     * Returns signature for given parameters.
-     * Sets $hash member with calculated value.
-     * @return bool
-     * @internal param string $parameter Parameter to be checked
-     *
-     */
+	/**
+	 * Returns signature for given parameters.
+	 * Sets $hash member with calculated value.
+	 *
+	 * @param string $parameter,... Parameter to be checked
+	 *
+	 * @return boolean
+	 */
 	function Sign()
 	{
 		$hash = implode("|", func_get_args());
@@ -1037,15 +1039,15 @@ class __CControllerPacket
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ Request:
+// Базовый класс для классов типа Request:
 //
-// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
-// CControllerServerRequestTo - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-// CControllerServerRequestFrom - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// Для использования на контроллере:
+// CControllerServerRequestTo - Класс для отправки запроса клиенту
+// CControllerServerRequestFrom - Класс для получения запроса от клиента
 //
-// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
-// CControllerClientRequestTo - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-// CControllerClientRequestFrom - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// Для использования на клиенте:
+// CControllerClientRequestTo - Класс для отправки запроса на сервер
+// CControllerClientRequestFrom - Класс для получения запроса от сервера
 ///////////////////////////////////////////////////////////////////////////////////////////
 class __CControllerPacketRequest extends __CControllerPacket
 {
@@ -1053,10 +1055,10 @@ class __CControllerPacketRequest extends __CControllerPacket
 	protected $hostname = '';
 
 	///////////////////////////////////
-	//пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (CControllerClientRequestFrom, CControllerServerRequestFrom):
+	//Для работе в классах получающих результаты (CControllerClientRequestFrom, CControllerServerRequestFrom):
 	///////////////////////////////////
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ $_REQUEST
+	// заполняет объект переменными, пришедшими в $_REQUEST
 	public function InitFromRequest()
 	{
 		$this->member_id = $_REQUEST['member_id'];
@@ -1113,7 +1115,7 @@ class __CControllerPacketRequest extends __CControllerPacket
 	}
 
 	///////////////////////////////////////
-	// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (CControllerClientRequestTo, CControllerServerRequestTo):
+	// Для работы в классах отправляющих запросы (CControllerClientRequestTo, CControllerServerRequestTo):
 	///////////////////////////////////////
 
 	/**
@@ -1140,13 +1142,12 @@ class __CControllerPacketRequest extends __CControllerPacket
 		return $result;
 	}
 
-    /**
-     * Asks user browser to do redirect.
-     * And thus make a hit with all needed payload.
-     *
-     * @param $url
-     * @return void
-     */
+	/**
+	 * Asks user browser to do redirect.
+	 * And thus make a hit with all needed payload.
+	 *
+	 * @return void
+	 **/
 	public function RedirectRequest($url)
 	{
 		if(strpos($url, "?")>0)
@@ -1208,7 +1209,7 @@ class __CControllerPacketRequest extends __CControllerPacket
 			$bUseProxy = (strlen($proxy_url) > 0 && strlen($proxy_port) > 0);
 		}
 
-		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		// соединяемся с удаленным сервером
 		if ($bUseProxy)
 		{
 			$proxy_port = intval($proxy_port);
@@ -1326,15 +1327,15 @@ class __CControllerPacketRequest extends __CControllerPacket
 }
 
 /////////////////////////////////////////////////////////
-// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ Response:
+// Базовый класс для классов типа Response:
 //
-// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
-// CControllerServerResponseFrom - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-// CControllerServerResponseTo - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// Для использования на контроллере:
+// CControllerServerResponseFrom - Класс для получения ответа клиента на сервере
+// CControllerServerResponseTo - Класс для отправки результатов выполнения запроса назад на клиента
 //
-// пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ:
-// CControllerClientResponseFrom - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-// CControllerClientResponseTo - пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// Для использования на клиенте:
+// CControllerClientResponseFrom - Класс для получения ответа контроллера на клиенте
+// CControllerClientResponseTo - Класс для отправки результатов выполнения запроса назад на контроллер
 //////////////////////////////////////////////////////////
 class __CControllerPacketResponse extends __CControllerPacket
 {
@@ -1358,7 +1359,7 @@ class __CControllerPacketResponse extends __CControllerPacket
 	}
 
 	//////////////////////////////////////////////
-	// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (CControllerServerResponseFrom, CControllerClientResponseFrom):
+	// Методы для работы в классах принимающих результат (CControllerServerResponseFrom, CControllerClientResponseFrom):
 	//////////////////////////////////////////////
 
 	/**
@@ -1382,13 +1383,13 @@ class __CControllerPacketResponse extends __CControllerPacket
 		parent::Sign($this->status, $this->text, serialize($this->arParameters), $this->secret_id);
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	// Возвращает успешно ли выполнился запрос по статус его ответа
 	function OK()
 	{
 		return (substr($this->status, 0, 1)=="2");
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	// Разбирает строку ответа по полям объекта
 	function ParseResult($result)
 	{
 		global $APPLICATION;
@@ -1437,10 +1438,10 @@ class __CControllerPacketResponse extends __CControllerPacket
 
 
 	///////////////////////////////////////
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (CControllerServerResponseTo, CControllerClientResponseTo):
+	// Базовые методы для использования в классах отправляющих результат (CControllerServerResponseTo, CControllerClientResponseTo):
 	///////////////////////////////////////
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	// возвращает отформатированную строку ответа в формате понятном для приема на сервере, с подписью
 	function GetResponseBody($log = false)
 	{
 		$result = "status=".urlencode($this->status).
@@ -1468,7 +1469,7 @@ class __CControllerPacketResponse extends __CControllerPacket
 		return $result;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	// отправляет ответ обратно
 	function Send()
 	{
 		if ($this->isDebugEnabled())
@@ -1487,7 +1488,7 @@ class __CControllerPacketResponse extends __CControllerPacket
 	}
 }
 
-// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+// Класс для отправки запроса на сервер
 class CControllerClientRequestTo extends __CControllerPacketRequest
 {
 	var $debug_const = "CONTROLLER_CLIENT_DEBUG";
@@ -1534,7 +1535,7 @@ class CControllerClientRequestTo extends __CControllerPacketRequest
 }
 
 
-// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+// Класс получения результата на клиенте (от контроллера)
 class CControllerClientResponseFrom extends __CControllerPacketResponse
 {
 	var $debug_const = "CONTROLLER_CLIENT_DEBUG";
@@ -1580,7 +1581,7 @@ class CControllerClientRequestFrom extends __CControllerPacketRequest
 }
 
 
-// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+// Класс для отсылки ответа на сервер
 class CControllerClientResponseTo extends __CControllerPacketResponse
 {
 	var $debug_const = "CONTROLLER_CLIENT_DEBUG";

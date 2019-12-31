@@ -270,7 +270,7 @@ class CDeliveryRUSSIANPOST
 			$arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE."=".urlencode($arProfile[$profile]);
 			$arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_PROFILE_NAME.'='.urlencode(GetMessage("SALE_DH_RUSSIANPOST_".ToUpper($profile)));
 			$arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY."=643";
-			$arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY_NAME.'='.urlencode($GLOBALS['APPLICATION']->ConvertCharset('ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', LANG_CHARSET, 'utf-8'));
+			$arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_COUNTRY_NAME.'='.urlencode($GLOBALS['APPLICATION']->ConvertCharset('Ðîññèéñêàÿ Ôåäåðàöèÿ', LANG_CHARSET, 'utf-8'));
 
 			$arQuery[] = DELIVERY_RUSSIANPOST_SERVER_POST_WEIGHT."=".urlencode($arOrder["WEIGHT"]);
 
@@ -414,9 +414,9 @@ class CDeliveryRUSSIANPOST
 		$arLocationFrom = CSaleHelper::getLocationByIdHitCached($arOrder["LOCATION_FROM"]);
 
 		if (
-			ToUpper($arLocationFrom["CITY_NAME_ORIG"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
-			|| ToUpper($arLocationFrom["CITY_SHORT_NAME"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
-			|| ToUpper($arLocationFrom["CITY_NAME_LANG"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
+			ToUpper($arLocationFrom["CITY_NAME_ORIG"]) == "ÌÎÑÊÂÀ"
+			|| ToUpper($arLocationFrom["CITY_SHORT_NAME"]) == "ÌÎÑÊÂÀ"
+			|| ToUpper($arLocationFrom["CITY_NAME_LANG"]) == "ÌÎÑÊÂÀ"
 			|| ToUpper($arLocationFrom["CITY_NAME_ORIG"]) == "MOSCOW"
 			|| ToUpper($arLocationFrom["CITY_SHORT_NAME"]) == "MOSCOW"
 			|| ToUpper($arLocationFrom["CITY_NAME_LANG"]) == "MOSCOW"
@@ -441,15 +441,15 @@ class CDeliveryRUSSIANPOST
 	function __IsRussian($arLocation)
 	{
 		return
-			(ToUpper($arLocation["COUNTRY_NAME_ORIG"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
-			|| ToUpper($arLocation["COUNTRY_SHORT_NAME"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
-			|| ToUpper($arLocation["COUNTRY_NAME_LANG"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
+			(ToUpper($arLocation["COUNTRY_NAME_ORIG"]) == "ÐÎÑÑÈß"
+			|| ToUpper($arLocation["COUNTRY_SHORT_NAME"]) == "ÐÎÑÑÈß"
+			|| ToUpper($arLocation["COUNTRY_NAME_LANG"]) == "ÐÎÑÑÈß"
 			|| ToUpper($arLocation["COUNTRY_NAME_ORIG"]) == "RUSSIA"
 			|| ToUpper($arLocation["COUNTRY_SHORT_NAME"]) == "RUSSIA"
 			|| ToUpper($arLocation["COUNTRY_NAME_LANG"]) == "RUSSIA"
-			|| ToUpper($arLocation["COUNTRY_NAME_ORIG"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
-			|| ToUpper($arLocation["COUNTRY_SHORT_NAME"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
-			|| ToUpper($arLocation["COUNTRY_NAME_LANG"]) == "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"
+			|| ToUpper($arLocation["COUNTRY_NAME_ORIG"]) == "ÐÎÑÑÈÉÑÊÀß ÔÅÄÅÐÀÖÈß"
+			|| ToUpper($arLocation["COUNTRY_SHORT_NAME"]) == "ÐÎÑÑÈÉÑÊÀß ÔÅÄÅÐÀÖÈß"
+			|| ToUpper($arLocation["COUNTRY_NAME_LANG"]) == "ÐÎÑÑÈÉÑÊÀß ÔÅÄÅÐÀÖÈß"
 			|| ToUpper($arLocation["COUNTRY_NAME_ORIG"]) == "RUSSIAN FEDERATION"
 			|| ToUpper($arLocation["COUNTRY_SHORT_NAME"]) == "RUSSIAN FEDERATION"
 			|| ToUpper($arLocation["COUNTRY_NAME_LANG"]) == "RUSSIAN FEDERATION"
@@ -468,11 +468,10 @@ class CDeliveryRUSSIANPOST
 		}
 	}
 
-    /**
-     * @param $data
-     * @param $method
-     * @return \Bitrix\Main\Entity\Result
-     */
+	/**
+	 * @param $data
+	 * @return \Bitrix\Main\Entity\Result
+	 */
 	protected static function sendRequestData($data, $method)
 	{
 		$result = new \Bitrix\Main\Entity\Result();

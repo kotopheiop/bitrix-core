@@ -1193,23 +1193,18 @@ class Manager
 	 * Deprecated methods. Will be removed in future versions.
 	 */
 
-    /**
-     * @deprecated  use \Bitrix\Sale\Delivery\Services\Manager::calculateDeliveryPrice()
-     * @param Shipment $shipment
-     * @return CalculationResult
-     */
+	/**
+	 * @deprecated  use \Bitrix\Sale\Delivery\Services\Manager::calculateDeliveryPrice()
+	 */
 	public static function calculate(Shipment $shipment)
 	{
 		$delivery = self::getObjectById($shipment->getDeliveryId());
 		return $delivery->calculate($shipment);
 	}
 
-    /**
-     * @deprecated will be remove in next versions
-     * @param $className
-     * @return mixed
-     * @throws SystemException
-     */
+	/**
+	 * @deprecated will be remove in next versions
+	 */
 	public static function getRestrictionObject($className)
 	{
 		if(!class_exists($className))
@@ -1229,33 +1224,25 @@ class Manager
 		return  $restriction;
 	}
 
-    /**
-     * @deprecated use Restrictions\Manager::checkService()
-     * @param $deliveryId
-     * @param Shipment $shipment
-     * @param array $restrictionsClassesToSkip
-     * @return bool
-     */
+	/**
+	 * @deprecated use Restrictions\Manager::checkService()
+	 */
 	public static function checkServiceRestrictions($deliveryId, Shipment $shipment, $restrictionsClassesToSkip = array())
 	{
 		return Restrictions\Manager::checkService($deliveryId, $shipment) == Restrictions\Manager::SEVERITY_NONE;
 	}
 
-    /**
-     * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getRestrictedObjectsList()
-     * @param Shipment $shipment
-     * @return Base[]
-     */
+	/**
+	 * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getRestrictedObjectsList()
+	 */
 	public static function getServicesForShipment(Shipment $shipment)
 	{
 		return self::getRestrictedObjectsList($shipment);
 	}
 
-    /**
-     * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::isServiceExist()
-     * @param $deliveryId
-     * @return bool
-     */
+	/**
+	 * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::isServiceExist()
+	 */
 	public static function isExistService($deliveryId)
 	{
 		return self::isServiceExist($deliveryId);
@@ -1269,43 +1256,33 @@ class Manager
 		return self::getActiveList();
 	}
 
-    /**
-     * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getRestrictedList()
-     * @param Shipment|null $shipment
-     * @param array $skipChecks
-     * @param bool $getAll
-     * @return array
-     */
+	/**
+	 * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getRestrictedList()
+	 */
 	public static function getServicesBriefsForShipment(Shipment $shipment = null, array $skipChecks = array(), $getAll = false)
 	{
 		return self::getRestrictedList($shipment, Restrictions\Manager::MODE_CLIENT, $skipChecks);
 	}
 
-    /**
-     * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::createObject()
-     * @param array $srvParams
-     * @return Base|null
-     */
+	/**
+	 * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::createObject()
+	 */
 	public static function createServiceObject(array $srvParams)
 	{
 		return self::createObject($srvParams);
 	}
 
-    /**
-     * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getObjectById()
-     * @param $deliveryId
-     * @return Base
-     */
+	/**
+	 * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getObjectById()
+	 */
 	public static function getService($deliveryId)
 	{
 		return self::getObjectById($deliveryId);
 	}
 
-    /**
-     * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getServiceByCode()
-     * @param $serviceCode
-     * @return Base
-     */
+	/**
+	 * @deprecated use \Bitrix\Sale\Delivery\Services\Manager::getServiceByCode()
+	 */
 	public static function getServiceByCode($serviceCode)
 	{
 		return self::getObjectByCode($serviceCode);
@@ -1327,11 +1304,9 @@ class Manager
 		return Restrictions\Manager::getClassesList();
 	}
 
-    /**
-     * @deprecated use Restrictions\Manager::getRestrictionsList()
-     * @param $deliveryId
-     * @return array
-     */
+	/**
+	 * @deprecated use Restrictions\Manager::getRestrictionsList()
+	 */
 	public static function getRestrictionsByDeliveryId($deliveryId)
 	{
 		return Restrictions\Manager::getRestrictionsList($deliveryId);

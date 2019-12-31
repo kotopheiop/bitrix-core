@@ -420,13 +420,7 @@ abstract class Base
 		return $html;
 	}
 
-    /**
-     * @param $name
-     * @param array $input
-     * @param $value
-     * @return string
-     * @throws SystemException
-     */
+	/** @return string */
 	public static function getEditHtmlSingle($name, array $input, $value)
 	{
 		throw new SystemException("you must implement [getEditHtmlSingle] or override [getEditHtml] in yor class", 0, __FILE__, __LINE__);
@@ -600,13 +594,7 @@ abstract class Base
 		}
 	}
 
-    /** @deprecated
-     * @param array $input
-     * @param array $boolean
-     * @param array $other
-     * @param bool $withGlobal
-     * @return string
-     */
+	/** @deprecated */
 	protected static function extractAttributes(array $input, array $boolean, array $other, $withGlobal = true)
 	{
 		$string = '';
@@ -954,9 +942,13 @@ class Enum extends Base
 		foreach ($array as $key => $value)
 		{
 			if (is_array($value))
-				$result = array_merge($result, $value);
+			{
+				$result = $result + $value;
+			}
 			else
+			{
 				$result[$key] = $value;
+			}
 		}
 
 		return $result;
@@ -1220,10 +1212,7 @@ class File extends Base
 		return $multiple ? $value : reset($value);
 	}
 
-    /** deprecated
-     * @param $file
-     * @return array|bool
-     */
+	/** deprecated */
 	static function loadInfoSingle($file)
 	{
 		if (is_array($file))

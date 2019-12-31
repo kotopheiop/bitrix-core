@@ -4,12 +4,7 @@ $GLOBALS["BLOG_SITE_PATH"] = Array();
 
 class CAllBlogSitePath
 {
-    /*************** ADD, UPDATE, DELETE ****************
-     * @param $ACTION
-     * @param $arFields
-     * @param int $ID
-     * @return bool
-     */
+	/*************** ADD, UPDATE, DELETE *****************/
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 /*

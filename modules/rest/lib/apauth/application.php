@@ -39,14 +39,14 @@ class Application extends \Bitrix\Main\Authentication\Application
 		);
 	}
 
-    /**
-     * Generates AP for REST access.
-     *
-     * @param string $siteTitle Site title for AP description.
-     *
-     * @param array $scopeList
-     * @return bool|string password or false
-     */
+	/**
+	 * Generates AP for REST access.
+	 *
+	 * @param string $siteTitle Site title for AP description.
+	 *
+	 * @return bool|string password or false
+	 * @throws \Exception
+	 */
 	public static function generateAppPassword($siteTitle, array $scopeList)
 	{
 		global $USER;

@@ -170,7 +170,7 @@ class Formatter
 		{
 			foreach ($leadingDigits as $leadingDigitsSample)
 			{
-				$re = '/^' . $leadingDigitsSample . '/';
+				$re = '/' . $leadingDigitsSample . '/A';
 				if(preg_match($re, $phoneNumber, $matches))
 				{
 					return $matches;
@@ -179,7 +179,7 @@ class Formatter
 		}
 		else
 		{
-			$re = '/^' . $leadingDigits . '/';
+			$re = '/' . $leadingDigits . '/A';
 			if(preg_match($re, $phoneNumber, $matches))
 			{
 				return $matches;
@@ -336,15 +336,15 @@ class Formatter
 		return is_array($mainCountryMetadata['availableFormats']) ? $mainCountryMetadata['availableFormats'] : array();
 	}
 
-    /**
-     * National prefix is supported by the format if:
-     * 1.    Format and country metadata do not have nationalPrefixFormattingRule.
-     * 2. OR Format or country metadata contains nationalPrefixFormattingRule and this formatting rule contains "$NP"
-     * @param array $format
-     * @param array $countryMetadata
-     * @return bool {boolean}
-     * @private
-     */
+	/**
+	 * National prefix is supported by the format if:
+	 * 1.    Format and country metadata do not have nationalPrefixFormattingRule.
+	 * 2. OR Format or country metadata contains nationalPrefixFormattingRule and this formatting rule contains "$NP"
+	 * @param array $format
+	 * @param array $countryMetadata
+	 * @returns {boolean}
+	 * @private
+	 */
 	protected static function _isNationalPrefixSupported($format, $countryMetadata)
 	{
 		$nationalPrefixFormattingRule = static::getNationalPrefixFormattingRule($format, $countryMetadata);

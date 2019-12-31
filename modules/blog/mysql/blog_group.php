@@ -3,10 +3,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/general/blog_group.
 
 class CBlogGroup extends CAllBlogGroup
 {
-    /*************** ADD, UPDATE, DELETE ****************
-     * @param $arFields
-     * @return bool|int
-     */
+	/*************** ADD, UPDATE, DELETE *****************/
 	function Add($arFields)
 	{
 		global $DB;
@@ -99,9 +96,11 @@ class CBlogGroup extends CAllBlogGroup
 	function GetList($arOrder = Array("ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
 	{
 		global $DB;
-
-		if (count($arSelectFields) <= 0)
+		
+		if (!is_array($arSelectFields) || count($arSelectFields) <= 0)
+		{
 			$arSelectFields = array("ID", "NAME", "SITE_ID");
+		}
 
 		// FIELDS -->
 		$arFields = array(
@@ -168,7 +167,7 @@ class CBlogGroup extends CAllBlogGroup
 			}
 			else
 			{
-				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ MYSQL!!! ï¿½ï¿½ï¿½ ORACLE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+				// ÒÎËÜÊÎ ÄËß MYSQL!!! ÄËß ORACLE ÄÐÓÃÎÉ ÊÎÄ
 				$cnt = $dbRes->SelectedRowsCount();
 			}
 

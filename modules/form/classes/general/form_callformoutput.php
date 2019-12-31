@@ -405,15 +405,14 @@ class CAllFormOutput extends CFormOutput_old
 			return "[]";
 	}
 
-    /**
-     * Public method used to put input field title to template
-     * Use: <?=$FORM->ShowInputCaption('MYFIELD_5')?>
-     *
-     * @param string $FIELD_SID
-     * @param string $css_style
-     * @return string
-     * @internal param string $caption_css_class
-     */
+	/**
+	 * Public method used to put input field title to template
+	 * Use: <?=$FORM->ShowInputCaption('MYFIELD_5')?>
+	 *
+	 * @param string $FIELD_SID
+	 * @param string $caption_css_class
+	 * @return string
+	 */
 	function ShowInputCaption($FIELD_SID, $css_style = "")
 	{
 		$ret = "";
@@ -468,25 +467,22 @@ class CAllFormOutput extends CFormOutput_old
 	}
 
 
-    /**
-     * Public method used to put question image if exists onto form
-     * Use: <?=$FORM->ShowInputCaptionImage('MYFIELD_5', 50, 50, "hspace=\"0\" vspace=\"0\" align=\"left\" border=\"0\"", "", true, GetMessage("FORM_ENLARGE"))?>
-     * params like CFile::ShowImage()
-     * Returns image code if image exists and empty string otherwise
-     *
-     * @param string $FIELD_SID
-     * @param string $sAlign
-     * @param int|string $iMaxW
-     * @param int|string $iMaxH
-     * @param bool|string $bPopup
-     * @param string $strPopupTitle
-     * @param string $sHSpace
-     * @param string $sVSpace
-     * @param string $sBorder
-     * @return string
-     * @internal param string $sParams
-     * @internal param string $strImageUrl
-     */
+	/**
+	 * Public method used to put question image if exists onto form
+	 * Use: <?=$FORM->ShowInputCaptionImage('MYFIELD_5', 50, 50, "hspace=\"0\" vspace=\"0\" align=\"left\" border=\"0\"", "", true, GetMessage("FORM_ENLARGE"))?>
+	 * params like CFile::ShowImage()
+	 * Returns image code if image exists and empty string otherwise
+	 *
+	 * @param string $FIELD_SID
+	 * @param int $iMaxW
+	 * @param int $iMaxH
+	 * @param string $sParams
+	 * @param string $strImageUrl
+	 * @param bool $bPopup
+	 * @param string $strPopupTitle
+
+	 * @return string
+	 */
 	function ShowInputCaptionImage($FIELD_SID, $sAlign = "", $iMaxW="", $iMaxH="", $bPopup="N", $strPopupTitle="", $sHSpace = "", $sVSpace = "", $sBorder = "")
 	{
 		if ($this->isInputCaptionImage($FIELD_SID))
@@ -874,14 +870,12 @@ class CAllFormOutput extends CFormOutput_old
 		return $this->ShowCaptchaImage()."<br />".$this->ShowCaptchaField();
 	}
 
-    /**
-     * Public method used to put submit button onto form.
-     * Use: <?=$FORM->ShowSubmitButton()?>
-     *
-     * @param string $caption
-     * @param string $css_style
-     * @return string
-     */
+	/**
+	 * Public method used to put submit button onto form.
+	 * Use: <?=$FORM->ShowSubmitButton()?>
+	 *
+	 * @return string
+	 */
 	function ShowSubmitButton($caption = "", $css_style = "")
 	{
 		$button_value = strlen(trim($caption)) > 0 ? trim($caption) : (strlen(trim($this->arForm["BUTTON"]))<=0 ? GetMessage("FORM_ADD") : $this->arForm["BUTTON"]);
@@ -889,14 +883,12 @@ class CAllFormOutput extends CFormOutput_old
 		return "<input ".(intval($this->F_RIGHT)<10 ? "disabled" : "")." type=\"submit\" name=\"web_form_submit\" value=\"".htmlspecialcharsbx($button_value)."\"".(!empty($css_style) ? " class=\"".$css_style."\"" : "")." />";
 	}
 
-    /**
-     * Public method used to put apply button onto form.
-     * Use: <?=$FORM->ShowApplyButton()?>
-     *
-     * @param string $caption
-     * @param string $css_style
-     * @return string
-     */
+	/**
+	 * Public method used to put apply button onto form.
+	 * Use: <?=$FORM->ShowApplyButton()?>
+	 *
+	 * @return string
+	 */
 	function ShowApplyButton($caption = "", $css_style = "")
 	{
 		$button_value = strlen(trim($caption)) > 0 ? trim($caption) : GetMessage("FORM_APPLY");
@@ -904,14 +896,12 @@ class CAllFormOutput extends CFormOutput_old
 		return "<input type=\"hidden\" name=\"web_form_apply\" value=\"Y\" /><input ".((intval($this->F_RIGHT)<10) ? "disabled" : "")." type=\"submit\" name=\"web_form_apply\" value=\"".htmlspecialcharsbx($button_value)."\"".(!empty($css_style) ? " class=\"".$css_style."\"" : "")." />";
 	}
 
-    /**
-     * Public method used to put reset button onto form.
-     * Use: <?=$FORM->ShowResetButton()?>
-     *
-     * @param string $caption
-     * @param string $css_style
-     * @return string
-     */
+	/**
+	 * Public method used to put reset button onto form.
+	 * Use: <?=$FORM->ShowResetButton()?>
+	 *
+	 * @return string
+	 */
 	function ShowResetButton($caption = "", $css_style = "")
 	{
 		$button_value = strlen(trim($caption)) > 0 ? trim($caption) : GetMessage("FORM_RESET");
@@ -919,13 +909,12 @@ class CAllFormOutput extends CFormOutput_old
 		return "<input type=\"reset\" value=\"".htmlspecialcharsbx($button_value)."\"".(!empty($css_style) ? " class=\"".$css_style."\"" : "")." />";
 	}
 
-    /**
-     * Public method used to put form description onto form page
-     * Use: <?=$FORM->ShowFormDescription()?>
-     *
-     * @param string $css_style
-     * @return string
-     */
+	/**
+	 * Public method used to put form description onto form page
+	 * Use: <?=$FORM->ShowFormDescription()?>
+	 *
+	 * @return string
+	 */
 	function ShowFormDescription($css_style = "")
 	{
 		$ret = $this->arForm["DESCRIPTION_TYPE"] == "html" ? trim($this->arForm["DESCRIPTION"]) : nl2br(htmlspecialcharsbx(trim($this->arForm["DESCRIPTION"])));
@@ -945,23 +934,19 @@ class CAllFormOutput extends CFormOutput_old
 		return strlen(trim($this->arForm["DESCRIPTION"])) > 0;
 	}
 
-    /**
-     * Public: shows form image; params like CFile::ShowImage()
-     * Use: <?=$FORM->ShowFormImage(250, 250, "hspace=\"0\" vspace=\"0\" align=\"left\" border=\"0\"", "", true, GetMessage("FORM_ENLARGE"))?>
-     * Returns image code if image exists and empty string otherwise
-     *
-     * @param string $sAlign
-     * @param int|string $iMaxW
-     * @param int|string $iMaxH
-     * @param bool|string $bPopup
-     * @param mixed $strPopupTitle
-     * @param string $sHSpace
-     * @param string $sVSpace
-     * @param string $sBorder
-     * @return string
-     * @internal param string $sParams
-     * @internal param string $strImageUrl
-     */
+	/**
+	 * Public: shows form image; params like CFile::ShowImage()
+	 * Use: <?=$FORM->ShowFormImage(250, 250, "hspace=\"0\" vspace=\"0\" align=\"left\" border=\"0\"", "", true, GetMessage("FORM_ENLARGE"))?>
+	 * Returns image code if image exists and empty string otherwise
+	 *
+	 * @param int $iMaxW
+	 * @param int $iMaxH
+	 * @param string $sParams
+	 * @param string $strImageUrl
+	 * @param bool $bPopup
+	 * @param mixed $strPopupTitle
+	 * @return string
+	 */
 	//function ShowFormImage($iMaxW=0, $iMaxH=0, $sParams="border=\"0\"", $strImageUrl="", $bPopup=false, $strPopupTitle=false)
 	function ShowFormImage($sAlign = "", $iMaxW="", $iMaxH="", $bPopup="N", $strPopupTitle="", $sHSpace = "", $sVSpace = "", $sBorder = "")
 	{
@@ -1002,12 +987,11 @@ class CAllFormOutput extends CFormOutput_old
 		return intval($this->arForm["IMAGE_ID"])>0;
 	}
 
-    /**
-     * Public: shows current form title
-     *
-     * @param string $css_style
-     * @return string
-     */
+	/**
+	 * Public: shows current form title
+	 *
+	 * @return string
+	 */
 	function ShowFormTitle($css_style = "")
 	{
 		$ret = trim(htmlspecialcharsbx($this->arForm["NAME"]));

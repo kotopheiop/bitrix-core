@@ -101,12 +101,12 @@ class BlacklistTable extends Entity\DataManager
 		}
 	}
 
-    /**
-     * @param array $list
-     * @param null $userId
-     * @return int
-     * @internal param array $mailbox
-     */
+	/**
+	 * @param array $list
+	 * @param array $mailbox
+	 * @return int
+	 * @throws \Bitrix\Main\Db\SqlQueryException
+	 */
 	public static function addMailsBatch(array $list, $userId = null)
 	{
 		if (empty($list))

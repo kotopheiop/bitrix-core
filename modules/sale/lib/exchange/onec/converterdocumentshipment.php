@@ -133,12 +133,11 @@ class ConverterDocumentShipment extends Converter
 		return $result;
 	}
 
-    /**
-     * @param Shipment|null $shipment
-     * @param array $fields
-     * @param ISettings $settings
-     * @throws ArgumentException
-     */
+	/**
+	 * @param Shipment|null $shipment
+	 * @param array $fields
+	 * @throws ArgumentException
+	 */
 	static public function sanitizeFields($shipment=null, array &$fields, ISettings $settings)
 	{
 		if(!empty($shipment) && !($shipment instanceof Shipment))

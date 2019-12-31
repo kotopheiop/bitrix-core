@@ -147,8 +147,7 @@ class DescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'field' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\FieldDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\FieldDescriptorProto> $value
      */
     public function setFieldList(\Protobuf\Collection $value = null)
     {
@@ -192,8 +191,7 @@ class DescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'extension' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\FieldDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\FieldDescriptorProto> $value
      */
     public function setExtensionList(\Protobuf\Collection $value = null)
     {
@@ -237,8 +235,7 @@ class DescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'nested_type' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\DescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\DescriptorProto> $value
      */
     public function setNestedTypeList(\Protobuf\Collection $value = null)
     {
@@ -282,8 +279,7 @@ class DescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'enum_type' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\EnumDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\EnumDescriptorProto> $value
      */
     public function setEnumTypeList(\Protobuf\Collection $value = null)
     {
@@ -327,8 +323,7 @@ class DescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'extension_range' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\DescriptorProto\ExtensionRange> $value
+     * @param \Protobuf\Collection<\google\protobuf\DescriptorProto\ExtensionRange> $value
      */
     public function setExtensionRangeList(\Protobuf\Collection $value = null)
     {
@@ -372,8 +367,7 @@ class DescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'oneof_decl' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\OneofDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\OneofDescriptorProto> $value
      */
     public function setOneofDeclList(\Protobuf\Collection $value = null)
     {
@@ -447,8 +441,7 @@ class DescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'reserved_range' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\DescriptorProto\ReservedRange> $value
+     * @param \Protobuf\Collection<\google\protobuf\DescriptorProto\ReservedRange> $value
      */
     public function setReservedRangeList(\Protobuf\Collection $value = null)
     {

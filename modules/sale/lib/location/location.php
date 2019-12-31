@@ -31,14 +31,15 @@ final class LocationTable extends Tree
 		return 'b_sale_location';
 	}
 
-    /**
-     * Returns location with the specified code.
-     *
-     * @param string $code location code to search for
-     *
-     * @param array $parameters
-     * @return Bitrix\Main\DB\Result
-     */
+	/**
+	* Returns location with the specified code.
+	*
+	* @param string $code location code to search for
+	*
+	* @throws Bitrix\Main\ArgumentNullException
+	*
+	* @return Bitrix\Main\DB\Result location
+	*/
 	public static function getByCode($code = '', $parameters = array())
 	{
 		$code = Assert::expectStringNotNull($code, '$code');
@@ -307,13 +308,11 @@ final class LocationTable extends Tree
 		return $delResult;
 	}
 
-    /**
-     *
-     *
-     * @param $primary
-     * @param array $parameters
-     * @return
-     */
+	/**
+	*
+	*
+	*
+	*/
 	public static function getExternalData($primary, $parameters = array())
 	{
 		$primary = Assert::expectIntegerPositive($primary, '$primary');
@@ -328,16 +327,12 @@ final class LocationTable extends Tree
 
 	// todo: make getList with SITE_ID parameter to have an ability to filter by SITE_ID using orm (even slowly)
 
-    /**
-     * Fetches a parent chain of a specified node, using its code
-     *
-     * Available keys in $behaviour
-     * SHOW_LEAF : if set to true, return node itself in the result
-     * @param $code
-     * @param $parameters
-     * @param array $behaviour
-     * @return
-     */
+	/**
+	 * Fetches a parent chain of a specified node, using its code
+	 * 
+	 * Available keys in $behaviour
+	 * SHOW_LEAF : if set to true, return node itself in the result
+	 */
 	public static function getPathToNodeByCode($code, $parameters, $behaviour = array('SHOW_LEAF' => true))
 	{
 		$code = Assert::expectStringNotNull($code, '$code');
@@ -581,11 +576,9 @@ final class LocationTable extends Tree
 		);
 	}
 
-    /**
-     * @deprecated
-     * @param array $parameters
-     * @return DB\ArrayResult|DB\Result
-     */
+	/**
+	 * @deprecated
+	 */
 	public static function getListFast($parameters = array())
 	{
 		// here $parameters conversion required

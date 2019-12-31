@@ -135,9 +135,7 @@ class CDBResult extends CDBResultMysql
 		parent::__construct($res);
 	}
 
-    /** @deprecated
-     * @param null $res
-     */
+	/** @deprecated */
 	public function CDBResult($res = null)
 	{
 		self::__construct($res);

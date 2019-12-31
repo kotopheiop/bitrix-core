@@ -20,14 +20,9 @@
  */
 class WLL_User
 {
-    /**
-     * Initialize the User with time stamp, userid, flags, context and token.
-     * @param $timestamp
-     * @param $id
-     * @param $flags
-     * @param $context
-     * @param $token
-     */
+	/**
+    * Initialize the User with time stamp, userid, flags, context and token.
+    */
 	public function __construct($timestamp, $id, $flags, $context, $token)
 	{
 		WLL_User::setTimestamp($timestamp);
@@ -49,9 +44,8 @@ class WLL_User
 		return $this->_timestamp;
 	}
 
-    /**
+	/**
      * Sets the Unix timestamp.
-     * @param $timestamp
      */
 	/*private*/
 	function setTimestamp($timestamp)
@@ -83,9 +77,8 @@ class WLL_User
 		return $this->_id;
 	}
 
-    /**
+	/**
      * Sets the pairwise unique ID for the user.
-     * @param $id
      */
 	/*private*/
 	function setId($id)
@@ -118,9 +111,8 @@ class WLL_User
 		return $this->_usePersistentCookie;
 	}
 
-    /**
+	/**
      * Sets the usePersistentCookie flag for the user.
-     * @param $flags
      */
 	/*private*/
 	function setFlags($flags)
@@ -144,9 +136,8 @@ class WLL_User
 		return $this->_context;
 	}
 
-    /**
+	/**
      * Sets the the Application context.
-     * @param $context
      */
 	/*private*/
 	function setContext($context)
@@ -168,9 +159,8 @@ class WLL_User
 		return $this->_token;
 	}
 
-    /**
+	/**
      * Sets the the User token.
-     * @param $token
      */
 	/*private*/
 	function setToken($token)
@@ -233,20 +223,10 @@ class WLL_ConsentToken
 	/*private*/
 	var $_wll;
 
-    /**
+	/**
      * Initialize the ConsentToken module with the WindowsLiveLogin,
      * delegation token, refresh token, session key, expiry, offers,
      * location ID, context, decoded token, and raw token.
-     * @param $wll
-     * @param $delegationtoken
-     * @param $refreshtoken
-     * @param $sessionkey
-     * @param $expiry
-     * @param $offers
-     * @param $locationID
-     * @param $context
-     * @param $decodedtoken
-     * @param $token
      */
 	public function __construct(
 						$wll, $delegationtoken, $refreshtoken,
@@ -278,9 +258,8 @@ class WLL_ConsentToken
 		return $this->_delegationtoken;
 	}
 
-    /**
+	/**
      * Sets the Delegation token.
-     * @param $delegationtoken
      */
 	/*private*/
 	function setDelegationToken($delegationtoken)
@@ -305,9 +284,8 @@ class WLL_ConsentToken
 		return $this->_refreshtoken;
 	}
 
-    /**
+	/**
      * Sets the refresh token.
-     * @param $refreshtoken
      */
 	/*private*/
 	function setRefreshToken($refreshtoken)
@@ -327,9 +305,8 @@ class WLL_ConsentToken
 		return $this->_sessionkey;
 	}
 
-    /**
+	/**
      * Sets the session key.
-     * @param $sessionkey
      */
 	/*private*/
 	function setSessionKey($sessionkey)
@@ -354,9 +331,8 @@ class WLL_ConsentToken
 		return $this->_expiry;
 	}
 
-    /**
+	/**
      * Sets the expiry time of delegation token.
-     * @param $expiry
      */
 	/*private*/
 	function setExpiry($expiry)
@@ -400,9 +376,8 @@ class WLL_ConsentToken
 		return $this->_offers_string;
 	}
 
-    /**
+	/**
      * Sets the offers/actions for which user granted consent.
-     * @param $offers
      */
 	/*private*/
 	function setOffers($offers)
@@ -439,9 +414,8 @@ class WLL_ConsentToken
 		return $this->_locationID;
 	}
 
-    /**
+	/**
      * Sets the location ID.
-     * @param $locationID
      */
 	/*private*/
 	function setLocationID($locationID)
@@ -466,9 +440,8 @@ class WLL_ConsentToken
 		return $this->_context;
 	}
 
-    /**
+	/**
      * Sets the application context.
-     * @param $context
      */
 	/*private*/
 	function setContext($context)
@@ -487,9 +460,8 @@ class WLL_ConsentToken
 		return $this->_decodedtoken;
 	}
 
-    /**
+	/**
      * Sets the decoded token.
-     * @param $decodedtoken
      */
 	/*private*/
 	function setDecodedToken($decodedtoken)
@@ -509,9 +481,8 @@ class WLL_ConsentToken
 		return $this->_token;
 	}
 
-    /**
+	/**
      * Sets the raw token.
-     * @param $token
      */
 	/*private*/
 	function setToken($token)
@@ -519,9 +490,8 @@ class WLL_ConsentToken
 		$this->_token = $token;
 	}
 
-    /**
+	/**
      * Makes a copy of the ConsentToken object.
-     * @param $ct
      */
 	/*private*/
 	function copy($ct)
@@ -560,11 +530,10 @@ class WindowsLiveLogin
 	/*private*/
 	var $_debug = false;
 
-    /**
+	/**
      * Stub implementation for logging errors. If you want to enable
      * debugging output, set this to true. In this implementation
      * errors will be logged using the PHP error_log function.
-     * @param $debug
      */
 	/*public*/
 	function setDebug($debug)
@@ -572,12 +541,11 @@ class WindowsLiveLogin
 		$this->_debug = $debug;
 	}
 
-    /**
+	/**
      * Stub implementation for logging errors. By default, this
      * function does nothing if the debug flag has not been set with
      * setDebug. Otherwise, errors are logged using the PHP error_log
      * function.
-     * @param $string
      */
 	/*private*/
 	function debug($string)
@@ -588,9 +556,8 @@ class WindowsLiveLogin
 		}
 	}
 
-    /**
+	/**
      * Stub implementation for handling a fatal error.
-     * @param $string
      */
 	/*private*/
 	function fatal($string)
@@ -600,7 +567,7 @@ class WindowsLiveLogin
 		$this->setError($string);
 	}
 
-    /**
+	/**
      * Initialize the WindowsLiveLogin module with the application ID,
      *   secret key, and security algorithm.
      *
@@ -622,12 +589,6 @@ class WindowsLiveLogin
      *  (that is, whether it uses an application ID and secret key). We
      *  recommend that your Delegated Authentication application always
      *  be registered for enhanced security and functionality.
-     * @param null $appid
-     * @param null $secret
-     * @param null $securityalgorithm
-     * @param null $force_delauth_nonprovisioned
-     * @param null $policyurl
-     * @param null $returnurl
      */
 	public function __construct(
 					$appid=null, $secret=null, $securityalgorithm=null,
@@ -654,7 +615,7 @@ class WindowsLiveLogin
 		}
 	}
 
-    /**
+	/**
      * Initialize the WindowsLiveLogin module from a settings file.
      *
      *  'settingsFile' specifies the location of the XML settings file
@@ -674,8 +635,6 @@ class WindowsLiveLogin
      *  We recommend that you store the WindowsLiveLogin settings file
      *  in an area on your server that cannot be accessed through the
      *  Internet. This file contains important confidential information.
-     * @param $settingsFile
-     * @return WindowsLiveLogin
      */
 	/*public static*/
 	function initFromXml($settingsFile)
@@ -713,11 +672,10 @@ class WindowsLiveLogin
 	/*private*/
 	var $_appid;
 
-    /**
+	/**
      * Sets the application ID. Use this method if you did not specify
      * an application ID at initialization.
-     * @param $appid
-     */
+     **/
 	/*public*/
 	function setAppId($appid)
 	{
@@ -751,10 +709,9 @@ class WindowsLiveLogin
 	/*private*/
 	var $_cryptkey;
 
-    /**
+	/**
      * Sets your secret key. Use this method if you did not specify
      * a secret key at initialization.
-     * @param $secret
      */
 	/*public*/
 	function setSecret($secret)
@@ -776,7 +733,7 @@ class WindowsLiveLogin
 	/*private*/
 	var $_oldcryptkey;
 
-    /**
+	/**
      * Sets your old secret key.
      *
      * Use this property to set your old secret key if you are in the
@@ -789,7 +746,6 @@ class WindowsLiveLogin
      * (as determined by the oldsecretexpiry setting), it will be used
      * as a fallback if token decryption fails with the new secret
      * key.
-     * @param $secret
      */
 	/*public*/
 	function setOldSecret($secret)
@@ -808,7 +764,7 @@ class WindowsLiveLogin
 	/*private*/
 	var $_oldsecretexpiry;
 
-    /**
+	/**
      * Sets the expiry time for your old secret key.
      *
      * After this time has passed, the old secret key will no longer be
@@ -816,7 +772,6 @@ class WindowsLiveLogin
      *
      * The old secret expiry time is represented as the number of seconds
      * elapsed since January 1, 1970.
-     * @param $timestamp
      */
 	/*public*/
 	function setOldSecretExpiry($timestamp)
@@ -845,9 +800,8 @@ class WindowsLiveLogin
 	/*private*/
 	var $_securityalgorithm;
 
-    /**
+	/**
      * Sets the version of the security algorithm being used.
-     * @param $securityalgorithm
      */
 	/*public*/
 	function setSecurityAlgorithm($securityalgorithm)
@@ -871,11 +825,10 @@ class WindowsLiveLogin
 	/*private*/
 	var $_force_delauth_nonprovisioned;
 
-    /**
+	/**
      * Sets a flag that indicates whether Delegated Authentication
      * is non-provisioned (i.e. does not use an application ID or secret
      * key).
-     * @param $force_delauth_nonprovisioned
      */
 	/*public*/
 	function setForceDelAuthNonProvisioned($force_delauth_nonprovisioned)
@@ -886,9 +839,8 @@ class WindowsLiveLogin
 	/*private*/
 	var $_policyurl;
 
-    /**
+	/**
      * Sets the privacy policy URL if you did not provide one at initialization time.
-     * @param $policyurl
      */
 	/*public*/
 	function setPolicyUrl($policyurl)
@@ -922,13 +874,12 @@ class WindowsLiveLogin
 	/*private*/
 	var $_returnurl;
 
-    /**
+	/**
      * Sets the return URL--the URL on your site to which the consent
      *  service redirects users (along with the action, consent token,
      *  and application context) after they have successfully provided
      *  consent information for Delegated Authentication. This value will
      *  override the return URL specified during registration.
-     * @param $returnurl
      */
 	/*public*/
 	function setReturnUrl($returnurl)
@@ -961,12 +912,11 @@ class WindowsLiveLogin
 	/*private*/
 	var $_baseurl;
 
-    /**
+	/**
      * Sets the base URL to use for the Windows Live Login server.
      *  You should not have to change this property. Furthermore, we recommend
      *  that you use the Sign In control instead of the URL methods
      *  provided here.
-     * @param $baseurl
      */
 	/*public*/
 	function setBaseUrl($baseurl)
@@ -993,10 +943,9 @@ class WindowsLiveLogin
 	/*private*/
 	var $_secureurl;
 
-    /**
+	/**
      * Sets the secure (HTTPS) URL to use for the Windows Live Login
      * server. You should not have to change this property.
-     * @param $secureurl
      */
 	/*public*/
 	function setSecureUrl($secureurl)
@@ -1021,10 +970,9 @@ class WindowsLiveLogin
 	/*private*/
 	var $_consenturl;
 
-    /**
+	/**
      * Sets the Consent Base URL to use for the Windows Live Consent
      * server. You should not have to use or change this property directly.
-     * @param $consenturl
      */
 	/*public*/
 	function setConsentBaseUrl($consenturl)
@@ -1048,15 +996,12 @@ class WindowsLiveLogin
 
 	/* Methods for Web Authentication support. */
 
-    /**
+	/**
      * Returns the sign-in URL to use for the Windows Live Login server.
      * We recommend that you use the Sign In control instead.
      *
      * If you specify it, 'context' will be returned as-is in the sign-in
      * response for site-specific use.
-     * @param null $context
-     * @param null $market
-     * @return string
      */
 	/*public*/
 	function getLoginUrl($context=null, $market=null)
@@ -1069,11 +1014,9 @@ class WindowsLiveLogin
 		return $url;
 	}
 
-    /**
+	/**
      * Returns the sign-out URL to use for the Windows Live Login server.
      * We recommend that you use the Sign In control instead.
-     * @param null $market
-     * @return string
      */
 	/*public*/
 	function getLogoutUrl($market=null)
@@ -1084,14 +1027,13 @@ class WindowsLiveLogin
 		return $url;
 	}
 
-    /**
+	/**
      * Processes the sign-in response from Windows Live Login server.
      *
-     * @param contains $query
-     * @return a User object on successful sign-in; otherwise null.
-     * @internal param contains $query the preprocessed POST query, a map of
+     * @param query contains the preprocessed POST query, a map of
      *              Strings to an an array of Strings, such as that
      *              returned by ServletRequest.getParameterMap().
+     * @return      a User object on successful sign-in; otherwise null.
      */
 	/*public*/
 	function processLogin($query)
@@ -1106,13 +1048,10 @@ class WindowsLiveLogin
 		return WindowsLiveLogin::processToken($token, $context);
 	}
 
-    /**
+	/**
      * Decodes and validates a Web Authentication token. Returns a User
      * object on success. If a context is passed in, it will be returned
      * as the context field in the User object.
-     * @param $token
-     * @param null $context
-     * @return null|void|WLL_User
      */
 	/*public*/
 	function processToken($token, $context=null)
@@ -1426,15 +1365,12 @@ class WindowsLiveLogin
 		return $stoken;
 	}
 
-    /**
+	/**
      * Decodes the given token string; returns undef on failure.
      *
      * First, the string is URL-unescaped and base64 decoded.
      * Second, the IV is extracted from the first 16 bytes of the string.
      * Finally, the string is decrypted using the encryption key.
-     * @param $token
-     * @param null $cryptkey
-     * @return string|void
      */
 	/*public*/
 	function decodeToken($token, $cryptkey=null)
@@ -1462,12 +1398,9 @@ class WindowsLiveLogin
 		return mcrypt_decrypt($enc, $cryptkey, $crypted, $mode, $iv);
 	}
 
-    /**
+	/**
      * Creates a signature for the given string by using the signature
      * key.
-     * @param $token
-     * @param null $signkey
-     * @return string|void
      */
 	/*public*/
 	function signToken($token, $signkey=null)
@@ -1490,10 +1423,8 @@ class WindowsLiveLogin
 			return hash_hmac("sha256", $token, $signkey, true);
 	}
 
-    /**
+	/**
      * Extracts the signature from the token and validates it.
-     * @param $token
-     * @param null $signkey
      */
 	/*public*/
 	function validateToken($token, $signkey=null)
@@ -1537,11 +1468,9 @@ class WindowsLiveLogin
 	/* Implementation of the methods needed to perform Windows Live
 	application verification as well as trusted sign-in. */
 
-    /**
+	/**
      * Generates an application verifier token. An IP address can
      * optionally be included in the token.
-     * @param null $ip
-     * @return string
      */
 	/*public*/
 	function getAppVerifier($ip=null)
@@ -1552,7 +1481,7 @@ class WindowsLiveLogin
 		return urlencode($token);
 	}
 
-    /**
+	/**
      * Returns the URL that is required to retrieve the application
      * security token.
      *
@@ -1571,10 +1500,6 @@ class WindowsLiveLogin
      * token value:
      *
      * WLIDResultCallback("<tokenvalue>");
-     * @param null $siteid
-     * @param null $ip
-     * @param null $js
-     * @return string
      */
 	/*public*/
 	function getAppLoginUrl($siteid=null, $ip=null, $js=null)
@@ -1587,7 +1512,7 @@ class WindowsLiveLogin
 		return $url;
 	}
 
-    /**
+	/**
      * Retrieves the application security token for application
      * verification from the application sign-in URL.
      *
@@ -1603,8 +1528,6 @@ class WindowsLiveLogin
      *
      * Therefore we must extract <value> from the string and return it as
      *  seen here.
-     * @param null $siteid
-     * @param null $ip
      */
 	/*public*/
 	function getAppSecurityToken($siteid=null, $ip=null)
@@ -1637,7 +1560,7 @@ class WindowsLiveLogin
 		return 'appid=' . WindowsLiveLogin::getAppId();
 	}
 
-    /**
+	/**
      * Returns a table of key-value pairs that must be posted to the
      * sign-in URL for trusted sign-in. Use HTTP POST to do this. Be aware
      * that the values in the table are neither URL nor HTML escaped and
@@ -1652,9 +1575,6 @@ class WindowsLiveLogin
      *  a string in the format 'id=2000'. If you pass in the value from
      *  getAppRetCode instead, sign-in will be redirected to the
      *  application. Otherwise, an HTTP 200 response is returned.
-     * @param $user
-     * @param null $retcode
-     * @return array|void
      */
 	/*public*/
 	function getTrustedParams($user, $retcode=null)
@@ -1676,14 +1596,12 @@ class WindowsLiveLogin
 		return $params;
 	}
 
-    /**
+	/**
      * Returns the trusted sign-in token in the format that is needed by a
      * control doing trusted sign-in.
      *
      * The user to be trusted on the local site is passed in as string
      * 'user'.
-     * @param $user
-     * @return string|void
      */
 	/*public*/
 	function getTrustedToken($user)
@@ -1720,10 +1638,8 @@ class WindowsLiveLogin
 
 	/* Helper methods */
 
-    /**
+	/**
      * Function to parse the settings file.
-     * @param $settingsFile
-     * @return array
      */
 	/*private*/
 	function parseSettings($settingsFile)
@@ -1762,12 +1678,9 @@ class WindowsLiveLogin
 		return $settings;
 	}
 
-    /**
+	/**
      * Derives the key, given the secret key and prefix as described in the
      * Web Authentication SDK documentation.
-     * @param $secret
-     * @param $prefix
-     * @return bool|string|void
      */
 	/*private*/
 	function derive($secret, $prefix)
@@ -1792,13 +1705,11 @@ class WindowsLiveLogin
 		return substr($key, 0, $keyLen);
 	}
 
-    /**
+	/**
      * Parses query string and returns a hash.
      *
      * If a hash ref is passed in from CGI->Var, it is dereferenced and
      * returned.
-     * @param $input
-     * @return array|void
      */
 	/*private*/
 	function parse($input)
@@ -1833,10 +1744,8 @@ class WindowsLiveLogin
 		return time();
 	}
 
-    /**
+	/**
      * Base64-encodes and URL-escapes a string.
-     * @param $input
-     * @return string|void
      */
 	/*private*/
 	function e64($input)
@@ -1847,10 +1756,8 @@ class WindowsLiveLogin
 		return urlencode(base64_encode($input));
 	}
 
-    /**
+	/**
      * URL-unescapes and Base64-decodes a string.
-     * @param $input
-     * @return bool|string|void
      */
 	/*private*/
 	function u64($input)
@@ -1860,10 +1767,8 @@ class WindowsLiveLogin
 		return base64_decode(urldecode($input));
 	}
 
-    /**
+	/**
      * Fetches the contents given a URL.
-     * @param $url
-     * @return bool|string
      */
 	/*private*/
 	function fetch($url)

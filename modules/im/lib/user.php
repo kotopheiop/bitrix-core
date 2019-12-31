@@ -63,10 +63,9 @@ class User
 		return $this->userId;
 	}
 
-    /**
-     * @param bool $safe
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function getFullName($safe = true)
 	{
 		$fields = $this->getFields();
@@ -76,10 +75,9 @@ class User
 		return $safe? $fields['name']: htmlspecialcharsback($fields['name']);
 	}
 
-    /**
-     * @param bool $safe
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function getName($safe = true)
 	{
 		$fields = $this->getFields();
@@ -89,10 +87,9 @@ class User
 		return $safe? $fields['first_name']: htmlspecialcharsback($fields['first_name']);
 	}
 
-    /**
-     * @param bool $safe
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function getLastName($safe = true)
 	{
 		$fields = $this->getFields();
@@ -226,10 +223,9 @@ class User
 		return $fields? $fields['avatar_id']: 0;
 	}
 
-    /**
-     * @param bool $safe
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function getWorkPosition($safe = false)
 	{
 		$fields = $this->getFields();
@@ -452,10 +448,9 @@ class User
 		return $params? $params['departments']: Array();
 	}
 
-    /**
-     * @param array $options
-     * @return array|null
-     */
+	/**
+	 * @return array|null
+	 */
 	public function getArray($options = array())
 	{
 		if (!$this->isExists())
@@ -541,7 +536,7 @@ class User
 		return $this->userData;
 	}
 
-	public static function uploadAvatar($avatarUrl = '')
+	public static function uploadAvatar($avatarUrl = '', $hash = '')
 	{
 		if (!$ar = parse_url($avatarUrl))
 			return '';
@@ -549,12 +544,22 @@ class User
 		if (!preg_match('#\.(png|jpg|jpeg|gif)$#i', $ar['path']))
 			return '';
 
+		$hash = md5($hash.$avatarUrl);
+
 		$orm = \Bitrix\Im\Model\ExternalAvatarTable::getList(Array(
-			'filter' => Array('=LINK_MD5' => md5($avatarUrl))
+			'select' => Array('*', 'FILE_EXISTS' => 'FILE.ID'),
+			'filter' => Array('=LINK_MD5' => $hash)
 		));
 		if ($cache = $orm->fetch())
 		{
-			return $cache['AVATAR_ID'];
+			if ($cache['FILE_EXISTS'])
+			{
+				return $cache['AVATAR_ID'];
+			}
+			else
+			{
+				\Bitrix\Im\Model\ExternalAvatarTable::delete($cache['ID']);
+			}
 		}
 
 		$recordFile = \CFile::MakeFileArray($avatarUrl);
@@ -572,13 +577,13 @@ class User
 
 		if ($recordFile)
 		{
-			$recordFile = \CFile::SaveFile($recordFile, 'botcontroller');
+			$recordFile = \CFile::SaveFile($recordFile, 'botcontroller', true);
 		}
 
 		if ($recordFile > 0)
 		{
 			\Bitrix\Im\Model\ExternalAvatarTable::add(Array(
-				'LINK_MD5' => md5($avatarUrl),
+				'LINK_MD5' => $hash,
 				'AVATAR_ID' => intval($recordFile)
 			));
 		}

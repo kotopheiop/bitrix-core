@@ -127,8 +127,10 @@ abstract class UserImportBase extends ImportBase
 
 		if($personType === null)
 		{
-			$r = \CSalePersonType::GetList(array(), array("ACTIVE" => "Y", "LIDS" => $siteId));
-			while($ar = $r->Fetch())
+			$registry = \Bitrix\Sale\Registry::getInstance(\Bitrix\Sale\Registry::REGISTRY_TYPE_ORDER);
+			$class = $registry->getPersonTypeClassName();
+			$r = $class::getlist(['filter' => ["=ACTIVE" => "Y", "=PERSON_TYPE_SITE.SITE_ID" => $siteId]]);
+			while($ar = $r->fetch())
 			{
 				$personType[] = $ar["ID"];
 			}
@@ -230,14 +232,13 @@ abstract class UserImportBase extends ImportBase
 		return $id;
 	}
 
-    /**
-     * @param $id
-     * @param $xmlId
-     * @return bool
-     * @internal param $xmlIdUser
-     * @internal param $xmlIdFields
-     * @internal
-     */
+	/**
+	 * @param $id
+	 * @param $xmlIdUser
+	 * @param $xmlIdFields
+	 * @return bool
+	 * @internal
+	 */
 	static public function updateEmptyXmlId($id, $xmlId)
 	{
 		$result = false;
@@ -265,11 +266,10 @@ abstract class UserImportBase extends ImportBase
 		));
 	}
 
-    /**
-     * @param IBusinessValueProvider $entity
-     * @return Order
-     * @throws ArgumentException
-     */
+	/**
+	 * @param IBusinessValueProvider $entity
+	 * @return Order
+	 */
 	static protected function getBusinessValueOrderProvider(IBusinessValueProvider $entity)
 	{
 		if(!($entity instanceof Order))

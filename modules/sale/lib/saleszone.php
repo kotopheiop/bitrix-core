@@ -313,16 +313,14 @@ class SalesZone
 		return explode(":" , \COption::GetOptionString('sale', 'sales_zone_countries', '', $siteId));
 	}
 
-    /**
-     * A very important function. Here we decide what locations we need to take,
-     * making a descision based on $_REQUEST from sales zone selector.
-     *
-     * Then we normalize the selection and store to database.
-     *
-     * Also this function is used in data migrator.
-     * @param $typeList
-     * @param $siteId
-     */
+	/**
+	 * A very important function. Here we decide what locations we need to take, 
+	 * making a descision based on $_REQUEST from sales zone selector.
+	 * 
+	 * Then we normalize the selection and store to database.
+	 * 
+	 * Also this function is used in data migrator.
+	 */
 	public static function saveSelectedTypes($typeList, $siteId)
 	{
 		$types = \CSaleLocation::getTypes();

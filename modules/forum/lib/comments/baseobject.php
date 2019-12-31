@@ -49,12 +49,10 @@ abstract class BaseObject
 			throw new ArgumentException(Loc::getMessage("FORUM_CM_WRONG_ENTITY"), self::ERROR_PARAMS_ENTITY_ID);
 	}
 
-    /**
-     * Returns entity which manage all rights. For example forum topic or task
-     * @return Entity
-     * @throws ArgumentTypeException
-     * @throws SystemException
-     */
+	/**
+	 * Returns entity which manage all rights. For example forum topic or task
+	 * @return Entity
+	 */
 	public function getEntity()
 	{
 		if ($this->entity instanceof Entity)

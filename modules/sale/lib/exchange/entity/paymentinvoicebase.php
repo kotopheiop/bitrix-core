@@ -9,12 +9,11 @@ use Bitrix\Sale\Order;
 
 class PaymentInvoiceBase extends PaymentImport
 {
-    /**
-     * @param $invoice
-     * @param $entity
-     * @param $result
-     * @internal param $order
-     */
+	/**
+	 * @param $order
+	 * @param $entity
+	 * @param $result
+	 */
 	protected function addMarker($invoice, $entity, $result)
 	{
 		EntityMarker::addMarker($invoice, $entity, $result);

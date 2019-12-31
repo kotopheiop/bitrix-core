@@ -318,6 +318,18 @@ class Controller implements Errorable, Controllerable
 	}
 
 	/**
+	 * @param array $sourceParametersList
+	 *
+	 * @return Controller
+	 */
+	final public function setSourceParametersList($sourceParametersList)
+	{
+		$this->sourceParametersList = $sourceParametersList;
+
+		return $this;
+	}
+
+	/**
 	 * @param       $actionName
 	 * @param array $sourceParametersList
 	 *
@@ -333,7 +345,7 @@ class Controller implements Errorable, Controllerable
 
 		try
 		{
-			$this->sourceParametersList = $sourceParametersList;
+			$this->setSourceParametersList($sourceParametersList);
 			$this->processUnsignedParameters();
 
 			$action = $this->create($actionName);
@@ -818,11 +830,10 @@ class Controller implements Errorable, Controllerable
 		return new Error($error->getMessage(), $error->getCode());
 	}
 
-    /**
-     * Runs processing if user is not authorized.
-     * @return void
-     * @throws SystemException
-     */
+	/**
+	 * Runs processing if user is not authorized.
+	 * @return void
+	 */
 	protected function runProcessingIfUserNotAuthorized()
 	{
 		$this->errorCollection[] = new Error('User is not authorized');
@@ -830,11 +841,10 @@ class Controller implements Errorable, Controllerable
 		throw new SystemException('User is not authorized');
 	}
 
-    /**
-     * Runs processing if csrf token is invalid.
-     * @return void
-     * @throws SystemException
-     */
+	/**
+	 * Runs processing if csrf token is invalid.
+	 * @return void
+	 */
 	protected function runProcessingIfInvalidCsrfToken()
 	{
 		$this->errorCollection[] = new Error('Invalid csrf token');

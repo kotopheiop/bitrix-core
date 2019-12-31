@@ -17,12 +17,11 @@ class SchemaOrg extends Parser
 
 	protected $documentEncoding;
 
-    /**
-     * Parses HTML document's Schema.org metadata.
-     *
-     * @param HtmlDocument $document
-     * @return null
-     */
+	/**
+	 * Parses HTML document's Schema.org metadata.
+	 *
+	 * @param HtmlDocument $document
+	 */
 	public function handle(HtmlDocument $document)
 	{
 		$this->documentEncoding = $document->getEncoding();

@@ -214,7 +214,18 @@ class Channel extends BaseObject implements \ArrayAccess
 	private $data = array();
 
 	/**
-	 * @throws \Bitrix\Main\ArgumentException
+	 * Channel constructor.
+	 * @param $id
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
+	public function __construct($id)
+	{
+		if (!($id > 0))
+			throw new \Bitrix\Main\ArgumentNullException("id");
+		parent::__construct($id);
+	}
+	/**
+	 * @throws \Bitrix\Main\ObjectNotFoundException
 	 */
 	public function init()
 	{
@@ -372,12 +383,10 @@ class Channel extends BaseObject implements \ArrayAccess
 	{
 		throw new \Bitrix\Main\NotSupportedException('Model provide ArrayAccess only for reading');
 	}
-
-    /**
-     * @param mixed $offset The offset to unset.
-     * @return void
-     * @throws \Bitrix\Main\NotSupportedException
-     */
+	/**
+	 * @param mixed $offset The offset to unset.
+	 * @return void
+	 */
 	public function offsetUnset($offset)
 	{
 		throw new \Bitrix\Main\NotSupportedException('Model provide ArrayAccess only for reading');

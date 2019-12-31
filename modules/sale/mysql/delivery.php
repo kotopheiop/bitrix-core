@@ -4,16 +4,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/delivery.ph
 /** @deprecated */
 class CSaleDelivery extends CAllSaleDelivery
 {
-    /** @deprecated
-     * @param $val
-     * @param $key
-     * @param $operation
-     * @param $negative
-     * @param $field
-     * @param $arField
-     * @param $arFilter
-     * @return bool|string
-     */
+	/** @deprecated  */
 	function PrepareCurrency4Where($val, $key, $operation, $negative, $field, &$arField, &$arFilter)
 	{
 		$val = DoubleVal($val);
@@ -46,16 +37,7 @@ class CSaleDelivery extends CAllSaleDelivery
 		return "(".$strSqlSearch.")";
 	}
 
-    /** @deprecated
-     * @param $val
-     * @param $key
-     * @param $operation
-     * @param $negative
-     * @param $field
-     * @param $arField
-     * @param $arFilter
-     * @return string
-     */
+	/** @deprecated */
 	function PrepareLocation4Where($val, $key, $operation, $negative, $field, &$arField, &$arFilter)
 	{
 		return "(D2L.LOCATION_ID = ".IntVal($val)." AND D2L.LOCATION_TYPE = 'L' ".

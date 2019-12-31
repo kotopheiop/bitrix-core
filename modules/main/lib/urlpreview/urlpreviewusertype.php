@@ -116,14 +116,12 @@ class UrlPreviewUserType
 		return "&nbsp;";
 	}
 
-    /**
-     * @param array $userField Array containing parameters of the user field.
-     * @param $id
-     * @param array|string $params
-     * @param array $settings
-     * @return string
-     * @internal param array $setting
-     */
+	/**
+	 * @param array $userField Array containing parameters of the user field.
+	 * @param array $params
+	 * @param array $setting
+	 * @return string
+	 */
 	public static function getPublicViewHTML($userField, $id, $params = "", $settings = array())
 	{
 		return UrlPreview::showView($userField, $params, $cacheTag);
@@ -138,8 +136,20 @@ class UrlPreviewUserType
 	 */
 	public static function checkfields($userField, $value)
 	{
-		$value = (int)$value;
 		$result = array();
+
+		$signer = new Signer();
+		try
+		{
+			$value = $signer->unsign($value, UrlPreview::SIGN_SALT);
+		}
+		catch (SystemException $e)
+		{
+			return $result;
+		}
+
+		$value = (int)$value;
+
 		if($value === 0)
 			return $result;
 
@@ -209,22 +219,5 @@ class UrlPreviewUserType
 		}
 
 		return null;
-	}
-
-	/**
-	 * Hook executed after fetching value of the user type. Signs returned value.
-	 * @param array $userField Array containing parameters of the user field.
-	 * @param array $value Unsigned value of the user field.
-	 * @return string Signed value of the user field.
-	 */
-	public static function onAfterFetch($userField, $value)
-	{
-		$result = null;
-		if(isset($value['VALUE']))
-		{
-			$result = UrlPreview::sign($value['VALUE']);
-		}
-
-		return $result;
 	}
 }

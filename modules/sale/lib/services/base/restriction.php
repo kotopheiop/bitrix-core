@@ -80,11 +80,10 @@ abstract class Restriction {
 		throw new NotImplementedException;
 	}
 
-    /**
-     * Returns params structure to show it to user
-     * @param int $entityId
-     * @return array
-     */
+	/**
+	 * Returns params structure to show it to user
+	 * @return array
+	 */
 	public static function getParamsStructure($entityId = 0)
 	{
 		return array();

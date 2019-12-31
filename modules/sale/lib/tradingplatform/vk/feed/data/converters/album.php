@@ -15,13 +15,12 @@ class Album extends DataConverter
 {
 	const TITLE_LENGHT_MAX = 128;
 	private $result;
-
-    /**
-     * Album constructor.
-     *
-     * @param $exportId - int ID of export
-     * @throws ArgumentNullException
-     */
+	
+	/**
+	 * Album constructor.
+	 *
+	 * @param $exportId - int ID of export
+	 */
 	public function __construct($exportId)
 	{
 		if (!isset($exportId) || strlen($exportId) <= 0)

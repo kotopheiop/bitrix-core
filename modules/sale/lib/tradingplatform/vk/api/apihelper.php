@@ -26,16 +26,17 @@ class ApiHelper
 	private $executer;
 	private $exportId;
 	private $logger;
-
-    /**
-     * ApiHelper constructor.
-     * @param $exportId - int, ID of export profile
-     * @throws ArgumentNullException
-     */
+	
+	/**
+	 * ApiHelper constructor.
+	 * @param $exportId - int, ID of export profile
+	 */
 	public function __construct($exportId)
 	{
 		if (empty($exportId))
+		{
 			throw new ArgumentNullException('exportId');
+		}
 		
 		$this->exportId = $exportId;
 		$this->vk = Vk::getInstance();
@@ -132,19 +133,19 @@ class ApiHelper
 		
 		return $result;
 	}
-
-
-    /**
-     * Check photo size, get upload server, upload photo and save them
-     * @deprecated use PhotoUploader class
-     *
-     * @param $data
-     * @param $vkGroupId
-     * @param $uploadType - type of photo. For other types used other params and methods
-     * @param Timer|null $timer - timer for control time of upload
-     * @return array - array of save photos results
-     * @throws SystemException
-     */
+	
+	
+	/**
+	 * Check photo size, get upload server, upload photo and save them
+	 * @deprecated use PhotoUploader class
+	 *
+	 * @param $data
+	 * @param $vkGroupId
+	 * @param $uploadType - type of photo. For other types used other params and methods
+	 * @param null $timer - timer for control time of upload
+	 * @return array - array of save photos results
+	 * @throws SystemException
+	 */
 	public function uploadPhotos($data, $vkGroupId, $uploadType, Timer $timer = NULL)
 	{
 //		todo: this is a little kostyl. In cool variant we must separately do http-upload,
@@ -247,19 +248,20 @@ class ApiHelper
 		
 		return $photoSaveResults;
 	}
-
-
-    /**
-     * Formatted params and run http-upload process
-     * @deprecated use PhotoUploader class
-     *
-     * @param $data
-     * @param $uploadServer
-     * @param $uploadType
-     * @param Timer|null $timer
-     * @return bool|string
-     * @throws SystemException
-     */
+	
+	
+	/**
+	 * Formatted params and run http-upload process
+	 * @deprecated use PhotoUploader class
+	 *
+	 * @param $data
+	 * @param $uploadServer
+	 * @param $uploadType
+	 * @param null $timer
+	 * @return bool|string
+	 * @throws SystemException
+	 * @throws TimeIsOverException
+	 */
 	private function uploadPhotoHttp($data, $uploadServer, $uploadType, Timer $timer = NULL)
 	{
 		switch ($uploadType)
@@ -310,7 +312,7 @@ class ApiHelper
 	 */
 	private static function setUploadServerMainPhotoParams($photoId)
 	{
-				$result = array();
+		$result = array();
 		$result["main_photo"] = 1;
 		
 		$photoParams = \CFile::GetFileArray($photoId);
@@ -567,9 +569,13 @@ class ApiHelper
 		$vkCats = $this->api->run('market.getCategories', array("count" => $count, "offset" => $offset));
 		
 		if (!empty($vkCats))
+		{
 			return $vkCats["items"];
+		}
 		
 		else
+		{
 			return false;
+		}
 	}
 }

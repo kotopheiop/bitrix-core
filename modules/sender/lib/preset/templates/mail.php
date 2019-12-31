@@ -58,13 +58,12 @@ class Mail
 		return '';
 	}
 
-    /**
-     * Get template html.
-     *
-     * @param $content
-     * @param array $replace Replace data.
-     * @return mixed|null
-     */
+	/**
+	 * Get template html.
+	 *
+	 * @param array $replace Replace data.
+	 * @return mixed|null
+	 */
 	public static function replaceTemplateHtml($content, $replace = [])
 	{
 		$content = str_replace(

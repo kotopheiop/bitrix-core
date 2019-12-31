@@ -113,12 +113,11 @@ class ConverterDocumentOrder extends Converter
 		return $result;
 	}
 
-    /**
-     * @param null $order
-     * @param array $fields
-     * @param ISettings $settings
-     * @throws ArgumentException
-     */
+	/**
+	 * @param null $order
+	 * @param array $fields
+	 * @throws ArgumentException
+	 */
 	static public function sanitizeFields($order=null, array &$fields, ISettings $settings)
 	{
 		if(!empty($order) && !($order instanceof Order))
@@ -297,12 +296,12 @@ class ConverterDocumentOrder extends Converter
 		return $result;
 	}
 
-    /**
-     * @param array $items
-     * @param array $info
-     * @return array
-     * @internal param array $params
-     */
+	/**
+	 * @param $items
+	 * @param $info
+	 * @param array $params
+	 * @return array
+	 */
 	public function externalizeItems(array $items, array $info)
 	{
 		$result = array();
@@ -525,12 +524,12 @@ class ConverterDocumentOrder extends Converter
 		return $result;
 	}
 
-    /**
-     * @param array $stories
-     * @param array $info
-     * @return array
-     * @internal param array $params
-     */
+	/**
+	 * @param $stories
+	 * @param $info
+	 * @param array $params
+	 * @return array
+	 */
 	public function externalizeStories(array $stories, array $info)
 	{
 		$result = array();
@@ -602,12 +601,11 @@ class ConverterDocumentOrder extends Converter
 		return $result;
 	}
 
-    /**
-     * @param array $discount
-     * @param array $info
-     * @return array
-     * @internal param array $discounts
-     */
+	/**
+	 * @param array $discounts
+	 * @param array $info
+	 * @return array
+	 */
 	public function externalizeDiscounts(array $discount, array $info)
 	{
 		$result = array();

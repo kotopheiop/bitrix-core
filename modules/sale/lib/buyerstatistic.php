@@ -18,12 +18,12 @@ Loc::loadMessages(__FILE__);
 
 class BuyerStatistic
 {
-    /**
-     * Executes the query and returns selection by parameters of the query. This function is an alias to the Query object functions
-     *
-     * @param $filter
-     * @return Main\DB\Result
-     */
+	/**
+	 * Executes the query and returns selection by parameters of the query. This function is an alias to the Query object functions
+	 *
+	 * @return Main\DB\Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
 	public static function getList($filter)
 	{
 		return Internals\BuyerStatisticTable::getList($filter);

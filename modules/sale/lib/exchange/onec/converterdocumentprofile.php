@@ -105,6 +105,9 @@ class ConverterDocumentProfile extends Converter
 		if(!empty($profile["OKPO_CODE"]))
 			$profile["OKPO"] = $profile["OKPO_CODE"];
 
+		if(strlen($profile["OFICIAL_NAME"]) > 0 && empty($profile["FULL_NAME"]))
+			$profile["FULL_NAME"] = $profile["OFICIAL_NAME"];
+
 		if(strlen($profile["OFICIAL_NAME"]) > 0 && strlen($profile["INN"]) > 0)
 			$profile["TYPE"] = "UR";
 		elseif(strlen($profile["INN"]) > 0)
@@ -122,6 +125,7 @@ class ConverterDocumentProfile extends Converter
 					case 'ID':
 					case 'VERSION':
 					case 'ITEM_NAME':
+					case 'AGENT_NAME':
 					case 'OFICIAL_NAME':
 					case 'FULL_NAME':
 					case 'INN':
@@ -171,11 +175,10 @@ class ConverterDocumentProfile extends Converter
 		return $result;
 	}
 
-    /**
-     * @param null $entity
-     * @param array $fields
-     * @param ISettings $settings
-     */
+	/**
+	 * @param null $entity
+	 * @param array $fields
+	 */
 	static public function sanitizeFields($entity = null, array &$fields, ISettings $settings)
 	{
 		// TODO: Implement sanitizeFields() method.
@@ -401,12 +404,11 @@ class ConverterDocumentProfile extends Converter
 		return ($fields["IS_FIZ"]=="Y");
 	}
 
-    /**
-     * @param $fields
-     * @param null $fieldsInfo
-     * @param null $key
-     * @return array
-     */
+	/**
+	 * @param $fields
+	 * @param null $fieldsInfo
+	 * @return array
+	 */
 	public function externalizeArrayFields($fields, $fieldsInfo, $key=null)
 	{
 		$result = array();

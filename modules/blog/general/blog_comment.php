@@ -5,13 +5,7 @@ $GLOBALS["BLOG_COMMENT"] = Array();
 class CAllBlogComment
 {
 	const UF_NAME = 'UF_BLOG_COMMENT_DOC';
-
-    /*************** ADD, UPDATE, DELETE ****************
-     * @param $ACTION
-     * @param $arFields
-     * @param int $ID
-     * @return bool
-     */
+	/*************** ADD, UPDATE, DELETE *****************/
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $DB, $APPLICATION;
@@ -101,6 +95,11 @@ class CAllBlogComment
 		{
 			$APPLICATION->ThrowException(GetMessage("BLG_GCM_EMPTY_POST_TEXT"), "EMPTY_POST_TEXT");
 			return false;
+		}
+
+		if (!empty($arFields["POST_TEXT"]))
+		{
+			$arFields["POST_TEXT"] = \Bitrix\Main\Text\Emoji::encode($arFields["POST_TEXT"]);
 		}
 
 		/*

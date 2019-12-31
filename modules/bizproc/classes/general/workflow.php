@@ -57,13 +57,13 @@ class CBPWorkflow
 
 	/************************  CONSTRUCTORS  ****************************************************/
 
-    /**
-     * Public constructor initializes a new workflow instance with the specified ID.
-     *
-     * @param mixed $instanceId - ID of the new workflow instance.
-     * @param mixed $runtime - Runtime object.
-     * @throws Exception
-     */
+	/**
+	* Public constructor initializes a new workflow instance with the specified ID.
+	* 
+	* @param mixed $instanceId - ID of the new workflow instance.
+	* @param mixed $runtime - Runtime object.
+	* @return CBPWorkflow
+	*/
 	public function __construct($instanceId, CBPRuntime $runtime)
 	{
 		if (strlen($instanceId) <= 0)
@@ -84,14 +84,7 @@ class CBPWorkflow
 		return array();
 	}
 
-    /************************  CREATE / LOAD WORKFLOW  ***************************************
-     * @param CBPActivity $rootActivity
-     * @param $documentId
-     * @param array $workflowParameters
-     * @param array $workflowVariablesTypes
-     * @param array $workflowParametersTypes
-     * @param int $workflowTemplateId
-     */
+	/************************  CREATE / LOAD WORKFLOW  ****************************************/
 
 	public function Initialize(CBPActivity $rootActivity, $documentId, $workflowParameters = array(), $workflowVariablesTypes = array(), $workflowParametersTypes = array(), $workflowTemplateId = 0)
 	{
@@ -133,7 +126,17 @@ class CBPWorkflow
 		if (is_array($workflowVariablesTypes))
 		{
 			foreach ($workflowVariablesTypes as $k => $v)
-				$rootActivity->SetVariable($k, $v["Default"]);
+			{
+				$variableValue = $v["Default"];
+				if ($documentType && $fieldTypeObject = $documentService->getFieldTypeObject($documentType, $v))
+				{
+					$fieldTypeObject->setDocumentId($arDocumentId);
+					$variableValue = $fieldTypeObject->internalizeValue('Variable', $variableValue);
+				}
+
+				//set defaults on start
+				$rootActivity->SetVariable($k, $variableValue);
+			}
 		}
 
 		$rootActivity->SetPropertiesTypes($workflowParametersTypes);
@@ -270,9 +273,7 @@ class CBPWorkflow
 		$this->Resume();
 	}
 
-    /***********************  SEARCH ACTIVITY BY NAME  ***************************************************
-     * @param CBPActivity $activity
-     */
+	/***********************  SEARCH ACTIVITY BY NAME  ****************************************************/
 
 	private function FillNameActivityMapInternal(CBPActivity $activity)
 	{
@@ -297,13 +298,12 @@ class CBPWorkflow
 		$this->FillNameActivityMapInternal($this->rootActivity);
 	}
 
-    /**
-     * Returns activity by its name.
-     *
-     * @param mixed $activityName - Activity name.
-     * @return CBPActivity - Returns activity object or null if activity is not found.
-     * @throws Exception
-     */
+	/**
+	* Returns activity by its name.
+	* 
+	* @param mixed $activityName - Activity name.
+	* @return CBPActivity - Returns activity object or null if activity is not found.
+	*/
 	public function GetActivityByName($activityName)
 	{
 		if (strlen($activityName) <= 0)
@@ -321,13 +321,11 @@ class CBPWorkflow
 
 	/************************  ACTIVITY EXECUTION  *************************************************/
 
-    /**
-     * Initializes the specified activity by calling its method Initialize.
-     *
-     * @param CBPActivity $activity
-     * @throws CBPArgumentNullException
-     * @throws Exception
-     */
+	/**
+	* Initializes the specified activity by calling its method Initialize.
+	* 
+	* @param CBPActivity $activity
+	*/
 	public function InitializeActivity(CBPActivity $activity)
 	{
 		if ($activity == null)
@@ -339,13 +337,12 @@ class CBPWorkflow
 		$activity->Initialize();
 	}
 
-    /**
-     * Plans specified activity for execution.
-     *
-     * @param CBPActivity $activity - Activity object.
-     * @param mixed $arEventParameters - Optional parameters.
-     * @throws Exception
-     */
+	/**
+	* Plans specified activity for execution.
+	* 
+	* @param CBPActivity $activity - Activity object.
+	* @param mixed $arEventParameters - Optional parameters.
+	*/
 	public function ExecuteActivity(CBPActivity $activity, $arEventParameters = array())
 	{
 		if ($activity == null)
@@ -358,13 +355,12 @@ class CBPWorkflow
 		$this->AddItemToQueue(array($activity, CBPActivityExecutorOperationType::Execute));
 	}
 
-    /**
-     * Close specified activity.
-     *
-     * @param CBPActivity $activity - Activity object.
-     * @param mixed $arEventParameters - Optional parameters.
-     * @throws Exception
-     */
+	/**
+	* Close specified activity.
+	* 
+	* @param CBPActivity $activity - Activity object.
+	* @param mixed $arEventParameters - Optional parameters.
+	*/
 	public function CloseActivity(CBPActivity $activity, $arEventParameters = array())
 	{
 		switch ($activity->executionStatus)
@@ -388,13 +384,12 @@ class CBPWorkflow
 		throw new Exception("InvalidClosingState");
 	}
 
-    /**
-     * Cancel specified activity.
-     *
-     * @param CBPActivity $activity - Activity object.
-     * @param mixed $arEventParameters - Optional parameters.
-     * @throws Exception
-     */
+	/**
+	* Cancel specified activity.
+	* 
+	* @param CBPActivity $activity - Activity object.
+	* @param mixed $arEventParameters - Optional parameters.
+	*/
 	public function CancelActivity(CBPActivity $activity, $arEventParameters = array())
 	{
 		if ($activity == null)
@@ -426,9 +421,7 @@ class CBPWorkflow
 		}
 	}
 
-    /************************  ACTIVITIES QUEUE  **********************************************
-     * @param $item
-     */
+	/************************  ACTIVITIES QUEUE  ***********************************************/
 
 	private function AddItemToQueue($item)
 	{
@@ -597,10 +590,7 @@ class CBPWorkflow
 		$activity->Finalize();
 	}
 
-    /************************  EVENTS QUEUE  *******************************************************
-     * @param $eventName
-     * @param array $arEventParameters
-     */
+	/************************  EVENTS QUEUE  ********************************************************/
 
 	private function AddEventToQueue($eventName, $arEventParameters = array())
 	{

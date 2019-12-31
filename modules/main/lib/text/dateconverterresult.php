@@ -49,15 +49,14 @@ class DateConverterResult
 	const TYPE_CALENDAR = 'CALENDAR';
 	const TYPE_PARTOFDAY = 'PARTOFDAY';
 
-    /**
-     * DateConverterResult constructor.
-     * @param \Bitrix\Main\Type\DateTime $date
-     * @param $matchParams
-     * @param string $type
-     * @param array $metrics
-     * @param array $metricModifier
-     * @internal param string $text
-     */
+	/**
+	 * DateConverterResult constructor.
+	 * @param \Bitrix\Main\Type\DateTime $date
+	 * @param string $text
+	 * @param $type
+	 * @param array $metrics
+	 * @param array $metricModifier
+	 */
 	function __construct(\Bitrix\Main\Type\DateTime $date, $matchParams, $type = self::TYPE_UNKNOWN, $metrics = Array(), $metricModifier = Array())
 	{
 		$this->date = $date;

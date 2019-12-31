@@ -30,12 +30,12 @@ class SqlExpression
 	/** @var  Connection */
 	protected $connection;
 
-    /**
-     * @throws \Bitrix\Main\ArgumentException
-     * @internal param string $expression Sql expression.
-     * @internal param $string ,... $args Substitutes.
-     *
-     */
+	/**
+	 * @param string $expression Sql expression.
+	 * @param string,... $args Substitutes.
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
 	public function __construct()
 	{
 		$args = func_get_args();

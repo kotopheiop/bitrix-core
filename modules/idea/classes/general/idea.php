@@ -53,15 +53,7 @@ Class CIdeaManagment
 		return new CIdeaManagmentNotify($arNotification);
 	}
 
-    /*************TOOLS*********
-     * @param $BlogCode
-     * @param string $type
-     * @param int $numPosts
-     * @param bool|mixed|string $siteID
-     * @param array $arPathTemplates
-     * @param array $arFilterExt
-     * @return string
-     */
+	/*************TOOLS**********/
 	public function GetRSS($BlogCode, $type = "rss2.0", $numPosts = 10, $siteID = SITE_ID, $arPathTemplates = Array(), $arFilterExt = array())
 	{
 		if(!$this->IsAvailable())

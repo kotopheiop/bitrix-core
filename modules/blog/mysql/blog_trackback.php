@@ -3,10 +3,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/general/blog_trackb
 
 class CBlogTrackback extends CAllBlogTrackback
 {
-    /*************** ADD, UPDATE, DELETE ****************
-     * @param $arFields
-     * @return bool|int
-     */
+	/*************** ADD, UPDATE, DELETE *****************/
 	function Add($arFields)
 	{
 		global $DB;
@@ -178,7 +175,7 @@ class CBlogTrackback extends CAllBlogTrackback
 			}
 			else
 			{
-				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ MYSQL!!! ï¿½ï¿½ï¿½ ORACLE ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½
+				// ÒÎËÜÊÎ ÄËß MYSQL!!! ÄËß ORACLE ÄÐÓÃÎÉ ÊÎÄ
 				$cnt = $dbRes->SelectedRowsCount();
 			}
 

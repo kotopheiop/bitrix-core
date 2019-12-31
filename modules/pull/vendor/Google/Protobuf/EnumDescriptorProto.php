@@ -98,8 +98,7 @@ class EnumDescriptorProto extends \Protobuf\AbstractMessage
     /**
      * Set 'value' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\EnumValueDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\EnumValueDescriptorProto> $value
      */
     public function setValueList(\Protobuf\Collection $value = null)
     {

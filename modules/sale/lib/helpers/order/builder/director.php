@@ -65,12 +65,12 @@ final class Director
 		return null;
 	}
 
-    /**
-     * @param OrderBuilder $builder
-     * @param array $paymentData
-     * @return \Bitrix\Sale\Payment
-     * @internal param array $shipmentData
-     */
+	/**
+	 * @param OrderBuilder $builder
+	 * @param array $shipmentData
+	 * @return \Bitrix\Sale\Payment
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
 	public function getUpdatedPayment(OrderBuilder $builder, array $paymentData)
 	{
 		try{

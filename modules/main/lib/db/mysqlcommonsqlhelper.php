@@ -180,14 +180,15 @@ abstract class MysqlCommonSqlHelper extends SqlHelper
 		}
 	}
 
-    /**
-     * Returns function for concatenating database fields or expressions.
-     * <p>
-     * All parameters are SQL unsafe.
-     * @return string
-     * @internal param string $field Database fields or expressions.
-     *
-     */
+	/**
+	 * Returns function for concatenating database fields or expressions.
+	 * <p>
+	 * All parameters are SQL unsafe.
+	 *
+	 * @param string $field,... Database fields or expressions.
+	 *
+	 * @return string
+	 */
 	public function getConcatFunction()
 	{
 		$str = "";

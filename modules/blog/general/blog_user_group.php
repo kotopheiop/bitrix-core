@@ -4,12 +4,7 @@ $GLOBALS["BLOG_USER_GROUP"] = Array();
 
 class CAllBlogUserGroup
 {
-    /*************** ADD, UPDATE, DELETE ****************
-     * @param $ACTION
-     * @param $arFields
-     * @param int $ID
-     * @return bool
-     */
+	/*************** ADD, UPDATE, DELETE *****************/
 	function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		if ((is_set($arFields, "NAME") || $ACTION=="ADD") && strlen($arFields["NAME"]) <= 0)

@@ -11,12 +11,11 @@ class PossibleLengthField extends XmlField
 		return static::parsePossibleLength($value);
 	}
 
-    /**
-     * Parses possible length field and returns corresponding array of possible lengths.
-     * @param string $possibleLength Something like "3,5,7", or "[7-9]", or  "6,[8-10]"
-     * @return array Returns array of possible lengths. I.e. [3, 5, 7], or [7, 8, 9], or [6, 8, 10].
-     * @throws SystemException
-     */
+	/**
+	 * Parses possible length field and returns corresponding array of possible lengths.
+	 * @param string $possibleLength Something like "3,5,7", or "[7-9]", or  "6,[8-10]"
+	 * @return array Returns array of possible lengths. I.e. [3, 5, 7], or [7, 8, 9], or [6, 8, 10].
+	 */
 	public static function parsePossibleLength($possibleLength)
 	{
 		$result = array();

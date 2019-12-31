@@ -6,36 +6,25 @@
 abstract class CSalePaySystemTarif
 {
 	private static $arItems = array();
-
-    /**
-     * getPrice
-     * Calculate price for pay system service
-     * @param $arPaySystem
-     * @param $orderPrice
-     * @param $deliveryPrice
-     * @param $buyerLocationId
-     * @return float
-     */
+	/**
+	 * getPrice
+	 * Calculate price for pay system service
+	 * @return float
+	 */
 	abstract public static function getPrice(&$arPaySystem, $orderPrice, $deliveryPrice, $buyerLocationId);
 
-    /**
-     * getStructure
-     * Describe tarif params structure
-     * @param $psId
-     * @param $persId
-     * @return array
-     */
+	/**
+	 * getStructure
+	 * Describe tarif params structure
+	 * @return array
+	 */
 	abstract public static function getStructure($psId, $persId);
 
-    /**
-     * checkCompability
-     * Check if we can use this pay system
-     * @param $arOrder
-     * @param $orderPrice
-     * @param $deliveryPrice
-     * @param $buyerLocationId
-     * @return bool
-     */
+	/**
+	 * checkCompability
+	 * Check if we can use this pay system
+	 * @return bool
+	 */
 	abstract public static function checkCompability(&$arOrder, $orderPrice, $deliveryPrice, $buyerLocationId);
 
 	public static function extractFromField($strFieldContent)
@@ -48,12 +37,11 @@ abstract class CSalePaySystemTarif
 		return serialize($arTarif);
 	}
 
-    /**
-     * getByPaySystemId
-     * returns saved tarif's values
-     * @param $psaId
-     * @return array
-     */
+	/**
+	 * getByPaySystemId
+	 * returns saved tarif's values
+	 * @return array
+	 */
 	protected static function getValuesByPSAId($psaId)
 	{
 		$arResult = array();

@@ -32,11 +32,10 @@ abstract class DirectoryEntry
 	 */
 	abstract public function getChildren();
 
-    /**
-     * @param $name
-     * @return DirectoryEntry
-     * @internal param string $path
-     */
+	/**
+	 * @param string $path
+	 * @return DirectoryEntry
+	 */
 	abstract public function createSubdirectory($name);
 
 	public function isDirectory()

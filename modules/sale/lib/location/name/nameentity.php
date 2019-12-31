@@ -24,13 +24,13 @@ abstract class NameEntity extends Entity\DataManager
 
 	abstract public function getReferenceFieldName();
 
-    /**
-     * Add translations for $primaryOwner
-     * @param mixed $primaryOwner Primary key of the item
-     * @param string[] $names A set of translations for the item
-     * @return void
-     * @throws Main\SystemException
-     */
+	/**
+	 * Add translations for $primaryOwner
+	 * @param mixed $primaryOwner Primary key of the item
+	 * @param string[] $names A set of translations for the item
+	 * 
+	 * @return void
+	 */
 	public static function addMultipleForOwner($primaryOwner, $names = array())
 	{
 		$primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
@@ -83,13 +83,13 @@ abstract class NameEntity extends Entity\DataManager
 		$GLOBALS['CACHE_MANAGER']->ClearByTag('sale-location-data');
 	}
 
-    /**
-     * Update translations for $primaryOwner
-     * @param mixed $primaryOwner Primary key of the item
-     * @param string[] $names A set of translations for the item
-     * @return void
-     * @throws Main\SystemException
-     */
+	/**
+	 * Update translations for $primaryOwner
+	 * @param mixed $primaryOwner Primary key of the item
+	 * @param string[] $names A set of translations for the item
+	 * 
+	 * @return void
+	 */
 	public static function updateMultipleForOwner($primaryOwner, $names)
 	{
 		$primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
@@ -156,12 +156,12 @@ abstract class NameEntity extends Entity\DataManager
 		}
 	}
 
-    /**
-     * Delete translations for $primaryOwner
-     * @param mixed $primaryOwner Primary key of the item
-     * @return void
-     * @throws Main\SystemException
-     */
+	/**
+	 * Delete translations for $primaryOwner
+	 * @param mixed $primaryOwner Primary key of the item
+	 * 
+	 * @return void
+	 */
 	public static function deleteMultipleForOwner($primaryOwner)
 	{
 		$primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
@@ -181,14 +181,13 @@ abstract class NameEntity extends Entity\DataManager
 		}
 	}
 
-    /**
-     * Get existed translations for $primaryOwner and add only non-existed ones from $names
-     * @param mixed $primaryOwner Primary key of the item
-     * @param string[] $names A set of translations for the item
-     *
-     * @param array $behaviour
-     * @return void
-     */
+	/**
+	 * Get existed translations for $primaryOwner and add only non-existed ones from $names
+	 * @param mixed $primaryOwner Primary key of the item
+	 * @param string[] $names A set of translations for the item
+	 * 
+	 * @return void
+	 */
 	public static function addAbsentForOwner($primaryOwner, $names, $behaviour = array('TREAT_EMPTY_AS_ABSENT' => true))
 	{
 		$primaryOwner = Assert::expectIntegerPositive($primaryOwner, '$primaryOwner');
@@ -242,13 +241,11 @@ abstract class NameEntity extends Entity\DataManager
 		}
 	}
 
-    /**
-     * This method is for internal use only. It may be changed without any notification further, or even mystically disappear.
-     *
-     * @access private
-     * @param $sql
-     * @throws Main\SystemException
-     */
+	/**
+	 * This method is for internal use only. It may be changed without any notification further, or even mystically disappear.
+	 * 
+	 * @access private
+	 */
 	public static function deleteMultipleByParentRangeSql($sql)
 	{
 		if(!strlen($sql))

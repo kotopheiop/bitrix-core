@@ -117,11 +117,11 @@ class OrderProcessingTable extends DataManager
 		}
 	}
 
-    /**
-     * Clear table
-     *
-     * @internal param int $orderId
-     */
+	/**
+	 * Clear table
+	 *
+	 * @param int $orderId
+	 */
 	public static function clear()
 	{
 		$connection = Application::getConnection();

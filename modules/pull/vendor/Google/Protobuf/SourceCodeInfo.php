@@ -54,8 +54,7 @@ class SourceCodeInfo extends \Protobuf\AbstractMessage
     /**
      * Set 'location' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\SourceCodeInfo\Location> $value
+     * @param \Protobuf\Collection<\google\protobuf\SourceCodeInfo\Location> $value
      */
     public function setLocationList(\Protobuf\Collection $value = null)
     {

@@ -98,11 +98,10 @@ class OrderCompatibility extends Internals\EntityCompatibility
 		$this->basket = $basketCompatibility;
 	}
 
-    /**
-     * @param array $fields
-     * @return static
-     * @throws Sale\UserMessageException
-     */
+	/**
+	 * @param array $fields
+	 * @return static
+	 */
 	public static function create(array $fields)
 	{
 		$adminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
@@ -751,7 +750,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
 		$paySystemId = null;
 		$paySystemName = null;
-		$paidFull = false;
 
 		$userId = $order->getUserId();
 		$currency = $order->getCurrency();
@@ -935,10 +933,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
 							$userBudget = Sale\Internals\UserBudgetPool::getUserBudget($userId, $currency);
 
 							$setSum = $userBudget;
-							if ($userBudget >= $sum)
-							{
-								$paidFull = true;
-							}
 
 							/** @var Sale\Result $r */
 							$r = static::payFromBudget($order, false);
@@ -1032,7 +1026,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
 					if ($result->isSuccess() && intval($paySystemId) > 0)
 					{
-						$order = $paymentCollection->getOrder();
 						$order->setFieldNoDemand('PAY_SYSTEM_ID', $paySystemId);
 					}
 				}
@@ -1137,7 +1130,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
 		if (array_key_exists('SUM_PAID', $fields))
 		{
-
 			if ($orderPaid)
 			{
 				if ($fields['SUM_PAID'] == 0)
@@ -1154,7 +1146,6 @@ class OrderCompatibility extends Internals\EntityCompatibility
 
 				if ($deltaSumPaid > 0)
 				{
-
 					$paidPayment = false;
 
 					/** @var Sale\Payment $payment */
@@ -1219,16 +1210,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 						}
 					}
 				}
-				elseif ($deltaSumPaid < 0)
-				{
-					throw new Main\NotSupportedException('Sum paid of reduction is not supported');
-				}
-			}
-			else
-			{
-				throw new Main\NotSupportedException('Sum paid of reduction is not supported');
 			}
 		}
+
 		return $result;
 	}
 
@@ -1550,7 +1534,7 @@ class OrderCompatibility extends Internals\EntityCompatibility
 						);
 
 						/** @var Sale\ShipmentItemStore $shipmentItemStore */
-						$shipmentItemStore = $shipmentItemStoreCollection->getItemByBarcode($saveBarcodeData['BARCODE'],$basketItem->getBasketCode(), $barcodeData['STORE_ID']);
+						$shipmentItemStore = $shipmentItemStoreCollection->getItemByBarcode($saveBarcodeData['BARCODE']);
 
 						if (!$shipmentItemStore)
 						{
@@ -1761,7 +1745,7 @@ class OrderCompatibility extends Internals\EntityCompatibility
 					if (intval($fUserId) > 0 && intval($fUserIdByUserId) > 0
 						&& intval($fUserId) != intval($fUserIdByUserId))
 					{
-						// TODO: ... [SALE_BASKET_001] - ����� ������� ������ �������� �������
+						// TODO: ... [SALE_BASKET_001] - the call of old method of the basket
 						\CSaleBasket::TransferBasket($fUserId, $fUserIdByUserId);
 					}
 
@@ -3019,10 +3003,9 @@ class OrderCompatibility extends Internals\EntityCompatibility
 		);
 	}
 
-    /**
-     * @param Sale\Internals\CollectableEntity $entity
-     * @return array
-     */
+	/**
+	 * @return array
+	 */
 	protected static function getEntityDateFields(Sale\Internals\CollectableEntity $entity)
 	{
 		if ($entity instanceof Sale\Shipment)

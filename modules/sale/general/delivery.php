@@ -107,17 +107,9 @@ class CAllSaleDelivery
 		}
 	}
 
-    /**
-     * @deprecated Use \Bitrix\Sale\Delivery\Services\Manager
-     * @param $location
-     * @param $locationZip
-     * @param $weight
-     * @param $price
-     * @param $currency
-     * @param null $siteId
-     * @param array $arShoppingCart
-     * @return array
-     */
+	/**
+	 * @deprecated Use \Bitrix\Sale\Delivery\Services\Manager
+	 */
 	public static function DoLoadDelivery($location, $locationZip, $weight, $price, $currency, $siteId = null, $arShoppingCart = array())
 	{
 		$location = intval($location);
@@ -252,11 +244,9 @@ class CAllSaleDelivery
 		return $arResult;
 	}
 
-    /**
-     * @deprecated Use \Bitrix\Sale\Delivery\Services\Table::getById().
-     * @param $ID
-     * @return array
-     */
+	/**
+	 * @deprecated Use \Bitrix\Sale\Delivery\Services\Table::getById().
+	 */
 	public static function GetByID($ID)
 	{
 		$res = self::GetList(array(), array("ID" => $ID));
@@ -300,13 +290,10 @@ class CAllSaleDelivery
 		return $dbResult;
 	}
 
-    /**
-     * @deprecated
-     * @internal
-     * @param $ACTION
-     * @param $arFields
-     * @return bool
-     */
+	/**
+	 * @deprecated
+	 * @internal
+	 */
 	public static function CheckFields($ACTION, &$arFields)
 	{
 		global $DB;
@@ -406,13 +393,9 @@ class CAllSaleDelivery
 		$class::resetMultipleForOwner($ID, $links);
 	}
 
-    /**
-     * @deprecated
-     * @param $oldId
-     * @param $arFields
-     * @param array $arOptions
-     * @return mixed
-     */
+	/**
+	 * @deprecated
+	 */
 	public static function Update($oldId, $arFields, $arOptions = array())
 	{
 		if(strlen($oldId) <= 0)
@@ -619,11 +602,9 @@ class CAllSaleDelivery
 		return $oldId;
 	}
 
-    /**
-     * @deprecated
-     * @param $ID
-     * @return bool|CDBResult
-     */
+	/**
+	 * @deprecated
+	 */
 	public static function Delete($ID)
 	{
 		$newId = \CSaleDelivery::getIdByCode($ID);
@@ -1467,7 +1448,6 @@ class CAllSaleDelivery
 		if($collection = $shipment->getShipmentItemCollection())
 			$oldOrder["PRICE"] = $collection->getPrice();
 
-		$oldOrder["WEIGHT"] = 0;
 		$oldOrder["LOCATION_FROM"] = \Bitrix\Main\Config\Option::get(
 			'sale',
 			'location',
@@ -1504,10 +1484,7 @@ class CAllSaleDelivery
 
 			unset($itemFieldValues['DATE_INSERT'], $itemFieldValues['DATE_UPDATE']);
 			$oldOrder["ITEMS"][] = $itemFieldValues;
-			$itemWeight = floatval($basketItem->getField("WEIGHT"));
-
-			if($itemWeight > 0)
-				$oldOrder["WEIGHT"] += $itemWeight*floatval($basketItem->getField("QUANTITY"));
+			$oldOrder["WEIGHT"] = $shipment->getWeight();
 		}
 
 		return $oldOrder;

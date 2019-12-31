@@ -73,11 +73,9 @@ class ExchangeLogTable extends Main\Entity\DataManager
 		$connection->queryExecute("DELETE FROM {$tableName}");
 	}
 
-    /**
-     * Clears old logging data
-     * @param $direction
-     * @throws Main\ArgumentOutOfRangeException
-     */
+	/**
+	 * Clears old logging data
+	 */
 	public static function deleteOldRecords($direction)
 	{
 		$tableName = static::getTableName();

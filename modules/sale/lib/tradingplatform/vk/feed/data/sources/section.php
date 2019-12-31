@@ -27,14 +27,12 @@ class Section extends DataSource implements \Iterator
 	protected $sectionsAliases;
 
 	protected $startPosition = 0;
-
-    /**
-     * Section constructor.
-     * @param $exportId
-     * @param $startPosition
-     * @throws ArgumentNullException
-     * @throws SystemException
-     */
+	
+	/**
+	 * Section constructor.
+	 * @param $exportId
+	 * @param $startPosition
+	 */
 	public function __construct($exportId, $startPosition)
 	{
 		$this->vk = Vk\Vk::getInstance();

@@ -211,11 +211,12 @@ class RestrictionManager
 		return $result;
 	}
 
-    /**
-     * @param array $servicesIds
-     * @param array $fields
-     * @internal
-     */
+	/**
+	 * @param array $servicesIds
+	 * @throws NotImplementedException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @internal
+	 */
 	public static function prepareData(array $servicesIds, array $fields = array())
 	{
 		if(empty($servicesIds))

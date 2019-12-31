@@ -5,7 +5,7 @@ use \Bitrix\Main;
 use \Bitrix\Bizproc;
 use \Bitrix\Bizproc\RestActivityTable;
 
- /**
+/**
  * Workflow runtime.
  *
  * @method \CBPSchedulerService getSchedulerService()
@@ -340,13 +340,12 @@ class CBPRuntime
 		return null;
 	}
 
-    /**
-     * Adds new service to runtime. Runtime should be stopped.
-     *
-     * @param string $name - Service code.
-     * @param CBPRuntimeService $service - Service object.
-     * @throws Exception
-     */
+	/**
+	* Adds new service to runtime. Runtime should be stopped.
+	* 
+	* @param string $name - Service code.
+	* @param CBPRuntimeService $service - Service object.
+	*/
 	public function AddService($name, CBPRuntimeService $service)
 	{
 		if ($this->isStarted)
@@ -385,12 +384,11 @@ class CBPRuntime
 
 	/*******************  UTILITIES  ***************************************************************/
 
-    /**
-     * Includes activity file by activity code.
-     *
-     * @param string $code - Activity code.
-     * @return bool
-     */
+	/**
+	* Includes activity file by activity code.
+	* 
+	* @param string $code - Activity code.
+	*/
 	public function IncludeActivityFile($code)
 	{
 		if (in_array($code, $this->arLoadedActivities))
@@ -733,6 +731,24 @@ class CBPRuntime
 			&& !$this->checkActivityFilter($activity['FILTER'], $documentType)
 		)
 			$result['EXCLUDED'] = true;
+
+		if (!empty($activity['RETURN_PROPERTIES']))
+		{
+			foreach ($activity['RETURN_PROPERTIES'] as $name => $property)
+			{
+				$result['RETURN'][$name] = array(
+					'NAME' => RestActivityTable::getLocalization($property['NAME'], $lang),
+					'TYPE' => isset($property['TYPE']) ? $property['TYPE'] : \Bitrix\Bizproc\FieldType::STRING
+				);
+			}
+		}
+		if ($activity['USE_SUBSCRIPTION'] !== 'N')
+		{
+			$result['RETURN']['IsTimeout'] = array(
+				'NAME' => GetMessage('BPRA_IS_TIMEOUT'),
+				'TYPE' => \Bitrix\Bizproc\FieldType::INT
+			);
+		}
 
 		return $result;
 	}

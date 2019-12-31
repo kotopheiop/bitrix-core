@@ -96,8 +96,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
     /**
      * Set 'name' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\UninterpretedOption\NamePart> $value
+     * @param \Protobuf\Collection<\google\protobuf\UninterpretedOption\NamePart> $value
      */
     public function setNameList(\Protobuf\Collection $value = null)
     {

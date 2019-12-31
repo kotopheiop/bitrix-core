@@ -12,6 +12,7 @@ use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
 use Bitrix\Main\Page\AssetMode;
+use Bitrix\Main\SiteTable;
 
 define('BX_RESIZE_IMAGE_PROPORTIONAL_ALT', 0);
 define('BX_RESIZE_IMAGE_PROPORTIONAL', 1);
@@ -690,12 +691,7 @@ abstract class CAllMain
 		return array_unique($this->sPath2css);
 	}
 
-    /** @deprecated use Asset::getInstance()->getCss()
-     * @param bool $cMaxStylesCnt
-     * @param bool $bXhtmlStyle
-     * @param int $assetTargetType
-     * @return string
-     */
+	/** @deprecated use Asset::getInstance()->getCss() */
 	public function GetCSS($cMaxStylesCnt = true, $bXhtmlStyle = true, $assetTargetType = Main\Page\AssetShowTargetType::ALL)
 	{
 		if($cMaxStylesCnt === true)
@@ -714,11 +710,7 @@ abstract class CAllMain
 		$this->AddBufferContent(array(&$this, "GetCSS"), $cMaxStylesCnt, $bXhtmlStyle);
 	}
 
-    /** @deprecated $Asset::getInstance->addString($str, $bUnique, $location);
-     * @param $str
-     * @param bool $bUnique
-     * @param string $location
-     */
+	/** @deprecated $Asset::getInstance->addString($str, $bUnique, $location); */
 	public function AddHeadString($str, $bUnique = false, $location = AssetLocation::AFTER_JS_KERNEL)
 	{
 		$location = Asset::getLocationByName($location);
@@ -749,10 +741,7 @@ abstract class CAllMain
 		}
 	}
 
-    /** @deprecated use Asset::getInstance()->addJs($src, $additional)
-     * @param $src
-     * @param bool $additional
-     */
+	/** @deprecated use Asset::getInstance()->addJs($src, $additional) */
 	public function AddHeadScript($src, $additional=false)
 	{
 		$this->oAsset->addJs($src, $additional);
@@ -770,17 +759,13 @@ abstract class CAllMain
 		}
 	}
 
-    /** @deprecated use Asset::getInstance()->addBeforeJs($content)
-     * @param $content
-     */
+	/** @deprecated use Asset::getInstance()->addBeforeJs($content) */
 	public function AddLangJS($content)
 	{
 		$this->oAsset->addString($content, true, 'AFTER_CSS');
 	}
 
-    /** @deprecated use Asset::getInstance()->addString($content, false, \Bitrix\Main\Page\AssetLocation::AFTER_JS, $mode)
-     * @param $content
-     */
+	/** @deprecated use Asset::getInstance()->addString($content, false, \Bitrix\Main\Page\AssetLocation::AFTER_JS, $mode) */
 	public function AddAdditionalJS($content)
 	{
 		$this->oAsset->addString($content, false, AssetLocation::AFTER_JS);
@@ -791,55 +776,37 @@ abstract class CAllMain
 		return (strncmp($src, 'http://', 7) == 0 || strncmp($src, 'https://', 8) == 0 || strncmp($src, '//', 2) == 0);
 	}
 
-    /** @deprecated deprecated use Asset::addCssKernelInfo()
-     * @param string $module
-     * @param array $arCSS
-     */
+	/** @deprecated deprecated use Asset::addCssKernelInfo() */
 	public function AddCSSKernelInfo($module = '', $arCSS = array())
 	{
 		$this->oAsset->addCssKernelInfo($module, $arCSS);
 	}
 
-    /** @deprecated deprecated use Asset::addJsKernelInfo()
-     * @param string $module
-     * @param array $arJS
-     */
+	/** @deprecated deprecated use Asset::addJsKernelInfo() */
 	public function AddJSKernelInfo($module = '', $arJS = array())
 	{
 		$this->oAsset->addJsKernelInfo($module, $arJS);
 	}
 
-    /** @deprecated use Asset::getInstance()->groupJs($from, $to)
-     * @param string $from
-     * @param string $to
-     */
+	/** @deprecated use Asset::getInstance()->groupJs($from, $to) */
 	public function GroupModuleJS($from = '', $to = '')
 	{
 		$this->oAsset->groupJs($from, $to);
 	}
 
-    /** @deprecated use Asset::getInstance()->moveJs($module)
-     * @param string $module
-     */
+	/** @deprecated use Asset::getInstance()->moveJs($module) */
 	public function MoveJSToBody($module = '')
 	{
 		$this->oAsset->moveJs($module);
 	}
 
-    /** @deprecated use Asset::getInstance()->groupCss($from, $to)
-     * @param string $from
-     * @param string $to
-     */
+	/** @deprecated use Asset::getInstance()->groupCss($from, $to) */
 	public function GroupModuleCSS($from = '', $to = '')
 	{
 		$this->oAsset->groupCss($from, $to);
 	}
 
-    /** @deprecated use Asset::getInstance()->setUnique($type, $id)
-     * @param string $id
-     * @param string $cssType
-     * @return bool
-     */
+	/** @deprecated use Asset::getInstance()->setUnique($type, $id) */
 	public function SetUniqueCSS($id = '', $cssType = 'page')
 	{
 		$cssType = (($cssType == 'page') ? 'PAGE' : 'TEMPLATE');
@@ -847,20 +814,13 @@ abstract class CAllMain
 		return true;
 	}
 
-    /** @deprecated
-     * @param string $id
-     * @param string $jsType
-     * @return bool
-     */
+	/** @deprecated */
 	public function SetUniqueJS($id = '', $jsType = 'page')
 	{
 		return true;
 	}
 
-    /** @deprecated use Asset::getInstance()->getJs($type)
-     * @param int $type
-     * @return string
-     */
+	/** @deprecated use Asset::getInstance()->getJs($type) */
 	public function GetHeadScripts($type = 0)
 	{
 		return $this->oAsset->getJs($type);
@@ -1759,7 +1719,7 @@ abstract class CAllMain
 		include($io->GetPhysicalName($DOC_ROOT_FROM.$path_from_dir."/.access.php"));
 
 		$FILE_PERM = $PERM[$path_from_file];
-		if(count($FILE_PERM)>0)
+		if(!empty($FILE_PERM))
 			return $this->SetFileAccessPermission(array($site_to, $path_to), $FILE_PERM, $bOverWrite);
 
 		return true;
@@ -2213,23 +2173,17 @@ abstract class CAllMain
 		return $contents;
 	}
 
-    /**
-     * @deprecated Use LPA::Process()
-     * @param bool $filesrc
-     * @param bool $old_filesrc
-     * @return bool|mixed|string
-     */
+	/**
+	 * @deprecated Use LPA::Process()
+	 */
 	public static function ProcessLPA($filesrc = false, $old_filesrc = false)
 	{
 		return LPA::Process($filesrc, $old_filesrc);
 	}
 
-    /**
-     * @deprecated Use LPA::ComponentChecker()
-     * @param $arParams
-     * @param $arPHPparams
-     * @param bool $parentParamName
-     */
+	/**
+	 * @deprecated Use LPA::ComponentChecker()
+	 */
 	public static function LPAComponentChecker(&$arParams, &$arPHPparams, $parentParamName = false)
 	{
 		LPA::ComponentChecker($arParams, $arPHPparams, $parentParamName);
@@ -3325,14 +3279,9 @@ abstract class CAllMain
 		return $str;
 	}
 
-    /**
-     * @deprecated Use CAdminFileDialog::ShowScript instead
-     * @param $event
-     * @param $arResultDest
-     * @param array $arPath
-     * @param string $fileFilter
-     * @param bool $bAllowFolderSelect
-     */
+	/**
+	 * @deprecated Use CAdminFileDialog::ShowScript instead
+	 */
 	public static function ShowFileSelectDialog($event, $arResultDest, $arPath = array(), $fileFilter = "", $bAllowFolderSelect = False)
 	{
 		CAdminFileDialog::ShowScript(array(
@@ -4032,9 +3981,10 @@ class CAllSite
 			}
 		}
 
+		SiteTable::getEntity()->cleanCache();
+
 		return $arFields["LID"];
 	}
-
 
 	public function Update($ID, $arFields)
 	{
@@ -4093,6 +4043,8 @@ class CAllSite
 				}
 			}
 		}
+
+		SiteTable::getEntity()->cleanCache();
 
 		return true;
 	}
@@ -4154,6 +4106,8 @@ class CAllSite
 
 		if(CACHED_b_lang!==false)
 			$CACHE_MANAGER->CleanDir("b_lang");
+
+		SiteTable::getEntity()->cleanCache();
 
 		return $DB->Query("DELETE FROM b_lang WHERE LID='".$DB->ForSQL($ID, 2)."'", true);
 	}
@@ -5283,10 +5237,7 @@ class CApplicationException
 		$this->id = $id;
 	}
 
-    /** @deprecated
-     * @param $msg
-     * @param bool $id
-     */
+	/** @deprecated */
 	public function CApplicationException($msg, $id = false)
 	{
 		self::__construct($msg, $id);

@@ -966,11 +966,10 @@ class CIBlockDocument
 		return $v;
 	}
 
-    /**
-     * @param string $documentId - document id.
-     * @return string - document admin page url.
-     * @throws CBPArgumentNullException
-     */
+	/**
+	* @param string $documentId - document id.
+	* @return string - document admin page url.
+	*/
 	public function GetDocumentAdminPage($documentId)
 	{
 		$documentId = intval($documentId);
@@ -2357,14 +2356,12 @@ class CIBlockDocument
 		return $r;
 	}
 
-    /**
-     * пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ).
-     *
-     * @param $parentDocumentId
-     * @param array $arFields - пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ array(пїЅпїЅпїЅ_пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ => пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, ...). пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ GetDocumentFields.
-     * @return int - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-     * @throws Exception
-     */
+	/**
+	* Метод создает новый документ с указанными свойствами (полями).
+	*
+	* @param array $arFields - массив значений свойств документа в виде array(код_свойства => значение, ...). Коды свойств соответствуют кодам свойств, возвращаемым методом GetDocumentFields.
+	* @return int - код созданного документа.
+	*/
 	public function CreateDocument($parentDocumentId, $arFields)
 	{
 		if (!array_key_exists("IBLOCK_ID", $arFields) || intval($arFields["IBLOCK_ID"]) <= 0)
@@ -2508,6 +2505,11 @@ class CIBlockDocument
 		if (count($arFieldsPropertyValues) > 0)
 			$arFields["PROPERTY_VALUES"] = $arFieldsPropertyValues;
 
+		if (isset($arFields['SORT']))
+		{
+			$arFields['SORT'] = (int) $arFields['SORT'];
+		}
+
 		$iblockElement = new CIBlockElement();
 		$id = $iblockElement->Add($arFields, false, true, true);
 		if (!$id || $id <= 0)
@@ -2516,12 +2518,11 @@ class CIBlockDocument
 		return $id;
 	}
 
-    /**
-     * пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-     *
-     * @param string $documentId - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-     * @throws CBPArgumentNullException
-     */
+	/**
+	* Метод удаляет указанный документ.
+	*
+	* @param string $documentId - код документа.
+	*/
 	public function DeleteDocument($documentId)
 	{
 		$documentId = intval($documentId);
@@ -2531,12 +2532,11 @@ class CIBlockDocument
 		CIBlockElement::Delete($documentId);
 	}
 
-    /**
-     * пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
-     *
-     * @param string $documentId - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-     * @return bool|int
-     */
+	/**
+	* Метод публикует документ. То есть делает его доступным в публичной части сайта.
+	*
+	* @param string $documentId - код документа.
+	*/
 	public function PublishDocument($documentId)
 	{
 		global $DB;
@@ -2577,8 +2577,8 @@ class CIBlockDocument
 			$PARENT_ID = intval($ar_element["WF_PARENT_ELEMENT_ID"]);
 			if($PARENT_ID)
 			{
-				// TODO: пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $documentId пїЅпїЅпїЅпїЅ WF_PARENT_ELEMENT_ID пїЅпїЅ NULL, пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-				// (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ) пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $documentId пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ WF_PARENT_ELEMENT_ID,
+				// TODO: Если в документе $documentId поле WF_PARENT_ELEMENT_ID не NULL, то при публикации нужно перенести данные
+				// (скопировать документ) из документа $documentId в документ WF_PARENT_ELEMENT_ID,
 				$obElement = new CIBlockElement;
 				$ar_element["WF_PARENT_ELEMENT_ID"] = false;
 
@@ -2640,14 +2640,14 @@ class CIBlockDocument
 				}
 
 				$obElement->Update($PARENT_ID, $ar_element);
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ CBPDocument::MergeDocuments(WF_PARENT_ELEMENT_ID, $documentId) пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ,
+				// вызвать CBPDocument::MergeDocuments(WF_PARENT_ELEMENT_ID, $documentId) для переноса состояний и истории БП,
 				CBPDocument::MergeDocuments(
 					array("iblock", "CIBlockDocument", $PARENT_ID),
 					array("iblock", "CIBlockDocument", $documentId)
 				);
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ $documentId,
+				// грохнуть документ $documentId,
 				CIBlockElement::Delete($ID);
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ WF_PARENT_ELEMENT_ID
+				// опубликовать документ WF_PARENT_ELEMENT_ID
 				CIBlockElement::WF_CleanUpHistoryCopies($PARENT_ID, 0);
 				$strSql = "update b_iblock_element set WF_STATUS_ID='1', WF_NEW=NULL WHERE ID=".$PARENT_ID." AND WF_PARENT_ELEMENT_ID IS NULL";
 				$DB->Query($strSql, false, "FILE: ".__FILE__."<br>LINE: ".__LINE__);
@@ -2657,7 +2657,7 @@ class CIBlockDocument
 			}
 			else
 			{
-				// пїЅпїЅпїЅпїЅ WF_PARENT_ELEMENT_ID пїЅпїЅпїЅпїЅпїЅ NULL, пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+				// Если WF_PARENT_ELEMENT_ID равно NULL, то все как раньше.
 				CIBlockElement::WF_CleanUpHistoryCopies($ID, 0);
 				$strSql = "update b_iblock_element set WF_STATUS_ID='1', WF_NEW=NULL WHERE ID=".$ID." AND WF_PARENT_ELEMENT_ID IS NULL";
 				$DB->Query($strSql, false, "FILE: ".__FILE__."<br>LINE: ".__LINE__);
@@ -2792,9 +2792,9 @@ class CIBlockDocument
 	}
 
 	/**
-	* пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+	* Метод снимает документ с публикации. То есть делает его недоступным в публичной части сайта.
 	*
-	* @param string $documentId - пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+	* @param string $documentId - код документа.
 	*/
 	public function UnpublishDocument($documentId)
 	{
@@ -2805,7 +2805,7 @@ class CIBlockDocument
 		CIBlockElement::UpdateSearch($documentId);
 	}
 
-	// array("read" => "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ", "write" => "пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")
+	// array("read" => "Ета чтение", "write" => "Ета запысь")
 	public function GetAllowableOperations($documentType)
 	{
 		$iblockId = intval(substr($documentType, strlen("iblock_")));
@@ -3017,17 +3017,18 @@ class CIBlockDocument
 
 		$arResult = array();
 
-		$arFilter = array("ACTIVE" => "Y");
+		$arFilter = ['ACTIVE' => 'Y', 'IS_REAL_USER' => true];
 		if ($group != 2)
-			$arFilter["GROUPS_ID"] = $group;
-		else
 		{
-			$arFilter['EXTERNAL_AUTH_ID'] = '';
+			$arFilter["GROUPS_ID"] = $group;
 		}
 
-		$dbUsersList = CUser::GetList(($b = "ID"), ($o = "ASC"), $arFilter);
+		$dbUsersList = CUser::GetList(($b = "ID"), ($o = "ASC"), $arFilter, ['FIELDS' => ['ID']]);
 		while ($arUser = $dbUsersList->Fetch())
+		{
 			$arResult[] = $arUser["ID"];
+		}
+
 		return $arResult;
 	}
 
@@ -3117,14 +3118,12 @@ class CIBlockDocument
 		$ob->SetRights($documentRights);
 	}
 
-    /**
-     * Method return array with all information about document. Array used for method RecoverDocumentFromHistory.
-     *
-     * @param string $documentId - document id.
-     * @param $historyIndex
-     * @return array - document information array.
-     * @throws CBPArgumentNullException
-     */
+	/**
+	* Method return array with all information about document. Array used for method RecoverDocumentFromHistory.
+	*
+	* @param string $documentId - document id.
+	* @return array - document information array.
+	*/
 	public function GetDocumentForHistory($documentId, $historyIndex)
 	{
 		$documentId = intval($documentId);
@@ -3202,15 +3201,12 @@ class CIBlockDocument
 		return $arResult;
 	}
 
-    /**
-     * Method recover document from array. Array must be created by method RecoverDocumentFromHistory.
-     *
-     * @param string $documentId - document id.
-     * @param array $arDocument - array.
-     * @return bool
-     * @throws CBPArgumentNullException
-     * @throws Exception
-     */
+	/**
+	* Method recover document from array. Array must be created by method RecoverDocumentFromHistory.
+	*
+	* @param string $documentId - document id.
+	* @param array $arDocument - array.
+	*/
 	public function RecoverDocumentFromHistory($documentId, $arDocument)
 	{
 		$documentId = intval($documentId);

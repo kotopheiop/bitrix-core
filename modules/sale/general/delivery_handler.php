@@ -33,12 +33,10 @@ class CAllSaleDeliveryHandler
 		return \Bitrix\Sale\Delivery\Services\Automatic::getRegisteredHandlers("SID");
 	}
 
-    /**
-     * get full list based on FS
-     * @deprecated
-     * @param array $arSort
-     * @return CDBResult
-     */
+	/**
+	 * get full list based on FS
+	 * @deprecated
+	 */
 	public static function GetAdminList($arSort = array("SORT" => "ASC"))
 	{
 		return  self::GetList($arSort, array("SITE_ID" => "ALL"));
@@ -203,13 +201,10 @@ class CAllSaleDeliveryHandler
 		return $result;
 	}
 
-    /**
-     * get handlers list based on DB data
-     * @deprecated
-     * @param array $arSort
-     * @param array $arFilter
-     * @return CDBResult
-     */
+	/**
+	 * get handlers list based on DB data
+	 * @deprecated
+	 */
 	public static function GetList($arSort = array("SORT" => "ASC"), $arFilter = array())
 	{
 		if(self::isFieldInFilter2("SITE", $arFilter))
@@ -318,14 +313,10 @@ class CAllSaleDeliveryHandler
 		return $result;
 	}
 
-    /**
-     * get services compability. result - list of delivery profiles;
-     * @deprecated
-     * @param $arOrder
-     * @param $arHandler
-     * @param bool|mixed|string $SITE_ID
-     * @return array|bool
-     */
+	/**
+	 * get services compability. result - list of delivery profiles;
+	 * @deprecated
+	 */
 	public static function GetHandlerCompability($arOrder, $arHandler, $SITE_ID = SITE_ID)
 	{
 		if (!defined('SALE_DH_INITIALIZED'))
@@ -521,13 +512,10 @@ class CAllSaleDeliveryHandler
 		return $result;
 	}
 
-    /**
-     * get services data by DB sID
-     * @deprecated
-     * @param $SID
-     * @param bool $SITE_ID
-     * @return CDBResult
-     */
+	/**
+	 * get services data by DB sID
+	 * @deprecated
+	 */
 	public static function GetBySID($SID, $SITE_ID = false)
 	{
 		static $cache = array();
@@ -549,10 +537,7 @@ class CAllSaleDeliveryHandler
 		return $dbResult;
 	}
 
-    /** @deprecated
-     * @param $arData
-     * @return bool
-     */
+	/** @deprecated */
 	public static function CheckFields($arData)
 	{
 		global $APPLICATION;
@@ -598,12 +583,12 @@ class CAllSaleDeliveryHandler
 		return true;
 	}
 
-    /**
-     * @param $sid
-     * @param bool $siteId
-     * @return array|bool
-     * @deprecated
-     */
+	/**
+	 * @param $sid
+	 * @return array|bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @deprecated
+	 */
 	public static function getServiceParams($sid, $siteId = false)
 	{
 		$res = \Bitrix\Sale\Delivery\Services\Table::getList(array(
@@ -843,14 +828,14 @@ class CAllSaleDeliveryHandler
 		return $rres->isSuccess();
 	}
 
-    /**
-     * @param $deliveryId
-     * @param $maxSize
-     * @param $update
-     * @return bool
-     * @internal param array $params
-     * @deprecated
-     */
+	/**
+	 * @param $deliveryId
+	 * @param array $params
+	 * @param $update
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @deprecated
+	 */
 	protected static function saveRestrictionByMaxSize($deliveryId, $maxSize, $update)
 	{
 		$rfields = array(
@@ -885,13 +870,7 @@ class CAllSaleDeliveryHandler
 		return $rres->isSuccess();
 	}
 
-    /** @deprecated
-     * @param $code
-     * @param $arData
-     * @param bool $siteId
-     * @return array|bool|int|mixed
-     * @throws \Bitrix\Main\SystemException
-     */
+	/** @deprecated */
 	public static function Set($code, $arData, $siteId = false)
 	{
 		global $APPLICATION;
@@ -1108,10 +1087,7 @@ class CAllSaleDeliveryHandler
 		return $id;
 	}
 
-    /** @deprecated
-     * @param $sid
-     * @return bool
-     */
+	/** @deprecated */
 	public static function Reset($sid)
 	{
 		$dbRes =  \Bitrix\Sale\Delivery\Services\Table::getList(array(
@@ -1154,13 +1130,7 @@ class CAllSaleDeliveryHandler
 		return;
 	}
 
-    /** @deprecated
-     * @param $SID
-     * @param $profile
-     * @param $arOrder
-     * @param $arReturn
-     * @return array|bool|mixed
-     */
+	/** @deprecated */
 	protected static function __executeCalculateEvents($SID, $profile, $arOrder, $arReturn)
 	{
 		$arEventsList = array(
@@ -1263,14 +1233,7 @@ class CAllSaleDeliveryHandler
 		return $result;
 	}
 
-    /** deprecated
-     * @param $SID
-     * @param $profile
-     * @param $arOrder
-     * @param $currency
-     * @param bool $SITE_ID
-     * @return array
-     */
+	/** deprecated */
 	public static function CalculateFull($SID, $profile, $arOrder, $currency, $SITE_ID = false)
 	{
 		$bFinish = false;
@@ -1533,10 +1496,11 @@ class CAllSaleDeliveryHandler
 		);
 	}
 
-    /**
-     * @param bool $renameTable
-     * @return \Bitrix\Sale\Result
-     */
+	/**
+	 * @return \Bitrix\Sale\Result
+	 * @throws Exception
+	 * @throws \Bitrix\Main\SystemException
+	 */
 	public static function convertToNew($renameTable = false)
 	{
 		$result = new \Bitrix\Sale\Result();

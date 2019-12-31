@@ -7,13 +7,11 @@ abstract class DataSource
 	protected $startPos = 0;
 	protected $startFeed = 0;
 
-    /**
-     * Set start position for complex source iterator
-     *
-     * @param $startPosition
-     * @return
-     * @internal param string $startPos - string in format iBlockNumber_RecordNumber
-     */
+	/**
+	 * Set start position for complex source iterator
+	 *
+	 * @param string $startPos - string in format iBlockNumber_RecordNumber
+	 */
 
 	abstract protected function setStartPosition($startPosition);
 }

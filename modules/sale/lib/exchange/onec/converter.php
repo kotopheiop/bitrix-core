@@ -29,11 +29,10 @@ abstract class Converter implements IConverter
     /** @var Converter[]|null  */
     private static $instances = null;
 
-    /**
+	/**
      * @param int $typeId Type ID.
      * @return Converter
-     * @throws ArgumentOutOfRangeException
-     * @deprecated
+	 * @deprecated
      */
     public static function getInstance($typeId)
     {
@@ -191,13 +190,11 @@ abstract class Converter implements IConverter
 		return $result;
 	}
 
-    /**
-     * @param $kRekv
-     * @param $vRekv
-     * @param array $info
-     * @return array
-     * @internal param $rekv
-     */
+	/**
+	 * @param $rekv
+	 * @param array $info
+	 * @return array
+	 */
 	protected function externalizeRekvValue($kRekv, $vRekv, array $info)
 	{
 		$result = array();

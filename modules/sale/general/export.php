@@ -958,10 +958,9 @@ class CSaleExport
 		return $result;
     }
 
-    /**
-     * @param array $arFilter
-     * @return array
-     */
+	/**
+	 * @return array
+	 */
     protected static function prepareFilter($arFilter=array())
     {
 		if(IntVal($_SESSION["BX_CML2_EXPORT"][self::getOrderPrefix()]) > 0)
@@ -1558,7 +1557,7 @@ class CSaleExport
 		ob_start();
 		?><<?=CSaleExport::getTagName("SALE_EXPORT_ITEMS")?>><?
 
-		$select = array("ID", "NOTES", "PRODUCT_XML_ID", "CATALOG_XML_ID", "NAME", "PRICE", "QUANTITY", "DISCOUNT_PRICE", "VAT_RATE", "MEASURE_CODE", "SET_PARENT_ID", "TYPE");
+		$select = array("ID", "NOTES", "PRODUCT_XML_ID", "CATALOG_XML_ID", "NAME", "PRICE", "QUANTITY", "DISCOUNT_PRICE", "VAT_RATE", "MEASURE_CODE", "SET_PARENT_ID", "TYPE", "VAT_INCLUDED");
 		if(count($arSelect)>0)
 		    $select = array_merge($arSelect, $select);
 
@@ -1662,7 +1661,7 @@ class CSaleExport
 					<<?=CSaleExport::getTagName("SALE_EXPORT_TAXES")?>>
 						<<?=CSaleExport::getTagName("SALE_EXPORT_TAX")?>>
 							<<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=CSaleExport::getTagName("SALE_EXPORT_VAT")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
-							<<?=CSaleExport::getTagName("SALE_EXPORT_IN_PRICE")?>>true</<?=CSaleExport::getTagName("SALE_EXPORT_IN_PRICE")?>>
+							<<?=CSaleExport::getTagName("SALE_EXPORT_IN_PRICE")?>><?=$arBasket["VAT_INCLUDED"]=="Y"?'true':'false'?></<?=CSaleExport::getTagName("SALE_EXPORT_IN_PRICE")?>>
 							<<?=CSaleExport::getTagName("SALE_EXPORT_AMOUNT")?>><?=roundEx($basketVatSum, 2)?></<?=CSaleExport::getTagName("SALE_EXPORT_AMOUNT")?>>
 						</<?=CSaleExport::getTagName("SALE_EXPORT_TAX")?>>
 					</<?=CSaleExport::getTagName("SALE_EXPORT_TAXES")?>>
@@ -2944,7 +2943,7 @@ class CSaleExport
 								$mapping1C['TYPE'] = $mapping['PROVIDER_KEY'];
 								break;
 
-							default: continue; // other types aren't present in old version
+							default: continue 2; // other types aren't present in old version
 						}
 
 						if (isset($code['CODE_INDEX']))
@@ -3098,11 +3097,7 @@ class CSaleExport
 		return False;
 	}
 
-    /** @deprecated
-     * @param $itemId
-     * @param $message
-     * @param \Bitrix\Main\Result|null $result
-     */
+	/** @deprecated */
 	private static function logError($itemId, $message, Bitrix\Main\Result $result = null)
 	{
 		if ($result)
@@ -3117,11 +3112,7 @@ class CSaleExport
 		));
 	}
 
-    /** @deprecated
-     * @param $personTypeId
-     * @param array $map1C
-     * @param $itemId
-     */
+	/** @deprecated */
 	private static function setMap($personTypeId, array $map1C, $itemId)
 	{
 		BusinessValue::INDIVIDUAL_DOMAIN; // make sure BusinessValueCode1CTable loaded since it in the same file as BusinessValue
@@ -3170,7 +3161,7 @@ class CSaleExport
 						$mapping['PROVIDER_KEY'] = $mapping1C['TYPE'];
 						break;
 
-					default: continue; // other types should not be there
+					default: continue 2; // other types should not be there
 				}
 
 				$r = BusinessValueConsumer1C::setMapping($codeKey, $personTypeId, $mapping);

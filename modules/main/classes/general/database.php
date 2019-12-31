@@ -679,9 +679,7 @@ abstract class CAllDBResult
 		}
 	}
 
-    /** @deprecated
-     * @param null $res
-     */
+	/** @deprecated */
 	public function CAllDBResult($res = null)
 	{
 		self::__construct($res);

@@ -38,26 +38,17 @@ class Auth
 		'auth_connector'
 	);
 
-    /**
-     * @deprecated Use \Bitrix\Rest\Application::getAuthProvider()->authorizeClient()
-     * @param $clientId
-     * @param $userId
-     * @param string $state
-     * @return
-     */
+	/**
+	 * @deprecated Use \Bitrix\Rest\Application::getAuthProvider()->authorizeClient()
+	 */
 	public static function authorizeClient($clientId, $userId, $state = '')
 	{
 		return Application::getAuthProvider()->authorizeClient($clientId, $userId, $state);
 	}
 
-    /**
-     * @deprecated Use \Bitrix\Rest\Application::getAuthProvider()->get()
-     * @param $clientId
-     * @param $scope
-     * @param $additionalParams
-     * @param $userId
-     * @return
-     */
+	/**
+	 * @deprecated Use \Bitrix\Rest\Application::getAuthProvider()->get()
+	 */
 	public static function get($clientId, $scope, $additionalParams, $userId)
 	{
 		return Application::getAuthProvider()->get($clientId, $scope, $additionalParams, $userId);

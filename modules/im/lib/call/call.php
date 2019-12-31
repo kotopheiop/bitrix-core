@@ -7,6 +7,7 @@ use Bitrix\Im\Model\CallTable;
 use Bitrix\Im\Model\CallUserTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\DateTime;
 
@@ -238,10 +239,11 @@ class Call
 			return;
 		}
 
+		$prevState = $this->state;
 		$this->state = $state;
 		if($this->associatedEntity)
 		{
-			$this->associatedEntity->onStateChange($state);
+			$this->associatedEntity->onStateChange($state, $prevState);
 		}
 	}
 
@@ -347,15 +349,9 @@ class Call
 		return $this->provider == static::PROVIDER_VOXIMPLANT ? 10 : 4;
 	}
 
-    /**
-     * Use this constructor only for creating new calls
-     * @param $type
-     * @param $provider
-     * @param $entityType
-     * @param $entityId
-     * @param $initiatorId
-     * @return static
-     */
+	/**
+	 * Use this constructor only for creating new calls
+	 */
 	public static function createWithEntity($type, $provider, $entityType, $entityId, $initiatorId)
 	{
 		$instance = new static();
@@ -447,9 +443,9 @@ class Call
 
 	public static function isCallServerEnabled()
 	{
-		if(ModuleManager::isModuleInstalled("bitrix24"))
+		if(Loader::includeModule("bitrix24"))
 		{
-			return true;
+			return \CBitrix24::getPortalZone() !== 'by';
 		}
 		if(!ModuleManager::isModuleInstalled("voximplant"))
 		{

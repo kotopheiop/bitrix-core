@@ -370,36 +370,36 @@ final class ResultItem implements \JsonSerializable, \ArrayAccess
 		return null;
 	}
 
-    /**
-     * Offset to set
-     * @link https://php.net/manual/en/arrayaccess.offsetset.php
-     *
-     * @param mixed $offset <p>
-     * The offset to assign the value to.
-     * </p>
-     * @param mixed $value <p>
-     * The value to set.
-     * </p>
-     * @return void
-     * @throws NotSupportedException
-     * @since 5.0.0
-     */
+	/**
+	 * Offset to set
+	 * @link https://php.net/manual/en/arrayaccess.offsetset.php
+	 *
+	 * @param mixed $offset <p>
+	 * The offset to assign the value to.
+	 * </p>
+	 * @param mixed $value <p>
+	 * The value to set.
+	 * </p>
+	 *
+	 * @return void
+	 * @since 5.0.0
+	 */
 	public function offsetSet($offset, $value)
 	{
 		throw new NotSupportedException('ResultItem provides ArrayAccess only for reading');
 	}
 
-    /**
-     * Offset to unset
-     * @link https://php.net/manual/en/arrayaccess.offsetunset.php
-     *
-     * @param mixed $offset <p>
-     * The offset to unset.
-     * </p>
-     * @return void
-     * @throws NotSupportedException
-     * @since 5.0.0
-     */
+	/**
+	 * Offset to unset
+	 * @link https://php.net/manual/en/arrayaccess.offsetunset.php
+	 *
+	 * @param mixed $offset <p>
+	 * The offset to unset.
+	 * </p>
+	 *
+	 * @return void
+	 * @since 5.0.0
+	 */
 	public function offsetUnset($offset)
 	{
 		throw new NotSupportedException('ResultItem provides ArrayAccess only for reading');

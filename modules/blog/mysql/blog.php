@@ -3,10 +3,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/blog/general/blog.php");
 
 class CBlog extends CAllBlog
 {
-    /*************** ADD, UPDATE, DELETE ****************
-     * @param $arFields
-     * @return bool|int
-     */
+	/*************** ADD, UPDATE, DELETE *****************/
 	function Add($arFields)
 	{
 		global $DB;

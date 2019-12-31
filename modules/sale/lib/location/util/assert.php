@@ -245,13 +245,13 @@ class Assert
 		throw new Main\NotImplementedException($msg);
 	}
 
-    /**
-     * Method announces that method or action is not supported
-     *
-     * @param string $msg message to be shown
-     *
-     * @throws Main\NotSupportedException
-     */
+	/**
+	* Method announces that method or action is not supported
+	*
+	* @param string $msg message to be shown
+	*
+	* @throws \Bitrix\Main\NotImplementedException
+	*/
 	public final static function announceNotSupported($msg = '')
 	{
 		throw new Main\NotSupportedException($msg);

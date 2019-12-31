@@ -70,16 +70,19 @@ class EventMessageCompiler
 		if(array_key_exists('ID', $arMessageParams['MESSAGE']))
 			$this->eventMessageId = $arMessageParams['MESSAGE']['ID'];
 
-		$this->siteFields = $this->getSiteFieldsArray($arMessageParams['SITE']);
+		$this->siteFields = $this->getSiteFieldsArray(
+			is_array($arMessageParams['SITE'])
+				? $arMessageParams['SITE']
+				: [$arMessageParams['SITE']]
+		);
 		$this->eventSiteFields = array_merge($this->siteFields, $this->eventFields);
 		foreach($this->eventSiteFields as $k => $v) $this->eventSiteFields[$k] = static::getFieldFlatValue($v);
 		$this->setMailCharset($arMessageParams['CHARSET']);
 	}
 
-    /**
-     * @param array $arMessageParams
-     * @return EventMessageCompiler
-     */
+	/**
+	 * @return EventMessageCompiler
+	 */
 	public static function createInstance(array $arMessageParams)
 	{
 		return new static($arMessageParams);
@@ -136,10 +139,23 @@ class EventMessageCompiler
 		$eventSiteFields = $this->eventSiteFields;
 		if($isHtml)
 		{
-			foreach ($eventSiteFields as $fieldKey => $fieldValue)
+			foreach ($this->eventSiteFields as $fieldKey => $fieldValue)
+			{
+				$eventSiteFields["HTML_".$fieldKey] = nl2br(htmlspecialcharsbx($fieldValue, ENT_COMPAT, false));
+
 				if (strpos($fieldValue, "<") === false)
+				{
 					$eventSiteFields[$fieldKey] = nl2br($fieldValue);
+				}
+			}
 		}
+		$eventSiteFields['MAIL_EVENTS_UNSUBSCRIBE_LINK'] = Tracking::getLinkUnsub(
+			'main',
+			[
+				'CODE' => strtolower(trim(explode(',', $this->getMailTo())[0])),
+				'EVENT_NAME' => $this->eventMessageFields["EVENT_NAME"]
+			]
+		);
 		$themeCompiler->setParams($eventSiteFields);
 		// eval site template and body
 		$themeCompiler->execute();
@@ -192,9 +208,9 @@ class EventMessageCompiler
 		return $this->mailContentType;
 	}
 
-    /**
-     * @internal param mixed $mailAttachment
-     */
+	/**
+	 * @param mixed $mailAttachment
+	 */
 	protected function setMailAttachment()
 	{
 		$eventMessageAttachment = array();
@@ -402,7 +418,7 @@ class EventMessageCompiler
 	}
 
 	/**
-	 * @param $sites
+	 * @param array|string $sites Sites.
 	 * @return array
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ArgumentNullException

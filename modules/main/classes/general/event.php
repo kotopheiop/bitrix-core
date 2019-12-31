@@ -171,44 +171,33 @@ class CAllEvent
 		return $str;
 	}
 
-    /**
-     * @deprecated See \Bitrix\Main\Mail\Mail::is8Bit()
-     * @param $str
-     * @return bool
-     */
+	/**
+	 * @deprecated See \Bitrix\Main\Mail\Mail::is8Bit()
+	 */
 	public static function Is8Bit($str)
 	{
 		return Mail\Mail::is8Bit($str);
 	}
 
-    /**
-     * @deprecated See \Bitrix\Main\Mail\Mail::encodeMimeString()
-     * @param $text
-     * @param $charset
-     * @return string
-     */
+	/**
+	 * @deprecated See \Bitrix\Main\Mail\Mail::encodeMimeString()
+	 */
 	public static function EncodeMimeString($text, $charset)
 	{
 		return Mail\Mail::encodeMimeString($text, $charset);
 	}
 
-    /**
-     * @deprecated See \Bitrix\Mail\Mail::encodeSubject()
-     * @param $text
-     * @param $charset
-     * @return string
-     */
+	/**
+	 * @deprecated See \Bitrix\Mail\Mail::encodeSubject()
+	 */
 	public static function EncodeSubject($text, $charset)
 	{
 		return Mail\Mail::encodeSubject($text, $charset);
 	}
 
-    /**
-     * @deprecated See \Bitrix\Main\Mail\Mail::encodeHeaderFrom()
-     * @param $text
-     * @param $charset
-     * @return string
-     */
+	/**
+	 * @deprecated See \Bitrix\Main\Mail\Mail::encodeHeaderFrom()
+	 */
 	public static function EncodeHeaderFrom($text, $charset)
 	{
 		return Mail\Mail::encodeHeaderFrom($text, $charset);
@@ -222,11 +211,9 @@ class CAllEvent
 		return Mail\Mail::getMailEol();
 	}
 
-    /**
-     * @deprecated See \Bitrix\Main\Mail\Event::handleEvent()
-     * @param $arEvent
-     * @return string
-     */
+	/**
+	 * @deprecated See \Bitrix\Main\Mail\Event::handleEvent()
+	 */
 	public static function HandleEvent($arEvent)
 	{
 		if(isset($arEvent['C_FIELDS']))
@@ -579,6 +566,30 @@ class CAllEventMessage
 			unset($data['EVENT_MESSAGE_TYPE_NAME']);
 			unset($data['EVENT_MESSAGE_TYPE_EVENT_NAME']);
 		}
+
+		if (!empty($data['ADDITIONAL_FIELD']) && is_array($data['ADDITIONAL_FIELD']))
+		{
+			foreach ($data['ADDITIONAL_FIELD'] as $index => $aField)
+			{
+				$index++;
+				$oldKeyName = "FIELD{$index}_NAME";
+				$oldKeyValue = "FIELD{$index}_VALUE";
+				if (!array_key_exists($oldKeyName, $data))
+				{
+					continue;
+				}
+
+				if (!empty($data[$oldKeyName]))
+				{
+					continue;
+				}
+
+				$data[$oldKeyName] = $aField['NAME'];
+				$data[$oldKeyValue] = $aField['VALUE'];
+			}
+		}
+
+		return $data;
 	}
 
 	public static function GetList(&$by, &$order, $arFilter=Array())

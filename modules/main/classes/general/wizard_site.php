@@ -77,9 +77,7 @@ class CWizard
 		$this->__GetInstallationScript();
 	}
 
-    /** @deprecated
-     * @param $wizardName
-     */
+	/** @deprecated */
 	public function CWizard($wizardName)
 	{
 		self::__construct($wizardName);

@@ -54,8 +54,7 @@ class FileDescriptorSet extends \Protobuf\AbstractMessage
     /**
      * Set 'file' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\FileDescriptorProto> $value
+     * @param \Protobuf\Collection<\google\protobuf\FileDescriptorProto> $value
      */
     public function setFileList(\Protobuf\Collection $value = null)
     {

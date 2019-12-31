@@ -1,6 +1,6 @@
 <?
 /***************************************
-			пїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ
+			Веб-форма
 ***************************************/
 
 class CAllForm extends CForm_old
@@ -12,8 +12,8 @@ class CAllForm extends CForm_old
 		return "<br>Module: ".$module_id." (".$arModuleVersion["VERSION"].")<br>Class: CAllForm<br>File: ".__FILE__;
 	}
 
-	// true - пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
-	// false - пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	// true - если текущий пользователь имеет полный доступ к модулю
+	// false - в противном случае
 	public static function IsAdmin()
 	{
 		global $USER, $APPLICATION;
@@ -23,7 +23,7 @@ class CAllForm extends CForm_old
 		if ($FORM_RIGHT>="W") return true;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+	// Функция возвращает массивы, содержащие данные по вопросам и полям формы, а также ответы и их значения.
 	public static function GetResultAnswerArray($WEB_FORM_ID, &$arrColumns, &$arrAnswers, &$arrAnswersSID, $arFilter=Array())
 	{
 		$err_mess = (CAllForm::err_mess())."<br>Function: GetResultAnswerArray<br>Line: ";
@@ -112,7 +112,7 @@ class CAllForm extends CForm_old
 		}
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	// получаем массив почтовых шаблонов связанных с формой
 	public static function GetMailTemplateArray($FORM_ID)
 	{
 		$err_mess = (CAllForm::err_mess())."<br>Function: GetMailTemplateArray<br>Line: ";
@@ -134,7 +134,7 @@ class CAllForm extends CForm_old
 		return $arrRes;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+	// получаем массив сайтов связанных с формой
 	public static function GetSiteArray($FORM_ID)
 	{
 		$err_mess = (CAllForm::err_mess())."<br>Function: GetSiteArray<br>Line: ";
@@ -156,7 +156,7 @@ class CAllForm extends CForm_old
 		return $arrRes;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	// функция вызывает заданный обработчик до смены статуса
 	public static function ExecHandlerBeforeChangeStatus($RESULT_ID, $ACTION, $NEW_STATUS_ID=0)
 	{
 		global $arrPREV_RESULT_STATUS, $DB, $MESS, $APPLICATION, $USER, $strError;
@@ -202,7 +202,7 @@ class CAllForm extends CForm_old
 		}
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	// функция вызывает заданный обработчик после смены статуса
 	public static function ExecHandlerAfterChangeStatus($RESULT_ID, $ACTION)
 	{
 		global $arrCURRENT_RESULT_STATUS, $arrPREV_RESULT_STATUS, $DB, $MESS, $APPLICATION, $USER, $strError;
@@ -249,7 +249,7 @@ class CAllForm extends CForm_old
 		}
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ
+	// права на веб-форму
 	public static function GetPermissionList($get_default="Y")
 	{
 		global $MESS, $strError;
@@ -869,7 +869,7 @@ class CAllForm extends CForm_old
 		return CFile::InputFile("form_".strtolower($FILE_TYPE)."_".$FIELD_NAME, $WIDTH, $VALUE, false, $MAX_FILE_SIZE, $FILE_TYPE, $PARAM_FILE, 0, "", $PARAM_CHECKBOX, $show_notes);
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	// возвращает массивы описывающие поля и вопросы формы
 	public static function GetDataByID($WEB_FORM_ID, &$arForm, &$arQuestions, &$arAnswers, &$arDropDown, &$arMultiSelect, $additional="N", $active="N")
 	{
 		global $strError;
@@ -892,7 +892,7 @@ class CAllForm extends CForm_old
 				while ($wr=$w->Fetch()) $arAnswers[$ur["SID"]][] = $wr;
 			}
 
-			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ dropdown пїЅ multiselect пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+			// собираем по каждому вопросу все dropdown и multiselect в отдельные массивы
 			if (is_array($arQuestions) && is_array($arAnswers))
 			{
 				foreach ($arQuestions as $arQ)
@@ -966,19 +966,19 @@ class CAllForm extends CForm_old
 		$WEB_FORM_ID = intval($WEB_FORM_ID);
 		if ($WEB_FORM_ID>0)
 		{
-			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+			// получаем данные по форме
 			$WEB_FORM_ID = CForm::GetDataByID($WEB_FORM_ID, $arForm, $arQuestions, $arAnswers, $arDropDown, $arMultiSelect, "ALL");
 			$WEB_FORM_ID = intval($WEB_FORM_ID);
 			if ($WEB_FORM_ID>0)
 			{
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+				// проверяем права
 				$F_RIGHT = ($CHECK_RIGHTS=="Y") ? CForm::GetPermission($WEB_FORM_ID) : 30;
 
 				if ($F_RIGHT<10) CForm::__check_PushError($errors, GetMessage("FORM_ACCESS_DENIED_FOR_FORM_WRITE"));
 				else
 				{
 					$NOT_ANSWER = "NOT_ANSWER";
-					// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+					// проходим по вопросам
 					foreach ($arQuestions as $key => $arQuestion)
 					{
 						$arAnswerValues = array();
@@ -995,16 +995,16 @@ class CAllForm extends CForm_old
 
 						if ($arQuestion["ADDITIONAL"]!="Y")
 						{
-							// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+							// проверяем вопросы формы
 							$FIELD_SID = $arQuestion["SID"];
 							$FIELD_REQUIRED = $arQuestion["REQUIRED"];
 
-							// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ: N - пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; Y - пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ;
+							// массив полей: N - поле не отвечено; Y - поле отвечено;
 							if ($FIELD_REQUIRED=="Y") $REQUIRED_FIELDS[$FIELD_SID] = "N";
 
 							$startType = "";
 							$bCheckValidators = true;
-							// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+							// проходим по ответам
 							if (is_array($arAnswers[$FIELD_SID]))
 							{
 								foreach ($arAnswers[$FIELD_SID] as $key => $arAnswer)
@@ -1207,7 +1207,7 @@ class CAllForm extends CForm_old
 								}
 							}
 						}
-						else // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+						else // проверяем дополнительные поля
 						{
 							$FIELD_TYPE = $arQuestion["FIELD_TYPE"];
 
@@ -1307,7 +1307,7 @@ class CAllForm extends CForm_old
 		return $errors;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	// проверка формы
 	public static function CheckFields($arFields, $FORM_ID, $CHECK_RIGHTS="Y")
 	{
 		$err_mess = (CAllForm::err_mess())."<br>Function: CheckFields<br>Line: ";
@@ -1374,7 +1374,7 @@ class CAllForm extends CForm_old
 		if (strlen($str)>0) return false; else return true;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	// добавление/обновление формы
 	public static function Set($arFields, $FORM_ID=false, $CHECK_RIGHTS="Y")
 	{
 		$err_mess = (CAllForm::err_mess())."<br>Function: Set<br>Line: ";
@@ -1514,7 +1514,7 @@ class CAllForm extends CForm_old
 
 			if ($FORM_ID>0)
 			{
-				// пїЅпїЅпїЅпїЅпїЅ
+				// сайты
 				if (is_set($arFields, "arSITE"))
 				{
 					$DB->Query("DELETE FROM b_form_2_site WHERE FORM_ID='".$FORM_ID."'", false, $err_mess.__LINE__);
@@ -1534,7 +1534,7 @@ class CAllForm extends CForm_old
 					}
 				}
 
-				// пїЅпїЅпїЅпїЅ
+				// меню
 				if (is_set($arFields, "arMENU"))
 				{
 					$DB->Query("DELETE FROM b_form_menu WHERE FORM_ID='".$FORM_ID."'", false, $err_mess.__LINE__);
@@ -1554,7 +1554,7 @@ class CAllForm extends CForm_old
 					}
 				}
 
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+				// почтовые шаблоны
 				if (is_set($arFields, "arMAIL_TEMPLATE"))
 				{
 					$DB->Query("DELETE FROM b_form_2_mail_template WHERE FORM_ID='".$FORM_ID."'", false, $err_mess.__LINE__);
@@ -1574,7 +1574,7 @@ class CAllForm extends CForm_old
 					}
 				}
 
-				// пїЅпїЅпїЅпїЅпїЅпїЅ
+				// группы
 				if (is_set($arFields, "arGROUP"))
 				{
 					$DB->Query("DELETE FROM b_form_2_group WHERE FORM_ID='".$FORM_ID."'", false, $err_mess.__LINE__);
@@ -1601,7 +1601,7 @@ class CAllForm extends CForm_old
 		return false;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅпїЅпїЅпїЅ
+	// копирует веб-форму
 	public static function Copy($ID, $CHECK_RIGHTS="Y")
 	{
 		global $DB, $APPLICATION, $strError;
@@ -1613,7 +1613,7 @@ class CAllForm extends CForm_old
 			$arForm = $rsForm->Fetch();
 			if (!is_set($arForm, "FORM_TEMPLATE")) $arForm["FORM_TEMPLATE"] = CForm::GetFormTemplateByID($ID);
 
-			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+			// символьный код формы
 			while(true)
 			{
 				$SID = $arForm["SID"];
@@ -1647,11 +1647,11 @@ class CAllForm extends CForm_old
 				"STAT_EVENT3"				=> $arForm["STAT_EVENT3"],
 				"arSITE"					=> CForm::GetSiteArray($ID)
 				);
-			// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
+			// пункты меню
 			$z = CForm::GetMenuList(array("FORM_ID"=>$ID), "N");
 			while ($zr = $z->Fetch()) $arFields["arMENU"][$zr["LID"]] = $zr["MENU"];
 
-			// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+			// права групп
 			$w = CGroup::GetList($v1="dropdown", $v2="asc", Array("ADMIN"=>"N"), $v3);
 			$arGroups = array();
 			while ($wr=$w->Fetch()) $arGroups[] = $wr["ID"];
@@ -1661,7 +1661,7 @@ class CAllForm extends CForm_old
 					$arFields["arGROUP"][$gid] = CForm::GetPermission($ID, array($gid), "Y");
 			}
 
-			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+			// картинка
 			if (intval($arForm["IMAGE_ID"])>0)
 			{
 				$arIMAGE = CFile::MakeFileArray(CFile::CopyFile($arForm["IMAGE_ID"]));
@@ -1673,11 +1673,11 @@ class CAllForm extends CForm_old
 
 			if (intval($NEW_ID)>0)
 			{
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+				// статусы
 				$rsStatus = CFormStatus::GetList($ID, $by, $order, array(), $is_filtered);
 				while ($arStatus = $rsStatus->Fetch()) CFormStatus::Copy($arStatus["ID"], "N", $NEW_ID);
 
-				// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅ
+				// вопросы/поля
 				$rsField = CFormField::GetList($ID, "ALL", $by, $order, array(), $is_filtered);
 				while ($arField = $rsField->Fetch())
 				{
@@ -1756,7 +1756,7 @@ class CAllForm extends CForm_old
 		return false;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	// удаляем результаты формы
 	public static function Reset($ID, $CHECK_RIGHTS="Y")
 	{
 		global $DB, $strError;
@@ -1766,11 +1766,11 @@ class CAllForm extends CForm_old
 		$F_RIGHT = ($CHECK_RIGHTS!="Y") ? 30 : CForm::GetPermission($ID);
 		if ($F_RIGHT>=30)
 		{
-			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+			// обнуляем поля формы
 			$rsFields = CFormField::GetList($ID, "ALL", $by, $order, array(), $is_filtered);
 			while ($arField = $rsFields->Fetch()) CFormField::Reset($arField["ID"], "N");
 
-			// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+			// удаляем результаты данной формы
 			$DB->Query("DELETE FROM b_form_result WHERE FORM_ID='$ID'", false, $err_mess.__LINE__);
 
 			return true;
@@ -1780,7 +1780,7 @@ class CAllForm extends CForm_old
 		return false;
 	}
 
-	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+	// создает тип почтового события и шаблон на языке формы
 	public static function SetMailTemplate($WEB_FORM_ID, $ADD_NEW_TEMPLATE="Y", $old_SID="", $bReturnFullInfo = false)
 	{
 		global $DB, $MESS, $strError;
@@ -1849,7 +1849,7 @@ class CAllForm extends CForm_old
 						)
 					);
 			}
-			// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+			// задаем новый тип события для старых шаблонов
 			if (strlen($old_MAIL_EVENT_TYPE)>0 && $old_MAIL_EVENT_TYPE!=$MAIL_EVENT_TYPE)
 			{
 				$e = $em->GetList($by="id",$order="desc",array("EVENT_NAME"=>$old_MAIL_EVENT_TYPE));
@@ -1893,7 +1893,7 @@ http://#SERVER_NAME#/bitrix/admin/form_result_view.php?lang=".$arrSiteLang[$sid]
 -------------------------------------------------------
 ".GetMessage("FORM_GENERATED_AUTOMATICALLY")."
 						";
-						// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+						// добавляем новый шаблон
 						$arFields = Array(
 							"ACTIVE"		=> "Y",
 							"EVENT_NAME"	=> $MAIL_EVENT_TYPE,
@@ -1941,13 +1941,13 @@ http://#SERVER_NAME#/bitrix/admin/form_result_view.php?lang=".$arrSiteLang[$sid]
 
 	}
 
-    /**
-     * Check whether CAPTCHA Fields is on template
-     *
-     * @param string $tpl
-     * @return bool
-     * @internal param string $FIELD_SID
-     */
+		/**
+	 * Check whether CAPTCHA Fields is on template
+	 *
+	 * @param string $FIELD_SID
+	 * @param string $tpl
+	 * @return bool
+	 */
 	public static function isCAPTCHAInTemplate($tpl)
 	{
 		$check_str = '$FORM->ShowCaptcha';

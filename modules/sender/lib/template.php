@@ -76,15 +76,14 @@ class TemplateTable extends ORM\Data\DataManager
 		return $resultList;
 	}
 
-    /**
-     * Increment use counter.
-     *
-     * @param $id
-     * @return bool
-     */
+	/**
+	 * Increment use counter.
+	 *
+	 * @return bool
+	 */
 	public static function incUseCount($id)
 	{
-		return static::update($id, array(
+ 		return static::update($id, array(
 			'USE_COUNT' => new DB\SqlExpression('?# + 1', 'USE_COUNT'),
 			'DATE_USE' => new MainType\DateTime()
 		))->isSuccess();
@@ -169,8 +168,11 @@ class TemplateTable extends ORM\Data\DataManager
 		$result = new ORM\EventResult;
 
 		$data = $event->getParameters();
-		$data['fields']['CONTENT'] = Security\Sanitizer::fixTemplateStyles($data['fields']['CONTENT']);
-		$result->modifyFields($data['fields']);
+		if (array_key_exists('CONTENT', $data['fields']))
+		{
+			$data['fields']['CONTENT'] = Security\Sanitizer::fixTemplateStyles($data['fields']['CONTENT']);
+			$result->modifyFields($data['fields']);
+		}
 
 		return $result;
 	}

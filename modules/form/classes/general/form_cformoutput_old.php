@@ -1,18 +1,17 @@
 <?
 /*********************************************
-	пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+	Устаревшие функции (для совместимости)
 *********************************************/
 
 class CFormOutput_old
 {
-    /**
-     * Form initializing and checking. If form's wrong, returns false
-     * Use ShowErrorMsg() to output error code
-     *
-     * @param array $arParams
-     * @param bool $admin
-     * @return bool
-     */
+	/**
+	 * Form initializing and checking. If form's wrong, returns false
+	 * Use ShowErrorMsg() to output error code
+	 *
+	 * @param array $arParams
+	 * @return bool
+	 */
 	function Init($arParams, $admin = false)
 	{
 		global $APPLICATION, $USER;

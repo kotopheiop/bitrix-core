@@ -392,11 +392,10 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
 		return '';
 	}
 
-    /**
-     * Returns SID required for requests.
-     * @param null $shipment
-     * @return Result
-     */
+	/**
+	 * Returns SID required for requests.
+	 * @return Result
+	 */
 	public function getSidResult($shipment = null)
 	{
 		$result = new Result();
@@ -486,11 +485,10 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
 		return $this->getAuthField('ICN', $shipment);
 	}
 
-    /**
-     * Returns services list with parameters.
-     * @param null $shipment
-     * @return Result
-     */
+	/**
+	 * Returns services list with parameters.
+	 * @return Result
+	 */
 	public function getServiceTypes($shipment = null)
 	{
 		$result = new Result();

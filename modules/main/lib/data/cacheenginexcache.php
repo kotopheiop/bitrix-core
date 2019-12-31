@@ -10,34 +10,39 @@ class CacheEngineXCache
 	private $written = false;
 	private $read = false;
 
-	protected $useLock = true;
+	protected $useLock = false;
 	protected $ttlMultiplier = 2;
 	protected static $locks = array();
 
 	/**
 	 * Engine constructor.
-	 *
+	 * @param array $options Cache options.
 	 */
-	function __construct()
+	function __construct($options = [])
 	{
-		$cacheConfig = \Bitrix\Main\Config\Configuration::getValue("cache");
+		$config = \Bitrix\Main\Config\Configuration::getValue("cache");
 
-		if ($cacheConfig && is_array($cacheConfig))
+		if ($config && is_array($config))
 		{
-			if (isset($cacheConfig["use_lock"]))
+			if (isset($config["use_lock"]))
 			{
-				$this->useLock = (bool)$cacheConfig["use_lock"];
+				$this->useLock = (bool)$config["use_lock"];
 			}
 
-			if (isset($cacheConfig["sid"]) && ($cacheConfig["sid"] != ""))
+			if (isset($config["sid"]) && ($config["sid"] != ""))
 			{
-				$this->sid = $cacheConfig["sid"];
+				$this->sid = $config["sid"];
 			}
 
-			if (isset($cacheConfig["ttl_multiplier"]) && $this->useLock)
+			if (isset($config["ttl_multiplier"]) && $this->useLock)
 			{
-				$this->ttlMultiplier = (integer)$cacheConfig["ttl_multiplier"];
+				$this->ttlMultiplier = (integer)$config["ttl_multiplier"];
 			}
+		}
+
+		if (!empty($options) && isset($options['actual_data']))
+		{
+			$this->useLock = !((bool) $options['actual_data']);
 		}
 
 		$this->sid .= !$this->useLock;
@@ -128,15 +133,16 @@ class CacheEngineXCache
 		return false;
 	}
 
-    /**
-     * Releases the lock obtained by lock method.
-     *
-     * @param string $baseDir Base cache directory (usually /bitrix/cache).
-     * @param bool|string $initDir Directory within base.
-     * @param bool|string $key Calculated cache key.
-     * @param integer $TTL Expiration period in seconds.
-     * @return void
-     */
+	/**
+	 * Releases the lock obtained by lock method.
+	 *
+	 * @param string $baseDir Base cache directory (usually /bitrix/cache).
+	 * @param string $initDir Directory within base.
+	 * @param string $key Calculated cache key.
+	 * @param integer $TTL Expiration period in seconds.
+	 *
+	 * @return void
+	 */
 	protected function unlock($baseDir, $initDir = false, $key = false, $TTL = 0)
 	{
 		if ($key !== false)
@@ -175,14 +181,15 @@ class CacheEngineXCache
 		}
 	}
 
-    /**
-     * Cleans (removes) cache directory or file.
-     *
-     * @param string $baseDir Base cache directory (usually /bitrix/cache).
-     * @param bool|string $initDir Directory within base.
-     * @param bool|string $filename File name.
-     * @return void
-     */
+	/**
+	 * Cleans (removes) cache directory or file.
+	 *
+	 * @param string $baseDir Base cache directory (usually /bitrix/cache).
+	 * @param string $initDir Directory within base.
+	 * @param string $filename File name.
+	 *
+	 * @return void
+	 */
 	public function clean($baseDir, $initDir = false, $filename = false)
 	{
 		$key = false;

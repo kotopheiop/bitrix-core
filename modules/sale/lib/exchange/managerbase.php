@@ -19,10 +19,9 @@ abstract class ManagerBase
 	/** @var LoggerDiag $logger */
 	protected $logger = null;
 
-    /**
-     * @return string
-     * @throws NotImplementedException
-     */
+	/**
+	 * @return string
+	 */
 	static public function getDirectionType()
 	{
 		throw new NotImplementedException('The method is not implemented.');

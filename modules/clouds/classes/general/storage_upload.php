@@ -17,9 +17,10 @@ class CCloudStorageUpload
 	protected /*.int.*/ $_max_retries = 3;
 	protected /*.array[string]string.*/ $_cache = null;
 
-    /**
-     * @param string $filePath
-     */
+	/**
+	 * @param string $filePath
+	 * @return void
+	*/
 	function __construct($filePath)
 	{
 		$this->_filePath = $filePath;
@@ -74,13 +75,12 @@ class CCloudStorageUpload
 		$DB->Query("DELETE FROM b_clouds_file_upload WHERE TIMESTAMP_X < ".$DB->CharToDateFunction(ConvertTimeStamp(time()-24*60*60)));
 	}
 
-    /**
-     * @param int $bucket_id
-     * @param float $fileSize
-     * @param string $ContentType
-     * @param bool $tmpFileName
-     * @return bool
-     */
+	/**
+	 * @param int $bucket_id
+	 * @param float $fileSize
+	 * @param string $ContentType
+	 * @return bool
+	*/
 	function Start($bucket_id, $fileSize, $ContentType = 'binary/octet-stream', $tmpFileName = false)
 	{
 		global $DB;
@@ -103,6 +103,16 @@ class CCloudStorageUpload
 				$fileSize,
 				$ContentType
 			);
+			if (!$bStarted && $obBucket->RenewToken())
+			{
+				$bStarted = $obBucket->GetService()->InitiateMultipartUpload(
+					$obBucket->GetBucketArray(),
+					$arUploadInfo,
+					$this->_filePath,
+					$fileSize,
+					$ContentType
+				);
+			}
 
 			if($bStarted)
 			{
@@ -127,11 +137,10 @@ class CCloudStorageUpload
 		return false;
 	}
 
-    /**
-     * @param string $data
-     * @param null $obBucket
-     * @return bool
-     */
+	/**
+	 * @param string $data
+	 * @return bool
+	*/
 	function Next($data, $obBucket = null)
 	{
 		global $APPLICATION;
@@ -168,12 +177,11 @@ class CCloudStorageUpload
 		return false;
 	}
 
-    /**
-     * @param string $data
-     * @param int $part_no
-     * @param null $obBucket
-     * @return bool
-     */
+	/**
+	 * @param string $data
+	 * @param int $part_no
+	 * @return bool
+	*/
 	function Part($data, $part_no, $obBucket = null)
 	{
 		global $APPLICATION;
@@ -218,10 +226,9 @@ class CCloudStorageUpload
 		return false;
 	}
 
-    /**
-     * @param null $obBucket
-     * @return bool
-     */
+	/**
+	 * @return bool
+	*/
 	function Finish($obBucket = null)
 	{
 		if($this->isStarted())
@@ -246,6 +253,11 @@ class CCloudStorageUpload
 
 			if ($bSuccess)
 			{
+				if ($obBucket->getQueueFlag())
+				{
+					CCloudFailover::queueCopy($obBucket, $this->_filePath);
+				}
+
 				foreach(GetModuleEvents("clouds", "OnAfterCompleteMultipartUpload", true) as $arEvent)
 				{
 					ExecuteModuleEventEx($arEvent, array($obBucket, array("size" => $ar["FILE_SIZE"]), $this->_filePath));

@@ -39,13 +39,10 @@ abstract class Tree extends Entity\DataManager
 		return self::addExtended($data);
 	}
 
-    /**
-     * Available keys in $additional
-     * REBALANCE - if set to true, method will rebalance tree after insertion
-     * @param array $data
-     * @param array $additional
-     * @return
-     */
+	/**
+	 * Available keys in $additional
+	 * REBALANCE - if set to true, method will rebalance tree after insertion
+	*/
 	public static function addExtended(array $data, array $additional = array())
 	{
 		$rebalance = !isset($additional['REBALANCE']) || $additional['REBALANCE'] !== false;
@@ -149,14 +146,10 @@ abstract class Tree extends Entity\DataManager
 		return self::update($primary, $data);
 	}
 
-    /**
-     * Available keys in $additional
-     * REBALANCE - if set to true, method will rebalance tree after insertion
-     * @param $primary
-     * @param array $data
-     * @param array $additional
-     * @return
-     */
+	/**
+	 * Available keys in $additional
+	 * REBALANCE - if set to true, method will rebalance tree after insertion
+	*/
 	public static function updateExtended($primary, array $data, array $additional = array())
 	{
 		$rebalance = !isset($additional['REBALANCE']) || $additional['REBALANCE'] !== false;
@@ -227,15 +220,11 @@ abstract class Tree extends Entity\DataManager
 		return parent::delete($primary);
 	}
 
-    /**
-     * This method is for internal use only. It may be changed without any notification further, or even mystically disappear.
-     *
-     * @access private
-     * @param $primary
-     * @param array $node
-     * @return
-     * @throws Tree\NodeNotFoundException
-     */
+	/**
+	 * This method is for internal use only. It may be changed without any notification further, or even mystically disappear.
+	 * 
+	 * @access private
+	 */
 	public static function getSubtreeRangeSqlForNode($primary, $node = array())
 	{
 		$primary = Assert::expectIntegerPositive($primary, '$primary');
@@ -259,6 +248,19 @@ abstract class Tree extends Entity\DataManager
 		));
 
 		return $query->getQuery();
+	}
+
+	public static function checkIntegrity()
+	{
+		return !self::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'LOGIC' => 'OR',
+				['LEFT_MARGIN' => false],
+				['RIGHT_MARGIN' => false]
+			],
+			'limit' => 1
+		])->fetch();
 	}
 
 	public static function checkNodeIsParentOfNodeById($primary, $childPrimary, $behaviour = array('CHECK_DIRECT' => false))
@@ -362,19 +364,14 @@ abstract class Tree extends Entity\DataManager
 		return self::getPathToNodeByCondition(array('ID' => $primary), $parameters, $behaviour);
 	}
 
-    /**
-     * Fetches a parent chain of a specified node
-     *
-     * Available keys in $behaviour
-     * SHOW_LEAF : if set to true, return node itself in the result
-     *
-     * @access private
-     * @param $filter
-     * @param array $parameters
-     * @param array $behaviour
-     * @return
-     * @throws Main\SystemException
-     */
+	/**
+	 * Fetches a parent chain of a specified node
+	 * 
+	 * Available keys in $behaviour
+	 * SHOW_LEAF : if set to true, return node itself in the result
+	 * 
+	 * @access private
+	 */
 	public static function getPathToNodeByCondition($filter, $parameters = array(), $behaviour = array('SHOW_LEAF' => true))
 	{
 		$filter = Assert::expectNotEmptyArray($filter, '$filter');
@@ -562,12 +559,9 @@ abstract class Tree extends Entity\DataManager
 		return self::getList($parameters);
 	}
 
-    /**
-     * Fetches a set of items which form sub-tree of a given node
-     * @param $primary
-     * @param array $parameters
-     * @return
-     */
+	/**
+	* Fetches a set of items which form sub-tree of a given node
+	*/
 	public static function getSubTree($primary, $parameters = array())
 	{
 		if(empty($parameters))
@@ -587,17 +581,13 @@ abstract class Tree extends Entity\DataManager
 		return self::getList($parameters);
 	}
 
-    /**
-     * Fetches a chain of parents with their subtrees expanded
-     *
-     * Available keys in $behaviour
-     * SHOW_CHILDREN : if set to true, do return direct ancestors of $primary in the result
-     * START_FROM
-     * @param $primary
-     * @param array $parameters
-     * @param array $behaviour
-     * @return
-     */
+	/**
+	* Fetches a chain of parents with their subtrees expanded
+	* 
+	* Available keys in $behaviour
+	* SHOW_CHILDREN : if set to true, do return direct ancestors of $primary in the result
+	* START_FROM
+	*/
 	public static function getParentTree($primary, $parameters = array(), $behaviour = array('SHOW_CHILDREN' => true, 'START_FROM' => false))
 	{
 		$primary = Assert::expectIntegerPositive($primary, '$primary');

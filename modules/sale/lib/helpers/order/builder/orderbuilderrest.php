@@ -367,16 +367,6 @@ class OrderBuilderRest extends OrderBuilder
 		return $result;
 	}
 
-	protected function getSettableShipmentFields()
-	{
-		return Shipment::getAvailableFields();
-	}
-
-	protected function getSettablePaymentFields()
-	{
-		return Payment::getAvailableFields();
-	}
-
 	protected function getSettableOrderFields()
 	{
 		return Order::getAvailableFields();

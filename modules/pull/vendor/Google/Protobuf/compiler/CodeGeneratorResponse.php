@@ -91,8 +91,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
     /**
      * Set 'file' value
      *
-     * @param \Protobuf\Collection|null $value
-     * @internal param $ \Protobuf\Collection<\google\protobuf\compiler\CodeGeneratorResponse\File> $value
+     * @param \Protobuf\Collection<\google\protobuf\compiler\CodeGeneratorResponse\File> $value
      */
     public function setFileList(\Protobuf\Collection $value = null)
     {

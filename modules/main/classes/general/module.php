@@ -413,7 +413,7 @@ function ExecuteModuleEvent($arEvent, $param1=NULL, $param2=NULL, $param3=NULL, 
 	for($i = $CNT_PREDEF + 1; $i < $nArgs; $i++)
 		$args[] = func_get_arg($i);
 
-	//TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ EventManager::getInstance()->getLastEvent();
+	//TODO: Возможно заменить на EventManager::getInstance()->getLastEvent();
 	global $BX_MODULE_EVENT_LAST;
 	$BX_MODULE_EVENT_LAST = $arEvent;
 
@@ -463,7 +463,7 @@ function ExecuteModuleEventEx($arEvent, $arParams = array())
 
 	if(array_key_exists("CALLBACK", $arEvent))
 	{
-		//TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ EventManager::getInstance()->getLastEvent();
+		//TODO: Возможно заменить на EventManager::getInstance()->getLastEvent();
 		global $BX_MODULE_EVENT_LAST;
 		$BX_MODULE_EVENT_LAST = $arEvent;
 
@@ -476,7 +476,7 @@ function ExecuteModuleEventEx($arEvent, $arParams = array())
 	}
 	elseif($arEvent["TO_CLASS"] != "" && $arEvent["TO_METHOD"] != "")
 	{
-		//TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ EventManager::getInstance()->getLastEvent();
+		//TODO: Возможно заменить на EventManager::getInstance()->getLastEvent();
 		global $BX_MODULE_EVENT_LAST;
 		$BX_MODULE_EVENT_LAST = $arEvent;
 
@@ -523,9 +523,6 @@ function GetModuleID($str)
  * Returns TRUE if version1 >= version2
  * version1 = "XX.XX.XX"
  * version2 = "XX.XX.XX"
- * @param $version1
- * @param $version2
- * @return bool
  */
 function CheckVersion($version1, $version2)
 {

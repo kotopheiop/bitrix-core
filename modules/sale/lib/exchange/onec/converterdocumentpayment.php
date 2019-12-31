@@ -162,12 +162,10 @@ class ConverterDocumentPayment extends Converter
 		return $paySystemId;
 	}
 
-    /**
-     * @param Payment|null $payment
-     * @param array $fields
-     * @param ISettings $settings
-     * @throws ArgumentException
-     */
+	/**
+	 * @param Payment|null $payment
+	 * @param array $fields
+	 */
 	static public function sanitizeFields($payment=null, array &$fields, ISettings $settings)
 	{
 		if(!empty($payment) && !($payment instanceof Payment))

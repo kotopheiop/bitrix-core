@@ -5,10 +5,9 @@ interface ISettings
 {
 	public static function getCurrent();
 
-    /**
-     * @param $typeId
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function prefixFor($typeId);
 }
 
@@ -80,26 +79,22 @@ interface ISettingsImport extends ISettings
     public function getCurrency();
 
     /**
-     * @param $typeId
-     * @return string
-     */
+	 * @return string
+	 */
 	public function canCreateOrder($typeId);
 
-    /**
-     * @param $typeId
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function finalStatusIdFor($typeId);
 
-    /**
-     * @param $typeId
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function finalStatusOnDeliveryFor($typeId);
 
-    /**
-     * @param $typeId
-     * @return string
-     */
+	/**
+	 * @return string
+	 */
 	public function changeStatusFor($typeId);
 }

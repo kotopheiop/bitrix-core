@@ -14,6 +14,8 @@ use Bitrix\Sale\PriceMaths;
  */
 class DocumentBase
 {
+	const CML_LANG_ID = 'ru';
+
 	/** @var Fields */
 	protected $fields;
 
@@ -27,7 +29,7 @@ class DocumentBase
      */
     protected static function getMessage()
     {
-        return Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix/sale.export.1c/component.php');
+        return Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix/sale.export.1c/component.php', self::CML_LANG_ID);
     }
 
 	/**
@@ -36,8 +38,8 @@ class DocumentBase
 	static protected function getMessageExport()
 	{
 		return array_merge(
-			Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix/sale.export.1c/component.php'),
-			Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/sale/general/export.php')
+			Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix/sale.export.1c/component.php', self::CML_LANG_ID),
+			Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/sale/general/export.php', self::CML_LANG_ID)
 		);
 	}
 
@@ -738,11 +740,10 @@ class DocumentBase
 		return $this->outputXml($fields, $level);
 	}
 
-    /**
-     * @param array $fields
-     * @param int $level
-     * @return string
-     */
+	/**
+	 * @param array $fields
+	 * @return string
+	 */
 	protected function outputXml(array $fields, $level=0)
 	{
 		$xml = '';

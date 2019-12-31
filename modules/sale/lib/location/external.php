@@ -118,13 +118,11 @@ class ExternalTable extends Entity\DataManager
 		}
 	}
 
-    /**
-     * This method is for internal use only. It may be changed without any notification further, or even mystically disappear.
-     *
-     * @access private
-     * @param $sql
-     * @throws Main\SystemException
-     */
+	/**
+	 * This method is for internal use only. It may be changed without any notification further, or even mystically disappear.
+	 * 
+	 * @access private
+	 */
 	public static function deleteMultipleByParentRangeSql($sql)
 	{
 		if(!strlen($sql))
