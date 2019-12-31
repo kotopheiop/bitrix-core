@@ -1,5 +1,7 @@
 <?php
+
 namespace Bitrix\Sale\Integration\Numerator;
+
 use Bitrix\Main\Numerator\Numerator;
 use Bitrix\Sale\Registry;
 
@@ -9,14 +11,14 @@ use Bitrix\Sale\Registry;
  */
 class NumeratorOrder
 {
-	/**
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public static function isUsedNumeratorForOrder()
-	{
-		return boolval(Numerator::getOneByType(Registry::ENTITY_ORDER));
-	}
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\ArgumentException
+     * @throws \Bitrix\Main\ObjectPropertyException
+     * @throws \Bitrix\Main\SystemException
+     */
+    public static function isUsedNumeratorForOrder()
+    {
+        return boolval(Numerator::getOneByType(Registry::ENTITY_ORDER));
+    }
 }

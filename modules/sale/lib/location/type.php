@@ -5,6 +5,7 @@
  * @subpackage sale
  * @copyright 2001-2012 Bitrix
  */
+
 namespace Bitrix\Sale\Location;
 
 use Bitrix\Main;
@@ -19,147 +20,139 @@ Loc::loadMessages(__FILE__);
 
 class TypeTable extends Entity\DataManager
 {
-	public static function getFilePath()
-	{
-		return __FILE__;
-	}
+    public static function getFilePath()
+    {
+        return __FILE__;
+    }
 
-	public static function getTableName()
-	{
-		return 'b_sale_loc_type';
-	}
+    public static function getTableName()
+    {
+        return 'b_sale_loc_type';
+    }
 
-	public static function add(array $data)
-	{
-		$res = self::getList(array(
-			'filter' => array('=CODE' => $data['CODE'])
-		));
-		
-		if($res->fetch())
-		{
-			$addResult = new Entity\AddResult();
-			$addResult->addError(new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR')));
-			return $addResult;
-		}
+    public static function add(array $data)
+    {
+        $res = self::getList(array(
+            'filter' => array('=CODE' => $data['CODE'])
+        ));
 
-		if(isset($data['NAME']))
-		{
-			$name = $data['NAME'];
-			unset($data['NAME']);
-		}
+        if ($res->fetch()) {
+            $addResult = new Entity\AddResult();
+            $addResult->addError(new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR')));
+            return $addResult;
+        }
 
-		if((string) $data['DISPLAY_SORT'] == '' && (string) $data['SORT'] != '')
-		{
-			$data['DISPLAY_SORT'] = $data['SORT'];
-		}
+        if (isset($data['NAME'])) {
+            $name = $data['NAME'];
+            unset($data['NAME']);
+        }
 
-		$addResult = parent::add($data);
+        if ((string)$data['DISPLAY_SORT'] == '' && (string)$data['SORT'] != '') {
+            $data['DISPLAY_SORT'] = $data['SORT'];
+        }
 
-		// add connected data
-		if($addResult->isSuccess())
-		{
-			$primary = $addResult->getId();
+        $addResult = parent::add($data);
 
-			// names
-			if(isset($name))
-				Name\TypeTable::addMultipleForOwner($primary, $name);
-		}
+        // add connected data
+        if ($addResult->isSuccess()) {
+            $primary = $addResult->getId();
 
-		return $addResult;
-	}
-	
-	public static function update($primary, array $data)
-	{
-		$primary = Assert::expectIntegerPositive($primary, '$primary');
+            // names
+            if (isset($name))
+                Name\TypeTable::addMultipleForOwner($primary, $name);
+        }
 
-		if(isset($data['CODE']))
-		{
-			$res = self::getList(array(
-				'filter' => array(
-					'=CODE' => $data['CODE'],
-					'!=ID' => $primary
-				)
-			));
+        return $addResult;
+    }
 
-			if($res->fetch())
-			{
-				$updResult = new Entity\UpdateResult();
-				$updResult->addError(new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR')));
-				return $updResult;
-			}
-		}
+    public static function update($primary, array $data)
+    {
+        $primary = Assert::expectIntegerPositive($primary, '$primary');
 
-		// first update parent, and if it succeed, do updates of the connected data
+        if (isset($data['CODE'])) {
+            $res = self::getList(array(
+                'filter' => array(
+                    '=CODE' => $data['CODE'],
+                    '!=ID' => $primary
+                )
+            ));
 
-		if(isset($data['NAME']))
-		{
-			$name = $data['NAME'];
-			unset($data['NAME']);
-		}
+            if ($res->fetch()) {
+                $updResult = new Entity\UpdateResult();
+                $updResult->addError(new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR')));
+                return $updResult;
+            }
+        }
 
-		$updResult = parent::update($primary, $data);
+        // first update parent, and if it succeed, do updates of the connected data
 
-		// update connected data
-		if($updResult->isSuccess())
-		{
-			// names
-			if(isset($name))
-				Name\TypeTable::updateMultipleForOwner($primary, $name);
-		}
+        if (isset($data['NAME'])) {
+            $name = $data['NAME'];
+            unset($data['NAME']);
+        }
 
-		return $updResult;
-	}
+        $updResult = parent::update($primary, $data);
 
-	public static function delete($primary)
-	{
-		$primary = Assert::expectIntegerPositive($primary, '$primary');
+        // update connected data
+        if ($updResult->isSuccess()) {
+            // names
+            if (isset($name))
+                Name\TypeTable::updateMultipleForOwner($primary, $name);
+        }
 
-		$delResult = parent::delete($primary);
+        return $updResult;
+    }
 
-		// delete connected data
-		if($delResult->isSuccess())
-			Name\TypeTable::deleteMultipleForOwner($primary);
+    public static function delete($primary)
+    {
+        $primary = Assert::expectIntegerPositive($primary, '$primary');
 
-		return $delResult;
-	}
+        $delResult = parent::delete($primary);
 
-	public static function getMap()
-	{
-		return array(
+        // delete connected data
+        if ($delResult->isSuccess())
+            Name\TypeTable::deleteMultipleForOwner($primary);
 
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			),
-			'CODE' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'title' => Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD')
-			),
-			'SORT' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_DEPTH_LEVEL_FIELD')
-			),
+        return $delResult;
+    }
 
-			'DISPLAY_SORT' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_DISPLAY_SORT_FIELD')
-			),
+    public static function getMap()
+    {
+        return array(
 
-			// virtual
-			'NAME' => array(
-				'data_type' => 'Bitrix\Sale\Location\Name\Type',
-				'reference' => array(
-					'=this.ID' => 'ref.TYPE_ID'
-				),
-			),
-			'LOCATION' => array(
-				'data_type' => 'Bitrix\Sale\Location\Location',
-				'reference' => array(
-					'=this.ID' => 'ref.TYPE_ID'
-				),
-			)
-		);
-	}
+            'ID' => array(
+                'data_type' => 'integer',
+                'primary' => true,
+                'autocomplete' => true,
+            ),
+            'CODE' => array(
+                'data_type' => 'string',
+                'required' => true,
+                'title' => Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD')
+            ),
+            'SORT' => array(
+                'data_type' => 'integer',
+                'title' => Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_DEPTH_LEVEL_FIELD')
+            ),
+
+            'DISPLAY_SORT' => array(
+                'data_type' => 'integer',
+                'title' => Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_DISPLAY_SORT_FIELD')
+            ),
+
+            // virtual
+            'NAME' => array(
+                'data_type' => 'Bitrix\Sale\Location\Name\Type',
+                'reference' => array(
+                    '=this.ID' => 'ref.TYPE_ID'
+                ),
+            ),
+            'LOCATION' => array(
+                'data_type' => 'Bitrix\Sale\Location\Location',
+                'reference' => array(
+                    '=this.ID' => 'ref.TYPE_ID'
+                ),
+            )
+        );
+    }
 }

@@ -49,26 +49,24 @@ class Site24
     {
         $params["operation"] = $operation;
 
-        require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
-        $params['key'] = md5("BITRIX".\CUpdateClient::GetLicenseKey()."LICENCE");
+        require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/update_client.php");
+        $params['key'] = md5("BITRIX" . \CUpdateClient::GetLicenseKey() . "LICENCE");
         $params['keysign'] = md5(\CUpdateClient::GetLicenseKey());
-        $params['host']= \Bitrix\Main\Config\Option::get('intranet', 'portal_url', null);
+        $params['host'] = \Bitrix\Main\Config\Option::get('intranet', 'portal_url', null);
 
-        if ($params['host'] === null)
-		{
-			$params['host']= \Bitrix\Main\Config\Option::get(
-				'landing',
-				'portal_url',
-				$_SERVER['HTTP_HOST']
-			);
-		}
+        if ($params['host'] === null) {
+            $params['host'] = \Bitrix\Main\Config\Option::get(
+                'landing',
+                'portal_url',
+                $_SERVER['HTTP_HOST']
+            );
+        }
 
-		$params['host'] = parse_url($params['host'])['host'];
+        $params['host'] = parse_url($params['host'])['host'];
 
-        if (!isset($params['lang']) || !$params['lang'])
-		{
-			unset($params['lang']);
-		}
+        if (!isset($params['lang']) || !$params['lang']) {
+            unset($params['lang']);
+        }
 
         $httpClient = new \Bitrix\Main\Web\HttpClient(array(
             "socketTimeout" => 5,
@@ -80,19 +78,14 @@ class Site24
 
 
         $result = '';
-        if ($answer && $httpClient->getStatus() == "200")
-        {
+        if ($answer && $httpClient->getStatus() == "200") {
             $result = $httpClient->getResult();
         }
 
-        if(strlen($result) > 0)
-        {
-            try
-            {
+        if (strlen($result) > 0) {
+            try {
                 $result = \Bitrix\Main\Web\Json::decode($result);
-            }
-            catch(\Bitrix\Main\ArgumentException $e)
-            {
+            } catch (\Bitrix\Main\ArgumentException $e) {
                 throw new SystemException('Bad response');
             }
 

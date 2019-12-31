@@ -10,160 +10,152 @@ use Bitrix\Sale;
  */
 class ProviderBuilderCompatibility extends ProviderBuilderBase
 {
-	/**
-	 * @param $providerClass
-	 * @param $context
-	 *
-	 * @return ProviderBuilderBase
-	 */
-	public static function create($providerClass, $context)
-	{
-		$builder = parent::create($providerClass, $context);
-		if (!$builder->providerClass && is_string($providerClass) && strval($providerClass) != '')
-		{
-			$builder->callbackFunction = $providerClass;
-		}
-		return $builder;
-	}
-	/**
-	 * @param Sale\BasketItemBase $basketItem
-	 */
-	public function addProductByBasketItem(Sale\BasketItemBase $basketItem)
-	{
-		$productId = $basketItem->getProductId();
-		$providerName = $basketItem->getProviderName();
+    /**
+     * @param $providerClass
+     * @param $context
+     *
+     * @return ProviderBuilderBase
+     */
+    public static function create($providerClass, $context)
+    {
+        $builder = parent::create($providerClass, $context);
+        if (!$builder->providerClass && is_string($providerClass) && strval($providerClass) != '') {
+            $builder->callbackFunction = $providerClass;
+        }
+        return $builder;
+    }
 
-		$isOrdable = ($basketItem->getField("CAN_BUY") == 'Y' && $basketItem->getField("DELAY") == 'N' && $basketItem->getField("SUBSCRIBE") == 'N');
+    /**
+     * @param Sale\BasketItemBase $basketItem
+     */
+    public function addProductByBasketItem(Sale\BasketItemBase $basketItem)
+    {
+        $productId = $basketItem->getProductId();
+        $providerName = $basketItem->getProviderName();
 
-		$fields = array(
-			'BASKET_ITEM' => $basketItem,
-			'ITEM_CODE' => $basketItem->getBasketCode(),
-			'BASKET_ID' => $basketItem->getId(),
-			'BASKET_CODE' => $basketItem->getBasketCode(),
-			'PRODUCT_ID' => $productId,
-			'QUANTITY' => $basketItem->getQuantity(),
+        $isOrdable = ($basketItem->getField("CAN_BUY") == 'Y' && $basketItem->getField("DELAY") == 'N' && $basketItem->getField("SUBSCRIBE") == 'N');
 
-			'MODULE' => $basketItem->getField('MODULE'),
-			'IS_ORDERABLE' => $isOrdable,
+        $fields = array(
+            'BASKET_ITEM' => $basketItem,
+            'ITEM_CODE' => $basketItem->getBasketCode(),
+            'BASKET_ID' => $basketItem->getId(),
+            'BASKET_CODE' => $basketItem->getBasketCode(),
+            'PRODUCT_ID' => $productId,
+            'QUANTITY' => $basketItem->getQuantity(),
 
-			'IS_BUNDLE_PARENT' => false,
-			'IS_BUNDLE_CHILD' => false,
-			'IS_NEW' => ($basketItem->getId() == 0),
-			'SUBSCRIBE' => ($basketItem->getField('SUBSCRIBE') == 'Y'),
-		);
+            'MODULE' => $basketItem->getField('MODULE'),
+            'IS_ORDERABLE' => $isOrdable,
 
-		if ($basketItem instanceof Sale\BasketItem)
-		{
-			$fields['IS_BUNDLE_PARENT'] = $basketItem->isBundleParent();
-			$fields['IS_BUNDLE_CHILD'] = $basketItem->isBundleChild();
-		}
+            'IS_BUNDLE_PARENT' => false,
+            'IS_BUNDLE_CHILD' => false,
+            'IS_NEW' => ($basketItem->getId() == 0),
+            'SUBSCRIBE' => ($basketItem->getField('SUBSCRIBE') == 'Y'),
+        );
 
-		if (strval(trim($providerName)) == '')
-		{
-			$callbackFunction = $basketItem->getCallbackFunction();
-			if (!empty($callbackFunction))
-			{
-				$fields['CALLBACK_FUNC'] = $callbackFunction;
-			}
-		}
+        if ($basketItem instanceof Sale\BasketItem) {
+            $fields['IS_BUNDLE_PARENT'] = $basketItem->isBundleParent();
+            $fields['IS_BUNDLE_CHILD'] = $basketItem->isBundleChild();
+        }
 
-		$this->addItem($productId, $fields);
-	}
+        if (strval(trim($providerName)) == '') {
+            $callbackFunction = $basketItem->getCallbackFunction();
+            if (!empty($callbackFunction)) {
+                $fields['CALLBACK_FUNC'] = $callbackFunction;
+            }
+        }
 
-	/**
-	 * @param Sale\ShipmentItem $shipmentItem
-	 */
-	public function addProductByShipmentItem(Sale\ShipmentItem $shipmentItem)
-	{
-		$basketItem = $shipmentItem->getBasketItem();
+        $this->addItem($productId, $fields);
+    }
 
-		$productId = $basketItem->getProductId();
-		$providerName = $basketItem->getProviderName();
+    /**
+     * @param Sale\ShipmentItem $shipmentItem
+     */
+    public function addProductByShipmentItem(Sale\ShipmentItem $shipmentItem)
+    {
+        $basketItem = $shipmentItem->getBasketItem();
 
-		$fields = array(
-			'PRODUCT_ID' => $productId,
-			'BASKET_CODE' => $basketItem->getBasketCode(),
-			'QUANTITY' => $basketItem->getQuantity(),
+        $productId = $basketItem->getProductId();
+        $providerName = $basketItem->getProviderName();
 
-			'MODULE' => $basketItem->getField('MODULE'),
-			'SHIPMENT_ITEM' => $shipmentItem
-		);
+        $fields = array(
+            'PRODUCT_ID' => $productId,
+            'BASKET_CODE' => $basketItem->getBasketCode(),
+            'QUANTITY' => $basketItem->getQuantity(),
 
-		if (strval(trim($providerName)) == '')
-		{
-			$callbackFunction = $basketItem->getCallbackFunction();
-			if (!empty($callbackFunction))
-			{
-				$fields['CALLBACK_FUNC'] = $callbackFunction;
-			}
-		}
+            'MODULE' => $basketItem->getField('MODULE'),
+            'SHIPMENT_ITEM' => $shipmentItem
+        );
 
-		$this->addItem($productId, $fields);
-	}
+        if (strval(trim($providerName)) == '') {
+            $callbackFunction = $basketItem->getCallbackFunction();
+            if (!empty($callbackFunction)) {
+                $fields['CALLBACK_FUNC'] = $callbackFunction;
+            }
+        }
 
-	/**
-	 * @param array $shipmentProductData
-	 *
-	 * @return bool
-	 */
-	public function addProductByShipmentProductData(array $shipmentProductData)
-	{
-		if ($shipmentProductData['QUANTITY'] == 0)
-		{
-			return false;
-		}
+        $this->addItem($productId, $fields);
+    }
 
-		/** @var Sale\ShipmentItem $shipmentItem */
-		$shipmentItem = $shipmentProductData['SHIPMENT_ITEM'];
+    /**
+     * @param array $shipmentProductData
+     *
+     * @return bool
+     */
+    public function addProductByShipmentProductData(array $shipmentProductData)
+    {
+        if ($shipmentProductData['QUANTITY'] == 0) {
+            return false;
+        }
 
-		$basketItem = $shipmentItem->getBasketItem();
+        /** @var Sale\ShipmentItem $shipmentItem */
+        $shipmentItem = $shipmentProductData['SHIPMENT_ITEM'];
 
-		$productId = $basketItem->getProductId();
-		$providerName = $basketItem->getProviderName();
+        $basketItem = $shipmentItem->getBasketItem();
 
-		$fields = array(
-			'PRODUCT_ID' => $productId,
-			'BASKET_ITEM' => $basketItem,
-			'BASKET_CODE' => $basketItem->getBasketCode(),
-			'QUANTITY' => $shipmentProductData['QUANTITY'],
+        $productId = $basketItem->getProductId();
+        $providerName = $basketItem->getProviderName();
 
-			'MODULE' => $basketItem->getField('MODULE'),
-			'SHIPMENT_ITEM' => $shipmentItem,
-			'NEED_RESERVE' => array(
-				$shipmentItem->getInternalIndex() => $shipmentProductData["NEED_RESERVE"]
-			),
-		);
+        $fields = array(
+            'PRODUCT_ID' => $productId,
+            'BASKET_ITEM' => $basketItem,
+            'BASKET_CODE' => $basketItem->getBasketCode(),
+            'QUANTITY' => $shipmentProductData['QUANTITY'],
 
-		if (strval(trim($providerName)) == '')
-		{
-			$callbackFunction = $basketItem->getCallbackFunction();
-			if (!empty($callbackFunction))
-			{
-				$fields['CALLBACK'] = $callbackFunction;
-			}
-		}
+            'MODULE' => $basketItem->getField('MODULE'),
+            'SHIPMENT_ITEM' => $shipmentItem,
+            'NEED_RESERVE' => array(
+                $shipmentItem->getInternalIndex() => $shipmentProductData["NEED_RESERVE"]
+            ),
+        );
 
-		$this->addItem($productId, $fields);
-	}
+        if (strval(trim($providerName)) == '') {
+            $callbackFunction = $basketItem->getCallbackFunction();
+            if (!empty($callbackFunction)) {
+                $fields['CALLBACK'] = $callbackFunction;
+            }
+        }
+
+        $this->addItem($productId, $fields);
+    }
 
 
-	/**
-	 * @param PoolQuantity $pool
-	 * @param array $productTryShipList
-	 *
-	 * @return Sale\Result
-	 */
-	public function setItemsResultAfterTryShip(PoolQuantity $pool, array $productTryShipList)
-	{
-		return new Sale\Result();
-	}
+    /**
+     * @param PoolQuantity $pool
+     * @param array $productTryShipList
+     *
+     * @return Sale\Result
+     */
+    public function setItemsResultAfterTryShip(PoolQuantity $pool, array $productTryShipList)
+    {
+        return new Sale\Result();
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getTransferClassName()
-	{
-		return '\Bitrix\Sale\Internals\TransferProviderCompatibility';
-	}
+    /**
+     * @return string
+     */
+    public function getTransferClassName()
+    {
+        return '\Bitrix\Sale\Internals\TransferProviderCompatibility';
+    }
 
 }

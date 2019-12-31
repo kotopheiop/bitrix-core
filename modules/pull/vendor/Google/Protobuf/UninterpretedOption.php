@@ -264,7 +264,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
      */
     public function setStringValue($value = null)
     {
-        if ($value !== null && ! $value instanceof \Protobuf\Stream) {
+        if ($value !== null && !$value instanceof \Protobuf\Stream) {
             $value = \Protobuf\Stream::wrap($value);
         }
 
@@ -306,7 +306,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
      */
     public function extensions()
     {
-        if ( $this->extensions !== null) {
+        if ($this->extensions !== null) {
             return $this->extensions;
         }
 
@@ -335,7 +335,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values  = array_merge([
+        $values = array_merge([
             'name' => [],
             'identifier_value' => null,
             'positive_int_value' => null,
@@ -365,8 +365,8 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
     public static function descriptor()
     {
         return \google\protobuf\DescriptorProto::fromArray([
-            'name'      => 'UninterpretedOption',
-            'field'     => [
+            'name' => 'UninterpretedOption',
+            'field' => [
                 \google\protobuf\FieldDescriptorProto::fromArray([
                     'number' => 2,
                     'name' => 'name',
@@ -419,9 +419,9 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
      */
     public function toStream(\Protobuf\Configuration $configuration = null)
     {
-        $config  = $configuration ?: \Protobuf\Configuration::getInstance();
+        $config = $configuration ?: \Protobuf\Configuration::getInstance();
         $context = $config->createWriteContext();
-        $stream  = $context->getStream();
+        $stream = $context->getStream();
 
         $this->writeTo($context);
         $stream->seek(0);
@@ -434,8 +434,8 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
      */
     public function writeTo(\Protobuf\WriteContext $context)
     {
-        $stream      = $context->getStream();
-        $writer      = $context->getWriter();
+        $stream = $context->getStream();
+        $writer = $context->getWriter();
         $sizeContext = $context->getComputeSizeContext();
 
         if ($this->name !== null) {
@@ -502,9 +502,9 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
                 break;
             }
 
-            $key  = $reader->readVarint($stream);
+            $key = $reader->readVarint($stream);
             $wire = \Protobuf\WireFormat::getTagWireType($key);
-            $tag  = \Protobuf\WireFormat::getTagFieldNumber($key);
+            $tag = \Protobuf\WireFormat::getTagFieldNumber($key);
 
             if ($stream->eof()) {
                 break;
@@ -513,7 +513,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
             if ($tag === 2) {
                 \Protobuf\WireFormat::assertWireType($wire, 11);
 
-                $innerSize    = $reader->readVarint($stream);
+                $innerSize = $reader->readVarint($stream);
                 $innerMessage = new \google\protobuf\UninterpretedOption\NamePart();
 
                 if ($this->name === null) {
@@ -578,7 +578,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
             }
 
             $extensions = $context->getExtensionRegistry();
-            $extension  = $extensions ? $extensions->findByNumber(__CLASS__, $tag) : null;
+            $extension = $extensions ? $extensions->findByNumber(__CLASS__, $tag) : null;
 
             if ($extension !== null) {
                 $this->extensions()->add($extension, $extension->readFrom($context, $wire));
@@ -590,7 +590,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
                 $this->unknownFieldSet = new \Protobuf\UnknownFieldSet();
             }
 
-            $data    = $reader->readUnknown($stream, $wire);
+            $data = $reader->readUnknown($stream, $wire);
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
@@ -604,7 +604,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
     public function serializedSize(\Protobuf\ComputeSizeContext $context)
     {
         $calculator = $context->getSizeCalculator();
-        $size       = 0;
+        $size = 0;
 
         if ($this->name !== null) {
             foreach ($this->name as $val) {
@@ -672,7 +672,7 @@ class UninterpretedOption extends \Protobuf\AbstractMessage
      */
     public function merge(\Protobuf\Message $message)
     {
-        if ( ! $message instanceof \google\protobuf\UninterpretedOption) {
+        if (!$message instanceof \google\protobuf\UninterpretedOption) {
             throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
         }
 

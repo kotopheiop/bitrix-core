@@ -12,7 +12,7 @@ global $APPLICATION;
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 if ($saleModulePermissions < "W")
-	$APPLICATION->AuthForm(Loc::getMessage("SALE_DSL_ACCESS_DENIED"));
+    $APPLICATION->AuthForm(Loc::getMessage("SALE_DSL_ACCESS_DENIED"));
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
@@ -35,108 +35,99 @@ $vk = Vk\Vk::getInstance();
 
 //GOUPS actions for items
 
-if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
-{
-	foreach ($arID as $id)
-	{
-		if (strlen($id) <= 0)
-			continue;
+if (($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "W") {
+    foreach ($arID as $id) {
+        if (strlen($id) <= 0)
+            continue;
 
-		switch ($_REQUEST['action'])
-		{
-			case "delete":
-				@set_time_limit(0);
+        switch ($_REQUEST['action']) {
+            case "delete":
+                @set_time_limit(0);
 
-				$vk->removeProfile($id);
+                $vk->removeProfile($id);
 
-				break;
-		}
-	}
+                break;
+        }
+    }
 }
 
 
 //HEADERS for columns
 $lAdmin->AddHeaders(array(
-	array("id" => "ID", "content" => Loc::getMessage("SALE_VK_TABLE__ID"), "sort" => "ID", "default" => true),
-	array("id" => "NAME", "content" => Loc::getMessage("SALE_VK_TABLE__DESCRIPTION"), "sort" => "", "default" => true),
-	array("id" => "ACTIVE", "content" => Loc::getMessage("SALE_VK_TABLE__ACTIVE"), "sort" => "ACTIVE", "default" => true),
+    array("id" => "ID", "content" => Loc::getMessage("SALE_VK_TABLE__ID"), "sort" => "ID", "default" => true),
+    array("id" => "NAME", "content" => Loc::getMessage("SALE_VK_TABLE__DESCRIPTION"), "sort" => "", "default" => true),
+    array("id" => "ACTIVE", "content" => Loc::getMessage("SALE_VK_TABLE__ACTIVE"), "sort" => "ACTIVE", "default" => true),
 ));
 
 
 //find ITEMS for list
 $resProfiles = Vk\ExportProfileTable::GetList(array(
-		'filter' => array('PLATFORM_ID' => $vk->getId()),
-		'select' => array('ID', 'DESCRIPTION', 'EXPORT_SETTINGS'),
-	)
+        'filter' => array('PLATFORM_ID' => $vk->getId()),
+        'select' => array('ID', 'DESCRIPTION', 'EXPORT_SETTINGS'),
+    )
 );
 $resProfiles = new CAdminResult($resProfiles, $sTableID);
 $resProfiles->NavStart();
 $lAdmin->NavText($resProfiles->GetNavPrint(GetMessage("STATUS_NAV")));
 
-while ($profile = $resProfiles->NavNext(true))
-{
-	$exportId = $profile["ID"];
-	$row =& $lAdmin->AddRow($exportId, $profile);
+while ($profile = $resProfiles->NavNext(true)) {
+    $exportId = $profile["ID"];
+    $row =& $lAdmin->AddRow($exportId, $profile);
 
-	$row->AddField("ID", "<a href=\"/bitrix/admin/sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG . "\">" . $exportId . "</a>");
-	$row->AddField("NAME", $profile['DESCRIPTION'] ? HtmlFilter::encode($profile['DESCRIPTION']) : '');
-	if ($profile["EXPORT_SETTINGS"]['ACTIVE'] == 'N')
-	{
-		$row->AddField("ACTIVE", Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO"));
-	}
-	else
-	{
-		$row->AddField("ACTIVE", $profile["EXPORT_SETTINGS"]['ACTIVE'] == 'Y' ? Loc::getMessage("SALE_VK_TABLE__YES") : Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO"));
-	}
+    $row->AddField("ID", "<a href=\"/bitrix/admin/sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG . "\">" . $exportId . "</a>");
+    $row->AddField("NAME", $profile['DESCRIPTION'] ? HtmlFilter::encode($profile['DESCRIPTION']) : '');
+    if ($profile["EXPORT_SETTINGS"]['ACTIVE'] == 'N') {
+        $row->AddField("ACTIVE", Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO"));
+    } else {
+        $row->AddField("ACTIVE", $profile["EXPORT_SETTINGS"]['ACTIVE'] == 'Y' ? Loc::getMessage("SALE_VK_TABLE__YES") : Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO"));
+    }
 
 //		add ACTIONS to item
-	$arActions = Array();
-	$arActions[] = array("ICON" => "edit", "TEXT" => Loc::GetMessage("SALE_VK_TABLE__EDIT"), "ACTION" => $lAdmin->ActionRedirect("sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG), "DEFAULT" => true);
+    $arActions = Array();
+    $arActions[] = array("ICON" => "edit", "TEXT" => Loc::GetMessage("SALE_VK_TABLE__EDIT"), "ACTION" => $lAdmin->ActionRedirect("sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG), "DEFAULT" => true);
 
-	if ($saleModulePermissions >= "W")
-	{
-		$arActions[] = array("SEPARATOR" => true);
-		$arActions[] = array("ICON" => "delete", "TEXT" => Loc::GetMessage("SALE_VK_TABLE__DELETE"), "ACTION" => "if(confirm('" . Loc::getMessage('SALE_VK_TABLE__DELETE_ALERT') . "')) " . $lAdmin->ActionDoGroup($exportId, "delete"));
-	}
+    if ($saleModulePermissions >= "W") {
+        $arActions[] = array("SEPARATOR" => true);
+        $arActions[] = array("ICON" => "delete", "TEXT" => Loc::GetMessage("SALE_VK_TABLE__DELETE"), "ACTION" => "if(confirm('" . Loc::getMessage('SALE_VK_TABLE__DELETE_ALERT') . "')) " . $lAdmin->ActionDoGroup($exportId, "delete"));
+    }
 
-	$row->AddActions($arActions);
+    $row->AddActions($arActions);
 }
 
 
 //FOOTER add
 $lAdmin->AddFooter(
-	array(
-		array(
-			"title" => Loc::getMessage("MAIN_ADMIN_LIST_SELECTED"),
-			"value" => $resProfiles->SelectedRowsCount(),
-		),
-		array(
-			"counter" => true,
-			"title" => Loc::getMessage("MAIN_ADMIN_LIST_CHECKED"),
-			"value" => "0",
-		),
-	)
+    array(
+        array(
+            "title" => Loc::getMessage("MAIN_ADMIN_LIST_SELECTED"),
+            "value" => $resProfiles->SelectedRowsCount(),
+        ),
+        array(
+            "counter" => true,
+            "title" => Loc::getMessage("MAIN_ADMIN_LIST_CHECKED"),
+            "value" => "0",
+        ),
+    )
 );
 
 
 //buttons for GROUP ACTIONS
 $lAdmin->AddGroupActionTable(
-	array("delete" => Loc::getMessage("SALE_VK_TABLE__DELETE"))
+    array("delete" => Loc::getMessage("SALE_VK_TABLE__DELETE"))
 );
 
 
 //buttons for CONTEXT ACTIONS in top menu
-if ($saleModulePermissions == "W")
-{
-	$aContext = array(
-		array(
-			"TEXT" => GetMessage("SALE_VK_TABLE__NEW_EXPORT"),
-			"ICON" => "btn_new",
-			"LINK" => "sale_vk_export_edit.php?lang=" . LANG,
-			"TITLE" => GetMessage("SALE_VK_TABLE__NEW_EXPORT_ALT"),
-		),
-	);
-	$lAdmin->AddAdminContextMenu($aContext);
+if ($saleModulePermissions == "W") {
+    $aContext = array(
+        array(
+            "TEXT" => GetMessage("SALE_VK_TABLE__NEW_EXPORT"),
+            "ICON" => "btn_new",
+            "LINK" => "sale_vk_export_edit.php?lang=" . LANG,
+            "TITLE" => GetMessage("SALE_VK_TABLE__NEW_EXPORT_ALT"),
+        ),
+    );
+    $lAdmin->AddAdminContextMenu($aContext);
 }
 $lAdmin->CheckListMode();
 

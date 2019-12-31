@@ -7,82 +7,77 @@ use Bitrix\Main;
 
 class Storage
 {
-	/** @var array $instance */
-	private static $instance = array();
-	/** @var Sale\Basket $basket */
-	protected $basket;
-	/** @var Sale\Basket $orderableBasket */
-	protected $orderableBasket;
+    /** @var array $instance */
+    private static $instance = array();
+    /** @var Sale\Basket $basket */
+    protected $basket;
+    /** @var Sale\Basket $orderableBasket */
+    protected $orderableBasket;
 
-	private $fUserId;
-	private $siteId;
+    private $fUserId;
+    private $siteId;
 
-	private function __construct($fUserId, $siteId)
-	{
-		$this->fUserId = $fUserId;
-		$this->siteId = $siteId;
-	}
+    private function __construct($fUserId, $siteId)
+    {
+        $this->fUserId = $fUserId;
+        $this->siteId = $siteId;
+    }
 
-	private function __clone()
-	{
-	}
+    private function __clone()
+    {
+    }
 
-	protected static function getHash($fUserId, $siteId)
-	{
-		return "{$fUserId}_{$siteId}";
-	}
+    protected static function getHash($fUserId, $siteId)
+    {
+        return "{$fUserId}_{$siteId}";
+    }
 
-	protected function getFUserId()
-	{
-		return $this->fUserId;
-	}
+    protected function getFUserId()
+    {
+        return $this->fUserId;
+    }
 
-	protected function getSiteId()
-	{
-		return $this->siteId;
-	}
+    protected function getSiteId()
+    {
+        return $this->siteId;
+    }
 
-	public static function getInstance($fUserId, $siteId)
-	{
-		if (empty($fUserId))
-		{
-			throw new Main\ArgumentNullException('fUserId');
-		}
+    public static function getInstance($fUserId, $siteId)
+    {
+        if (empty($fUserId)) {
+            throw new Main\ArgumentNullException('fUserId');
+        }
 
-		if (empty($siteId))
-		{
-			throw new Main\ArgumentNullException('siteId');
-		}
+        if (empty($siteId)) {
+            throw new Main\ArgumentNullException('siteId');
+        }
 
-		$hash = static::getHash($fUserId, $siteId);
+        $hash = static::getHash($fUserId, $siteId);
 
-		if (!isset(static::$instance[$hash]))
-		{
-			static::$instance[$hash] = new static($fUserId, $siteId);
-		}
+        if (!isset(static::$instance[$hash])) {
+            static::$instance[$hash] = new static($fUserId, $siteId);
+        }
 
-		return static::$instance[$hash];
-	}
+        return static::$instance[$hash];
+    }
 
-	public function getBasket()
-	{
-		if (!isset($this->basket))
-		{
-			$this->basket = Sale\Basket::loadItemsForFUser($this->getFUserId(), $this->getSiteId());
-		}
+    public function getBasket()
+    {
+        if (!isset($this->basket)) {
+            $this->basket = Sale\Basket::loadItemsForFUser($this->getFUserId(), $this->getSiteId());
+        }
 
-		return $this->basket;
-	}
+        return $this->basket;
+    }
 
-	public function getOrderableBasket()
-	{
-		if (!isset($this->orderableBasket))
-		{
-			/** @var Sale\Basket $basketClone */
-			$basketClone = $this->getBasket()->createClone();
-			$this->orderableBasket = $basketClone->getOrderableItems();
-		}
+    public function getOrderableBasket()
+    {
+        if (!isset($this->orderableBasket)) {
+            /** @var Sale\Basket $basketClone */
+            $basketClone = $this->getBasket()->createClone();
+            $this->orderableBasket = $basketClone->getOrderableItems();
+        }
 
-		return $this->orderableBasket;
-	}
+        return $this->orderableBasket;
+    }
 }

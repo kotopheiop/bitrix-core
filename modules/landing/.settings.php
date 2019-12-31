@@ -1,9 +1,9 @@
 <?php
 return [
-	'controllers' => [
-		'value' => [
-			'defaultNamespace' => '\\Bitrix\\Landing\\Controller',
-		],
-		'readonly' => true
-	]
+    'controllers' => [
+        'value' => [
+            'defaultNamespace' => '\\Bitrix\\Landing\\Controller',
+        ],
+        'readonly' => true
+    ]
 ];

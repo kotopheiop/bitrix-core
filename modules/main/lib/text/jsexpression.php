@@ -15,16 +15,16 @@ namespace Bitrix\Main\Text;
  */
 class JsExpression
 {
-	/** @var string */
-	protected $expression;
+    /** @var string */
+    protected $expression;
 
-	function __construct($expression)
-	{
-		$this->expression = $expression;
-	}
+    function __construct($expression)
+    {
+        $this->expression = $expression;
+    }
 
-	function __toString()
-	{
-		return $this->expression;
-	}
+    function __toString()
+    {
+        return $this->expression;
+    }
 }

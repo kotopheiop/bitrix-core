@@ -16,161 +16,177 @@ use Bitrix\Rest\PlacementTable;
 
 class Type extends TypeBase
 {
-	const USER_TYPE_ID = 'rest';
+    const USER_TYPE_ID = 'rest';
 
-	function getDBColumnType()
-	{
-		return "text";
-	}
+    function getDBColumnType()
+    {
+        return "text";
+    }
 
-	public static function getPublicView($arUserField, $arAdditionalParameters = array())
-	{
-		$value = static::getFieldValue($arUserField, $arAdditionalParameters);
+    public static function getPublicView($arUserField, $arAdditionalParameters = array())
+    {
+        $value = static::getFieldValue($arUserField, $arAdditionalParameters);
 
-		$arUserField['VALUE'] = $value;
+        $arUserField['VALUE'] = $value;
 
-		return static::getApplication($arUserField, array(), 'view');
-	}
+        return static::getApplication($arUserField, array(), 'view');
+    }
 
-	public static function getPublicEdit($arUserField, $arAdditionalParameters = array())
-	{
-		$fieldName = static::getFieldName($arUserField, $arAdditionalParameters);
-		$value = static::getFieldValue($arUserField, $arAdditionalParameters);
+    public static function getPublicEdit($arUserField, $arAdditionalParameters = array())
+    {
+        $fieldName = static::getFieldName($arUserField, $arAdditionalParameters);
+        $value = static::getFieldValue($arUserField, $arAdditionalParameters);
 
-		$arUserField['VALUE'] = $value;
+        $arUserField['VALUE'] = $value;
 
-		return static::getApplication($arUserField, array(
-			'NAME' => $fieldName
-		), 'edit');
-	}
+        return static::getApplication($arUserField, array(
+            'NAME' => $fieldName
+        ), 'edit');
+    }
 
-	function getEditFormHTML($arUserField, $arHtmlControl)
-	{
-		return static::getApplication($arUserField, $arHtmlControl, 'edit');
-	}
+    function getEditFormHTML($arUserField, $arHtmlControl)
+    {
+        return static::getApplication($arUserField, $arHtmlControl, 'edit');
+    }
 
-	function getEditFormHTMLMulty($arUserField, $arHtmlControl)
-	{
-		return static::getApplication($arUserField, $arHtmlControl, 'edit');
-	}
+    function getEditFormHTMLMulty($arUserField, $arHtmlControl)
+    {
+        return static::getApplication($arUserField, $arHtmlControl, 'edit');
+    }
 
-	protected static function getApplication($arUserField, $arHtmlControl, $mode = 'edit')
-	{
-		global $APPLICATION;
+    protected static function getApplication($arUserField, $arHtmlControl, $mode = 'edit')
+    {
+        global $APPLICATION;
 
-		$fieldName = $arHtmlControl['NAME'];
-		$value = static::normalizeFieldValue($arUserField['VALUE']);
+        $fieldName = $arHtmlControl['NAME'];
+        $value = static::normalizeFieldValue($arUserField['VALUE']);
 
-		$placementHandlerList = PlacementTable::getHandlersList(UserFieldType::PLACEMENT_UF_TYPE);
-		$currentPlacementHandler = null;
-		foreach($placementHandlerList as $placementInfo)
-		{
-			if($arUserField['USER_TYPE_ID'] === Callback::getUserTypeId($placementInfo))
-			{
-				$currentPlacementHandler = $placementInfo;
-				break;
-			}
-		}
+        $placementHandlerList = PlacementTable::getHandlersList(UserFieldType::PLACEMENT_UF_TYPE);
+        $currentPlacementHandler = null;
+        foreach ($placementHandlerList as $placementInfo) {
+            if ($arUserField['USER_TYPE_ID'] === Callback::getUserTypeId($placementInfo)) {
+                $currentPlacementHandler = $placementInfo;
+                break;
+            }
+        }
 
-		$html = '';
-		if($currentPlacementHandler !== null)
-		{
-			ob_start();
+        $html = '';
+        if ($currentPlacementHandler !== null) {
+            ob_start();
 
-			if($mode === 'edit'):
-?>
-<div style="display: none;" id="uf_rest_value_<?=$arUserField['FIELD_NAME']?>">
-<?
-				foreach($value as $res):
-?>
-	<input type="hidden" name="<?=$fieldName?>" value="<?=HtmlFilter::encode($res)?>" />
-<?
-				endforeach;
-			endif;
-?>
-</div>
-<?
-			$placementSid = $APPLICATION->includeComponent(
-				'bitrix:app.layout',
-				'',
-				array(
-					'ID' => $currentPlacementHandler['APP_ID'],
-					'PLACEMENT_ID' => $currentPlacementHandler['ID'],
-					'PLACEMENT' => UserFieldType::PLACEMENT_UF_TYPE,
-					'SHOW_LOADER' => 'N',
-					'SET_TITLE' => 'N',
-					'PLACEMENT_OPTIONS' => array(
-						'MODE' => $mode,
-						'ENTITY_ID' => $arUserField['ENTITY_ID'],
-						'FIELD_NAME' => $arUserField['FIELD_NAME'],
-						'ENTITY_VALUE_ID' => $arUserField['ENTITY_VALUE_ID'],
-						'VALUE' => $arUserField['MULTIPLE'] === 'N' ? $value[0] : $value,
-						'MULTIPLE' => $arUserField['MULTIPLE'],
-						'MANDATORY' => $arUserField['MANDATORY'],
-						'XML_ID' => $arUserField['XML_ID'],
-					),
-					'PARAM' => array(
-						'FRAME_HEIGHT' => '200px',
-					)
-				),
-				null,
-				array('HIDE_ICONS' => 'Y')
-			);
-?>
-<script>
-	(function(){
-		'use strict';
+        if ($mode === 'edit'):
+            ?>
+            <div style="display: none;" id="uf_rest_value_<?= $arUserField['FIELD_NAME'] ?>">
+                <?
+                foreach ($value as $res):
+                    ?>
+                    <input type="hidden" name="<?= $fieldName ?>" value="<?= HtmlFilter::encode($res) ?>"/>
+                <?
+                endforeach;
+                endif;
+                ?>
+            </div>
+            <?
+            $placementSid = $APPLICATION->includeComponent(
+                'bitrix:app.layout',
+                '',
+                array(
+                    'ID' => $currentPlacementHandler['APP_ID'],
+                    'PLACEMENT_ID' => $currentPlacementHandler['ID'],
+                    'PLACEMENT' => UserFieldType::PLACEMENT_UF_TYPE,
+                    'SHOW_LOADER' => 'N',
+                    'SET_TITLE' => 'N',
+                    'PLACEMENT_OPTIONS' => array(
+                        'MODE' => $mode,
+                        'ENTITY_ID' => $arUserField['ENTITY_ID'],
+                        'FIELD_NAME' => $arUserField['FIELD_NAME'],
+                        'ENTITY_VALUE_ID' => $arUserField['ENTITY_VALUE_ID'],
+                        'VALUE' => $arUserField['MULTIPLE'] === 'N' ? $value[0] : $value,
+                        'MULTIPLE' => $arUserField['MULTIPLE'],
+                        'MANDATORY' => $arUserField['MANDATORY'],
+                        'XML_ID' => $arUserField['XML_ID'],
+                    ),
+                    'PARAM' => array(
+                        'FRAME_HEIGHT' => '200px',
+                    )
+                ),
+                null,
+                array('HIDE_ICONS' => 'Y')
+            );
+            ?>
+            <script>
+                (function () {
+                    'use strict';
 
-		new BX.rest.UserField('<?=$placementSid?>', {
-			value: <?=\CUtil::phpToJsObject($arUserField['VALUE'])?>,
-			callback: function(value)
-			{
-<?
-			if($mode === 'edit'):
-?>
-				if(!BX.type.isArray(value))
-				{
-					value = [value];
-				}
+                    new BX.rest.UserField('<?=$placementSid?>', {
+                        value: <?=\CUtil::phpToJsObject($arUserField['VALUE'])?>,
+                        callback: function (value) {
+                            <?
+                            if($mode === 'edit'):
+                            ?>
+                            if (!BX.type.isArray(value)) {
+                                value = [value];
+                            }
 
-				var html = '';
-				for(var i = 0; i < value.length; i++)
-				{
-					html += '<input type="hidden" name="<?=$fieldName?>" value="'+BX.util.htmlspecialchars(value[i])+'" />';
-				}
+                            var html = '';
+                            for (var i = 0; i < value.length; i++) {
+                                html += '<input type="hidden" name="<?=$fieldName?>" value="' + BX.util.htmlspecialchars(value[i]) + '" />';
+                            }
 
-				BX('uf_rest_value_<?=$arUserField['FIELD_NAME']?>').innerHTML = html;
+                            BX('uf_rest_value_<?=$arUserField['FIELD_NAME']?>').innerHTML = html;
 
-				var input = BX('uf_rest_value_<?=$arUserField['FIELD_NAME']?>').firstChild;
-				if(input)
-				{
-					BX.fireEvent(input, 'change');
-				}
-<?
-			endif;
-?>
-			}
-		});
+                            var input = BX('uf_rest_value_<?=$arUserField['FIELD_NAME']?>').firstChild;
+                            if (input) {
+                                BX.fireEvent(input, 'change');
+                            }
+                            <?
+                            endif;
+                            ?>
+                        }
+                    });
 
-	})();
-</script>
+                })();
+            </script>
 
-<?
-			$html = ob_get_clean();
-		}
+            <?
+            $html = ob_get_clean();
+        }
 
-		\CJSCore::init(array('rest_userfield'));
+        \CJSCore::init(array('rest_userfield'));
 
-		return static::getHelper()->wrapDisplayResult($html);
+        return static::getHelper()->wrapDisplayResult($html);
 
-	}
+    }
 
-	function prepareSettings($arUserField){}
-	function getSettingsHTML($arUserField = false, $arHtmlControl, $bVarsFromForm){}
-	function getFilterHTML($arUserField, $arHtmlControl){}
-	function getFilterData($arUserField, $arHtmlControl){}
-	function getAdminListViewHTML($arUserField, $arHtmlControl){}
-	function getAdminListViewHTMLMulty($arUserField, $arHtmlControl){}
-	function getAdminListEditHTML($arUserField, $arHtmlControl){}
-	function getAdminListEditHTMLMulty($arUserField, $arHtmlControl){}
+    function prepareSettings($arUserField)
+    {
+    }
+
+    function getSettingsHTML($arUserField = false, $arHtmlControl, $bVarsFromForm)
+    {
+    }
+
+    function getFilterHTML($arUserField, $arHtmlControl)
+    {
+    }
+
+    function getFilterData($arUserField, $arHtmlControl)
+    {
+    }
+
+    function getAdminListViewHTML($arUserField, $arHtmlControl)
+    {
+    }
+
+    function getAdminListViewHTMLMulty($arUserField, $arHtmlControl)
+    {
+    }
+
+    function getAdminListEditHTML($arUserField, $arHtmlControl)
+    {
+    }
+
+    function getAdminListEditHTMLMulty($arUserField, $arHtmlControl)
+    {
+    }
 }

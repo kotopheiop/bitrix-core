@@ -15,120 +15,103 @@ use Bitrix\Report\VisualConstructor\Internal\Error\IErrorable;
  */
 class ReportDispatcher implements IErrorable
 {
-	private $view;
-	private $report;
-	private $errors = array();
+    private $view;
+    private $report;
+    private $errors = array();
 
-	/**
-	 * @return mixed|null|string
-	 */
-	public function getReportCompatibleData()
-	{
-		if (!$this->getView())
-		{
-			$this->errors[] = new Error("Set view to get data");
-			return null;
-		}
-		if (!$this->getReport())
-		{
-			$this->errors[] = new Error("Set report to get data");
-			return null;
-		}
+    /**
+     * @return mixed|null|string
+     */
+    public function getReportCompatibleData()
+    {
+        if (!$this->getView()) {
+            $this->errors[] = new Error("Set view to get data");
+            return null;
+        }
+        if (!$this->getReport()) {
+            $this->errors[] = new Error("Set report to get data");
+            return null;
+        }
 
-		$compatibleDataType = $this->getView()->getCompatibleDataType();
-		$result = array();
+        $compatibleDataType = $this->getView()->getCompatibleDataType();
+        $result = array();
 
-		if(!isset(Common::$reportImplementationTypesMap[$compatibleDataType]))
-		{
-			$this->errors[] = new Error("No isset : '" . $compatibleDataType . "' compatible data type.'");
-			return null;
-		}
-		else
-		{
-			$reportHandler = $this->getReport()->getReportHandler();
-			if (!$reportHandler->isEnabled())
-			{
-				return null;
-			}
+        if (!isset(Common::$reportImplementationTypesMap[$compatibleDataType])) {
+            $this->errors[] = new Error("No isset : '" . $compatibleDataType . "' compatible data type.'");
+            return null;
+        } else {
+            $reportHandler = $this->getReport()->getReportHandler();
+            if (!$reportHandler->isEnabled()) {
+                return null;
+            }
 
-			$reportHandler->setView($this->getView());
-			if ($reportHandler instanceof Common::$reportImplementationTypesMap[$compatibleDataType]['interface'])
-			{
-				if (!Dashboard::getBoardModeIsDemo($this->getReport()->getWidget()->getBoardId()))
-				{
-					$reportHandler->setCalculatedData($reportHandler->prepare());
-					$getDataMethodName = Common::$reportImplementationTypesMap[$compatibleDataType]['method'];
-					$result = $reportHandler->{$getDataMethodName}();
-				}
-				else
-				{
-					$getDemoDataMethodName = Common::$reportImplementationTypesMap[$compatibleDataType]['demoMethod'];
-					$result = $reportHandler->{$getDemoDataMethodName}();
-				}
-			}
-			elseif ($reportHandler::getClassName() === BaseReport::getClassName())
-			{
-				$getDataMethodName = Common::$reportImplementationTypesMap[$compatibleDataType]['method'];
-				if (method_exists($reportHandler, $getDataMethodName))
-				{
-					$result = $reportHandler->{$getDataMethodName}();
-				}
-				else
-				{
-					$result = array();
-				}
+            $reportHandler->setView($this->getView());
+            if ($reportHandler instanceof Common::$reportImplementationTypesMap[$compatibleDataType]['interface']) {
+                if (!Dashboard::getBoardModeIsDemo($this->getReport()->getWidget()->getBoardId())) {
+                    $reportHandler->setCalculatedData($reportHandler->prepare());
+                    $getDataMethodName = Common::$reportImplementationTypesMap[$compatibleDataType]['method'];
+                    $result = $reportHandler->{$getDataMethodName}();
+                } else {
+                    $getDemoDataMethodName = Common::$reportImplementationTypesMap[$compatibleDataType]['demoMethod'];
+                    $result = $reportHandler->{$getDemoDataMethodName}();
+                }
+            } elseif ($reportHandler::getClassName() === BaseReport::getClassName()) {
+                $getDataMethodName = Common::$reportImplementationTypesMap[$compatibleDataType]['method'];
+                if (method_exists($reportHandler, $getDataMethodName)) {
+                    $result = $reportHandler->{$getDataMethodName}();
+                } else {
+                    $result = array();
+                }
 
-			}
-			else
-			{
-				$this->errors[] = new Error('Report handler ' . $reportHandler::getClassName() . ' does not implement a compatible interface');
-				return null;
-			}
-		}
+            } else {
+                $this->errors[] = new Error('Report handler ' . $reportHandler::getClassName() . ' does not implement a compatible interface');
+                return null;
+            }
+        }
 
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * @return Error[]
-	 */
-	public function getErrors()
-	{
-		return $this->errors;
-	}
+    /**
+     * @return Error[]
+     */
+    public function getErrors()
+    {
+        return $this->errors;
+    }
 
-	/**
-	 * @return View
-	 */
-	public function getView()
-	{
-		return $this->view;
-	}
+    /**
+     * @return View
+     */
+    public function getView()
+    {
+        return $this->view;
+    }
 
-	/**
-	 * @param View $view View controller entity.
-	 * @return void
-	 */
-	public function setView(View $view)
-	{
-		$this->view = $view;
-	}
+    /**
+     * @param View $view View controller entity.
+     * @return void
+     */
+    public function setView(View $view)
+    {
+        $this->view = $view;
+    }
 
-	/**
-	 * @return Report
-	 */
-	public function getReport()
-	{
-		return $this->report;
-	}
+    /**
+     * @return Report
+     */
+    public function getReport()
+    {
+        return $this->report;
+    }
 
-	/**
-	 * @param Report $report Report entity.
-	 * @return void
-	 */
-	public function setReport($report)
-	{
-		$this->report = $report;
-	}
+    /**
+     * @param Report $report Report entity.
+     * @return void
+     */
+    public function setReport($report)
+    {
+        $this->report = $report;
+    }
 }

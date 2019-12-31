@@ -1,45 +1,46 @@
 <?php
+
 namespace Bitrix\Main\Data;
 
 class CacheEngineNone
-	implements ICacheEngine, ICacheEngineStat
+    implements ICacheEngine, ICacheEngineStat
 {
-	public function getReadBytes()
-	{
-		return 0;
-	}
+    public function getReadBytes()
+    {
+        return 0;
+    }
 
-	public function getWrittenBytes()
-	{
-		return 0;
-	}
+    public function getWrittenBytes()
+    {
+        return 0;
+    }
 
-	public function getCachePath()
-	{
-		return "";
-	}
+    public function getCachePath()
+    {
+        return "";
+    }
 
-	public function isAvailable()
-	{
-		return true;
-	}
+    public function isAvailable()
+    {
+        return true;
+    }
 
-	public function clean($baseDir, $initDir = false, $filename = false)
-	{
-		return true;
-	}
+    public function clean($baseDir, $initDir = false, $filename = false)
+    {
+        return true;
+    }
 
-	public function read(&$allVars, $baseDir, $initDir, $filename, $TTL)
-	{
-		return false;
-	}
+    public function read(&$allVars, $baseDir, $initDir, $filename, $TTL)
+    {
+        return false;
+    }
 
-	public function write($allVars, $baseDir, $initDir, $filename, $TTL)
-	{
-	}
+    public function write($allVars, $baseDir, $initDir, $filename, $TTL)
+    {
+    }
 
-	public function isCacheExpired($path)
-	{
-		return true;
-	}
+    public function isCacheExpired($path)
+    {
+        return true;
+    }
 }

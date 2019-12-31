@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Forum;
 
 use Bitrix\Main;
@@ -45,307 +46,307 @@ use Bitrix\Main\NotImplementedException;
  **/
 class MessageTable extends Main\Entity\DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_forum_message';
-	}
+    /**
+     * Returns DB table name for entity.
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_forum_message';
+    }
 
-	public static function getUfId()
-	{
-		return 'FORUM_MESSAGE';
-	}
+    public static function getUfId()
+    {
+        return 'FORUM_MESSAGE';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			),
-			'FORUM_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'TOPIC_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'USE_SMILES' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-			),
-			'NEW_TOPIC' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-			),
-			'APPROVED' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-			),
-			'SOURCE_ID' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateSourceId'),
-			),
-			'POST_DATE' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-			),
-			'POST_MESSAGE' => array(
-				'data_type' => 'text',
-			),
-			'POST_MESSAGE_HTML' => array(
-				'data_type' => 'text',
-			),
-			'POST_MESSAGE_FILTER' => array(
-				'data_type' => 'text',
-			),
-			'POST_MESSAGE_CHECK' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validatePostMessageCheck'),
-			),
-			'ATTACH_IMG' => array(
-				'data_type' => 'integer',
-			),
-			'PARAM1' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateParam1'),
-			),
-			'PARAM2' => array(
-				'data_type' => 'integer',
-			),
-			'AUTHOR_ID' => array(
-				'data_type' => 'integer',
-			),
-			'AUTHOR_NAME' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateAuthorName'),
-			),
-			'AUTHOR_EMAIL' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateAuthorEmail'),
-			),
-			'AUTHOR_IP' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateAuthorIp'),
-			),
-			'AUTHOR_REAL_IP' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateAuthorRealIp'),
-			),
-			'GUEST_ID' => array(
-				'data_type' => 'integer',
-			),
-			'EDITOR_ID' => array(
-				'data_type' => 'integer',
-			),
-			'EDITOR_NAME' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateEditorName'),
-			),
-			'EDITOR_EMAIL' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateEditorEmail'),
-			),
-			'EDIT_REASON' => array(
-				'data_type' => 'text',
-			),
-			'EDIT_DATE' => array(
-				'data_type' => 'datetime',
-			),
-			'XML_ID' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateXmlId'),
-			),
-			'HTML' => array(
-				'data_type' => 'text',
-			),
-			'MAIL_HEADER' => array(
-				'data_type' => 'text',
-			),
-			'TOPIC' => array(
-				'data_type' => '\Bitrix\Forum\TopicTable',
-				'reference' => array(
-					'=this.TOPIC_ID' => 'ref.ID',
-				),
-				'join_type' => 'RIGHT',
-			),
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            'ID' => array(
+                'data_type' => 'integer',
+                'primary' => true,
+                'autocomplete' => true,
+            ),
+            'FORUM_ID' => array(
+                'data_type' => 'integer',
+                'required' => true,
+            ),
+            'TOPIC_ID' => array(
+                'data_type' => 'integer',
+                'required' => true,
+            ),
+            'USE_SMILES' => array(
+                'data_type' => 'boolean',
+                'values' => array('N', 'Y'),
+            ),
+            'NEW_TOPIC' => array(
+                'data_type' => 'boolean',
+                'values' => array('N', 'Y'),
+            ),
+            'APPROVED' => array(
+                'data_type' => 'boolean',
+                'values' => array('N', 'Y'),
+            ),
+            'SOURCE_ID' => array(
+                'data_type' => 'string',
+                'required' => true,
+                'validation' => array(__CLASS__, 'validateSourceId'),
+            ),
+            'POST_DATE' => array(
+                'data_type' => 'datetime',
+                'required' => true,
+            ),
+            'POST_MESSAGE' => array(
+                'data_type' => 'text',
+            ),
+            'POST_MESSAGE_HTML' => array(
+                'data_type' => 'text',
+            ),
+            'POST_MESSAGE_FILTER' => array(
+                'data_type' => 'text',
+            ),
+            'POST_MESSAGE_CHECK' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validatePostMessageCheck'),
+            ),
+            'ATTACH_IMG' => array(
+                'data_type' => 'integer',
+            ),
+            'PARAM1' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateParam1'),
+            ),
+            'PARAM2' => array(
+                'data_type' => 'integer',
+            ),
+            'AUTHOR_ID' => array(
+                'data_type' => 'integer',
+            ),
+            'AUTHOR_NAME' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateAuthorName'),
+            ),
+            'AUTHOR_EMAIL' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateAuthorEmail'),
+            ),
+            'AUTHOR_IP' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateAuthorIp'),
+            ),
+            'AUTHOR_REAL_IP' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateAuthorRealIp'),
+            ),
+            'GUEST_ID' => array(
+                'data_type' => 'integer',
+            ),
+            'EDITOR_ID' => array(
+                'data_type' => 'integer',
+            ),
+            'EDITOR_NAME' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateEditorName'),
+            ),
+            'EDITOR_EMAIL' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateEditorEmail'),
+            ),
+            'EDIT_REASON' => array(
+                'data_type' => 'text',
+            ),
+            'EDIT_DATE' => array(
+                'data_type' => 'datetime',
+            ),
+            'XML_ID' => array(
+                'data_type' => 'string',
+                'validation' => array(__CLASS__, 'validateXmlId'),
+            ),
+            'HTML' => array(
+                'data_type' => 'text',
+            ),
+            'MAIL_HEADER' => array(
+                'data_type' => 'text',
+            ),
+            'TOPIC' => array(
+                'data_type' => '\Bitrix\Forum\TopicTable',
+                'reference' => array(
+                    '=this.TOPIC_ID' => 'ref.ID',
+                ),
+                'join_type' => 'RIGHT',
+            ),
 
-		);
-	}
+        );
+    }
 
-	/**
-	 * Returns validators for SOURCE_ID field.
-	 *
-	 * @return array
-	 */
-	public static function validateSourceId()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for SOURCE_ID field.
+     *
+     * @return array
+     */
+    public static function validateSourceId()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 255),
+        );
+    }
 
-	/**
-	 * Returns validators for POST_MESSAGE_CHECK field.
-	 *
-	 * @return array
-	 */
-	public static function validatePostMessageCheck()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 32),
-		);
-	}
+    /**
+     * Returns validators for POST_MESSAGE_CHECK field.
+     *
+     * @return array
+     */
+    public static function validatePostMessageCheck()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 32),
+        );
+    }
 
-	/**
-	 * Returns validators for PARAM1 field.
-	 *
-	 * @return array
-	 */
-	public static function validateParam1()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 2),
-		);
-	}
+    /**
+     * Returns validators for PARAM1 field.
+     *
+     * @return array
+     */
+    public static function validateParam1()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 2),
+        );
+    }
 
-	/**
-	 * Returns validators for AUTHOR_NAME field.
-	 *
-	 * @return array
-	 */
-	public static function validateAuthorName()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for AUTHOR_NAME field.
+     *
+     * @return array
+     */
+    public static function validateAuthorName()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 255),
+        );
+    }
 
-	/**
-	 * Returns validators for AUTHOR_EMAIL field.
-	 *
-	 * @return array
-	 */
-	public static function validateAuthorEmail()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for AUTHOR_EMAIL field.
+     *
+     * @return array
+     */
+    public static function validateAuthorEmail()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 255),
+        );
+    }
 
-	/**
-	 * Returns validators for AUTHOR_IP field.
-	 *
-	 * @return array
-	 */
-	public static function validateAuthorIp()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for AUTHOR_IP field.
+     *
+     * @return array
+     */
+    public static function validateAuthorIp()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 255),
+        );
+    }
 
-	/**
-	 * Returns validators for AUTHOR_REAL_IP field.
-	 *
-	 * @return array
-	 */
-	public static function validateAuthorRealIp()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 128),
-		);
-	}
+    /**
+     * Returns validators for AUTHOR_REAL_IP field.
+     *
+     * @return array
+     */
+    public static function validateAuthorRealIp()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 128),
+        );
+    }
 
-	/**
-	 * Returns validators for EDITOR_NAME field.
-	 *
-	 * @return array
-	 */
-	public static function validateEditorName()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for EDITOR_NAME field.
+     *
+     * @return array
+     */
+    public static function validateEditorName()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 255),
+        );
+    }
 
-	/**
-	 * Returns validators for EDITOR_EMAIL field.
-	 *
-	 * @return array
-	 */
-	public static function validateEditorEmail()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for EDITOR_EMAIL field.
+     *
+     * @return array
+     */
+    public static function validateEditorEmail()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 255),
+        );
+    }
 
-	/**
-	 * Returns validators for XML_ID field.
-	 *
-	 * @return array
-	 */
-	public static function validateXmlId()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for XML_ID field.
+     *
+     * @return array
+     */
+    public static function validateXmlId()
+    {
+        return array(
+            new Main\Entity\Validator\Length(null, 255),
+        );
+    }
 
 
-	/**
-	 * Adds row to entity table
-	 *
-	 * @param array $data
-	 *
-	 * @return Entity\AddResult Contains ID of inserted row
-	 *
-	 * @throws \Exception
-	 */
-	public static function add(array $data)
-	{
-		throw new NotImplementedException;
-	}
+    /**
+     * Adds row to entity table
+     *
+     * @param array $data
+     *
+     * @return Entity\AddResult Contains ID of inserted row
+     *
+     * @throws \Exception
+     */
+    public static function add(array $data)
+    {
+        throw new NotImplementedException;
+    }
 
-	/**
-	 * Updates row in entity table by primary key
-	 *
-	 * @param mixed $primary
-	 * @param array $data
-	 *
-	 * @return Entity\UpdateResult
-	 *
-	 * @throws \Exception
-	 */
-	public static function update($primary, array $data)
-	{
-		throw new NotImplementedException;
-	}
+    /**
+     * Updates row in entity table by primary key
+     *
+     * @param mixed $primary
+     * @param array $data
+     *
+     * @return Entity\UpdateResult
+     *
+     * @throws \Exception
+     */
+    public static function update($primary, array $data)
+    {
+        throw new NotImplementedException;
+    }
 
-	/**
-	 * Deletes row in entity table by primary key
-	 *
-	 * @param mixed $primary
-	 *
-	 * @return Entity\DeleteResult
-	 *
-	 * @throws \Exception
-	 */
-	public static function delete($primary)
-	{
-		throw new NotImplementedException;
-	}
+    /**
+     * Deletes row in entity table by primary key
+     *
+     * @param mixed $primary
+     *
+     * @return Entity\DeleteResult
+     *
+     * @throws \Exception
+     */
+    public static function delete($primary)
+    {
+        throw new NotImplementedException;
+    }
 }

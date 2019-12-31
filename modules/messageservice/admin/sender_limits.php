@@ -1,6 +1,6 @@
 <?
 define("ADMIN_MODULE_NAME", "messageservice");
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin.php");
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -9,31 +9,30 @@ $APPLICATION->SetAdditionalCSS('/bitrix/css/main/grid/webform-button.css');
 
 $isSlider = isset($_REQUEST['IFRAME_TYPE']) && $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER';
 
-if ($isSlider)
-{
-	$APPLICATION->RestartBuffer();
-	?>
-	<!DOCTYPE html>
-	<html>
-	<head>
-		<?$APPLICATION->ShowHead(); ?>
-	</head>
-	<body>
-	<?
+if ($isSlider) {
+    $APPLICATION->RestartBuffer();
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <?
+        $APPLICATION->ShowHead(); ?>
+    </head>
+    <body>
+    <?
 }
 
 ?>
-	<div style="background: white">
-		<?
-		/** @var \CAllMain $APPLICATION */
-		$APPLICATION->IncludeComponent("bitrix:messageservice.config.sender.limits", "", []);
-		?>
-	</div>
+    <div style="background: white">
+        <?
+        /** @var \CAllMain $APPLICATION */
+        $APPLICATION->IncludeComponent("bitrix:messageservice.config.sender.limits", "", []);
+        ?>
+    </div>
 <?
 
-if ($isSlider)
-{
-	?></body></html><?
+if ($isSlider) {
+    ?></body></html><?
 }
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");

@@ -11,14 +11,14 @@ use Bitrix\Main\Web\WebPacker;
  */
 class Base
 {
-	/**
-	 * Output.
-	 *
-	 * @param WebPacker\Builder $builder Builder.
-	 * @return Result
-	 */
-	public function output(WebPacker\Builder $builder)
-	{
-		return (new Result())->setContent($builder->stringify());
-	}
+    /**
+     * Output.
+     *
+     * @param WebPacker\Builder $builder Builder.
+     * @return Result
+     */
+    public function output(WebPacker\Builder $builder)
+    {
+        return (new Result())->setContent($builder->stringify());
+    }
 }

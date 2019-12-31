@@ -20,27 +20,27 @@ use Bitrix\Main\ORM\Fields\Relations\OneToMany;
  */
 class PublisherTable extends DataManager
 {
-	public static function getTableName()
-	{
-		return '(
+    public static function getTableName()
+    {
+        return '(
 			(SELECT 253 AS ID, "Publisher Title 253" AS TITLE)
 			UNION
 			(SELECT 254 AS ID, "Publisher Title 254" AS TITLE)
 		)';
-	}
+    }
 
-	public static function getMap()
-	{
-		return [
-			(new IntegerField('ID'))
-				->configurePrimary()
-				->configureAutocomplete(),
+    public static function getMap()
+    {
+        return [
+            (new IntegerField('ID'))
+                ->configurePrimary()
+                ->configureAutocomplete(),
 
-			(new StringField('TITLE')),
+            (new StringField('TITLE')),
 
-			(new OneToMany('BOOKS', BookTable::class, 'PUBLISHER'))
-				->configureJoinType('left')
-		];
-	}
+            (new OneToMany('BOOKS', BookTable::class, 'PUBLISHER'))
+                ->configureJoinType('left')
+        ];
+    }
 
 }

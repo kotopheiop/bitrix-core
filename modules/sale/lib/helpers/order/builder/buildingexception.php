@@ -1,4 +1,5 @@
 <?
+
 namespace Bitrix\Sale\Helpers\Order\Builder;
 /**
  * Exception is thrown if errors occurs during order building

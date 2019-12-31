@@ -23,34 +23,34 @@ Loc::loadMessages(__FILE__);
 
 class FreeDelivery extends Delivery
 {
-	public function getTitle()
-	{
-		return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_FREEDELIVERY_NAME');
-	}
+    public function getTitle()
+    {
+        return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_FREEDELIVERY_NAME');
+    }
 
-	public function getDescription()
-	{
-		return '';
-	}
+    public function getDescription()
+    {
+        return '';
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getCategory()
-	{
-		return Manager::CATEGORY_DELIVERY;
-	}
+    /**
+     * @return int
+     */
+    public function getCategory()
+    {
+        return Manager::CATEGORY_DELIVERY;
+    }
 
-	protected function renderDiscountValue(State $state, $currency)
-	{
-		return '';
-	}
+    protected function renderDiscountValue(State $state, $currency)
+    {
+        return '';
+    }
 
-	public function processSaveInputAmount(State $state)
-	{
-		$state['discount_type'] = 'Perc';
-		$state['discount_value'] = '100';
+    public function processSaveInputAmount(State $state)
+    {
+        $state['discount_type'] = 'Perc';
+        $state['discount_value'] = '100';
 
-		return parent::processSaveInputAmount($state);
-	}
+        return parent::processSaveInputAmount($state);
+    }
 }

@@ -10,8 +10,8 @@ namespace Bitrix\Main\ORM\Data;
 
 class DeleteResult extends Result
 {
-	public function __construct()
-	{
-		parent::__construct();
-	}
+    public function __construct()
+    {
+        parent::__construct();
+    }
 }

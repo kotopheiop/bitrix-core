@@ -5,6 +5,7 @@
  * @subpackage sale
  * @copyright 2001-2012 Bitrix
  */
+
 namespace Bitrix\Sale;
 
 use Bitrix\Main\Localization\Loc;
@@ -17,27 +18,27 @@ Loc::loadMessages(__FILE__);
 abstract class ReservationBase extends Attributes
 {
 
-	protected function __construct()
-	{
+    protected function __construct()
+    {
 
-	}
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function getEnableReservation()
-	{
-		//default_use_store_control = Y
-		return (COption::GetOptionString("catalog", "enable_reservation") == "Y"
+    /**
+     * @return bool
+     */
+    public function getEnableReservation()
+    {
+        //default_use_store_control = Y
+        return (COption::GetOptionString("catalog", "enable_reservation") == "Y"
 //			&& COption::GetOptionString("sale", "product_reserve_condition", "O") != "S"
-			&& COption::GetOptionString('catalog','default_use_store_control') == "Y");
-	}
+            && COption::GetOptionString('catalog', 'default_use_store_control') == "Y");
+    }
 
-	/**
-	 * @param Basket $basketCollection
-	 * @param array $productList
-	 * @throws \Exception
-	 */
+    /**
+     * @param Basket $basketCollection
+     * @param array $productList
+     * @throws \Exception
+     */
 
 
     /**
@@ -46,9 +47,9 @@ abstract class ReservationBase extends Attributes
      * @return array
      * @throws \Exception
      */
-	public static function getProductList(Basket $basketCollection, array $productList = array())
-	{
-		throw new \Exception("Method 'ReservationBase::getProduct' is not overridden");
-	}
+    public static function getProductList(Basket $basketCollection, array $productList = array())
+    {
+        throw new \Exception("Method 'ReservationBase::getProduct' is not overridden");
+    }
 
 } 

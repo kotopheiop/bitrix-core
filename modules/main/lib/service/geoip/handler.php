@@ -1,8 +1,10 @@
 <?php
+
 namespace Bitrix\Main\Service\GeoIp;
 
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -19,65 +21,64 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Main\Service\GeoIp
  **/
-
 class HandlerTable extends Entity\DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_geoip_handlers';
-	}
+    /**
+     * Returns DB table name for entity.
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_geoip_handlers';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_ID_FIELD'),
-			),
-			'SORT' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_SORT_FIELD'),
-			),
-			'ACTIVE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_ACTIVE_FIELD'),
-			),
-			'CLASS_NAME' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateClassName'),
-				'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_CLASS_NAME_FIELD'),
-			),
-			'CONFIG' => array(
-				'data_type' => 'text',
-				'serialized' => true,
-				'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_CONFIG_FIELD'),
-			),
-		);
-	}
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            'ID' => array(
+                'data_type' => 'integer',
+                'primary' => true,
+                'autocomplete' => true,
+                'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_ID_FIELD'),
+            ),
+            'SORT' => array(
+                'data_type' => 'integer',
+                'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_SORT_FIELD'),
+            ),
+            'ACTIVE' => array(
+                'data_type' => 'boolean',
+                'values' => array('N', 'Y'),
+                'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_ACTIVE_FIELD'),
+            ),
+            'CLASS_NAME' => array(
+                'data_type' => 'string',
+                'required' => true,
+                'validation' => array(__CLASS__, 'validateClassName'),
+                'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_CLASS_NAME_FIELD'),
+            ),
+            'CONFIG' => array(
+                'data_type' => 'text',
+                'serialized' => true,
+                'title' => Loc::getMessage('MAIN_SRV_GEOIP_HNDL_ENTITY_CONFIG_FIELD'),
+            ),
+        );
+    }
 
-	/**
-	 * Returns validators for CLASS_NAME field.
-	 *
-	 * @return array
-	 */
-	public static function validateClassName()
-	{
-		return array(
-			new Entity\Validator\Length(null, 255),
-		);
-	}
+    /**
+     * Returns validators for CLASS_NAME field.
+     *
+     * @return array
+     */
+    public static function validateClassName()
+    {
+        return array(
+            new Entity\Validator\Length(null, 255),
+        );
+    }
 }

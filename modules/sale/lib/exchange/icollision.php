@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Exchange;
 
 
@@ -14,7 +15,7 @@ interface ICollision
      * @param null $message
      * @return mixed
      */
-    public function addItem($entityTypeId, $typeId, Entity $entity, $message=null);
+    public function addItem($entityTypeId, $typeId, Entity $entity, $message = null);
 
     /**
      * @param $entityTypeId
@@ -47,9 +48,9 @@ interface ICollision
      */
     public function setEntity(Entity $entity);
 
-	/**
-	 * @param ImportBase $entity
-	 * @return Result
-	 */
-	public function resolve(ImportBase $entity);
+    /**
+     * @param ImportBase $entity
+     * @return Result
+     */
+    public function resolve(ImportBase $entity);
 }

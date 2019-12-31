@@ -1,4 +1,5 @@
 <?
+
 namespace Bitrix\Lists\Controller;
 
 use Bitrix\Lists\Copy\Container;
@@ -13,62 +14,59 @@ use Bitrix\Main\Copy\ContainerManager;
 
 class Iblock extends Entity
 {
-	public function copyAction()
-	{
-		$param = $this->getParamFromRequest();
-		$params = $param->getParams();
+    public function copyAction()
+    {
+        $param = $this->getParamFromRequest();
+        $params = $param->getParams();
 
-		$this->checkPermission($param, IblockRight::EDIT);
-		if ($this->getErrors())
-		{
-			return null;
-		}
+        $this->checkPermission($param, IblockRight::EDIT);
+        if ($this->getErrors()) {
+            return null;
+        }
 
-		$iblockCopier = $this->getCopier();
-		$iblockIdToCopy = $params["IBLOCK_ID"];
+        $iblockCopier = $this->getCopier();
+        $iblockIdToCopy = $params["IBLOCK_ID"];
 
-		$containerManager = $this->getContainerManager($iblockIdToCopy);
+        $containerManager = $this->getContainerManager($iblockIdToCopy);
 
-		$result = $iblockCopier->copy($containerManager);
-		if ($result->getErrors())
-		{
-			$this->addErrors($result->getErrors());
-			return null;
-		}
+        $result = $iblockCopier->copy($containerManager);
+        if ($result->getErrors()) {
+            $this->addErrors($result->getErrors());
+            return null;
+        }
 
-		$listCopiedIds = $result->getData();
-		return $listCopiedIds[$iblockIdToCopy];
-	}
+        $listCopiedIds = $result->getData();
+        return $listCopiedIds[$iblockIdToCopy];
+    }
 
-	private function checkPermission(Param $param, $permission)
-	{
-		global $USER;
-		$rightParam = new RightParam($param);
-		$rightParam->setUser($USER);
+    private function checkPermission(Param $param, $permission)
+    {
+        global $USER;
+        $rightParam = new RightParam($param);
+        $rightParam->setUser($USER);
 
-		$right = new Right($rightParam, new IblockRight($rightParam));
-		$right->checkPermission($permission);
-		if ($right->hasErrors())
-		{
-			$this->addErrors($right->getErrors());
-		}
-	}
+        $right = new Right($rightParam, new IblockRight($rightParam));
+        $right->checkPermission($permission);
+        if ($right->hasErrors()) {
+            $this->addErrors($right->getErrors());
+        }
+    }
 
-	private function getCopier()
-	{
-		$iblock = new IblockCopier();
-		$iblock->addEntityToCopy(new FieldCopier());
-		$iblock->addEntityToCopy(new SectionCopier());
+    private function getCopier()
+    {
+        $iblock = new IblockCopier();
+        $iblock->addEntityToCopy(new FieldCopier());
+        $iblock->addEntityToCopy(new SectionCopier());
 
-		return $iblock;
-	}
+        return $iblock;
+    }
 
-	private function getContainerManager($entityId)
-	{
-		$containerManager = new ContainerManager();
-		$container = new Container($entityId);
-		$containerManager->addContainer($container);
+    private function getContainerManager($entityId)
+    {
+        $containerManager = new ContainerManager();
+        $container = new Container($entityId);
+        $containerManager->addContainer($container);
 
-		return $containerManager;
-	}
+        return $containerManager;
+    }
 }

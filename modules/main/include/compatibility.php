@@ -66,7 +66,7 @@ class_alias('Bitrix\Main\ORM\Event', 'Bitrix\Main\Entity\Event');
 class_alias('Bitrix\Main\ORM\EventResult', 'Bitrix\Main\Entity\EventResult');
 
 \Bitrix\Main\Loader::registerAutoLoadClasses(
-	"main", ["Bitrix\\Main\\Entity\\UField" => "include/deprecated/ufield.php"]
+    "main", ["Bitrix\\Main\\Entity\\UField" => "include/deprecated/ufield.php"]
 );
 
 class_alias('Bitrix\Main\Entity\UField', 'Bitrix\Main\ORM\UField');

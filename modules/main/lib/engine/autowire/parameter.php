@@ -7,181 +7,167 @@ use Bitrix\Main\Result;
 
 class Parameter
 {
-	/** @var string */
-	private $className;
-	/** @var \Closure */
-	private $constructor;
-	/** @var \Closure */
-	private $externalNameConstructor;
+    /** @var string */
+    private $className;
+    /** @var \Closure */
+    private $constructor;
+    /** @var \Closure */
+    private $externalNameConstructor;
 
-	public function __construct($className, \Closure $constructor, \Closure $externalNameConstructor = null)
-	{
-		$this
-			->setClassName($className)
-			->setConstructor($constructor)
-		;
+    public function __construct($className, \Closure $constructor, \Closure $externalNameConstructor = null)
+    {
+        $this
+            ->setClassName($className)
+            ->setConstructor($constructor);
 
-		$reflectionFunction = new \ReflectionFunction($constructor);
-		if ($reflectionFunction->getNumberOfParameters() > 1)
-		{
-			if ($externalNameConstructor === null)
-			{
-				$externalNameConstructor = function(\ReflectionParameter $parameter){
-					return $parameter->getName() . 'Id';
-				};
-			}
+        $reflectionFunction = new \ReflectionFunction($constructor);
+        if ($reflectionFunction->getNumberOfParameters() > 1) {
+            if ($externalNameConstructor === null) {
+                $externalNameConstructor = function (\ReflectionParameter $parameter) {
+                    return $parameter->getName() . 'Id';
+                };
+            }
 
-			$this->setExternalNameConstructor($externalNameConstructor);
-		}
+            $this->setExternalNameConstructor($externalNameConstructor);
+        }
 
-	}
+    }
 
-	public function getPriority()
-	{
-		if (!$this->needToMapExternalData())
-		{
-			return 1;
-		}
+    public function getPriority()
+    {
+        if (!$this->needToMapExternalData()) {
+            return 1;
+        }
 
-		return 2;
-	}
+        return 2;
+    }
 
-	public function constructValue(\ReflectionParameter $parameter, Result $captureResult)
-	{
-		$paramsToInvoke = array_merge(
-			[$parameter->getClass()->getName()],
-			$captureResult->getData()
-		);
+    public function constructValue(\ReflectionParameter $parameter, Result $captureResult)
+    {
+        $paramsToInvoke = array_merge(
+            [$parameter->getClass()->getName()],
+            $captureResult->getData()
+        );
 
-		return call_user_func_array($this->getConstructor(), $paramsToInvoke);
-	}
+        return call_user_func_array($this->getConstructor(), $paramsToInvoke);
+    }
 
-	public function captureData(\ReflectionParameter $parameter, array $sourceParameters)
-	{
-		if (!$this->needToMapExternalData())
-		{
-			return new Result();
-		}
+    public function captureData(\ReflectionParameter $parameter, array $sourceParameters)
+    {
+        if (!$this->needToMapExternalData()) {
+            return new Result();
+        }
 
-		$result = new Result();
-		$externalName = $this->generateExternalName($parameter);
-		$value = $this->findParameterInSourceList($externalName, $sourceParameters, $status);
+        $result = new Result();
+        $externalName = $this->generateExternalName($parameter);
+        $value = $this->findParameterInSourceList($externalName, $sourceParameters, $status);
 
-		if ($status === Binder::STATUS_NOT_FOUND)
-		{
-			$result->addError(new Error("Could not find value for {{$externalName}}"));
-		}
-		else
-		{
-			$result->setData([
-				$value
-			]);
-		}
+        if ($status === Binder::STATUS_NOT_FOUND) {
+            $result->addError(new Error("Could not find value for {{$externalName}}"));
+        } else {
+            $result->setData([
+                $value
+            ]);
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	protected function findParameterInSourceList($name, array $sourceParameters, &$status)
-	{
-		$status = Binder::STATUS_FOUND;
-		foreach ($sourceParameters as $source)
-		{
-			if (isset($source[$name]))
-			{
-				return $source[$name];
-			}
+    protected function findParameterInSourceList($name, array $sourceParameters, &$status)
+    {
+        $status = Binder::STATUS_FOUND;
+        foreach ($sourceParameters as $source) {
+            if (isset($source[$name])) {
+                return $source[$name];
+            }
 
-			if ($source instanceof \ArrayAccess && $source->offsetExists($name))
-			{
-				return $source[$name];
-			}
-			elseif (is_array($source) && array_key_exists($name, $source))
-			{
-				return $source[$name];
-			}
-		}
-		$status = Binder::STATUS_NOT_FOUND;
+            if ($source instanceof \ArrayAccess && $source->offsetExists($name)) {
+                return $source[$name];
+            } elseif (is_array($source) && array_key_exists($name, $source)) {
+                return $source[$name];
+            }
+        }
+        $status = Binder::STATUS_NOT_FOUND;
 
-		return null;
-	}
-	
-	public function match(\ReflectionParameter $parameter)
-	{
-		$class = $parameter->getClass();
+        return null;
+    }
 
-		return
-			$class->isSubclassOf($this->getClassName()) ||
-			$class->name === ltrim($this->getClassName(), '\\')
-		;
-	}
+    public function match(\ReflectionParameter $parameter)
+    {
+        $class = $parameter->getClass();
 
-	/**
-	 * @return string
-	 */
-	public function getClassName()
-	{
-		return $this->className;
-	}
+        return
+            $class->isSubclassOf($this->getClassName()) ||
+            $class->name === ltrim($this->getClassName(), '\\');
+    }
 
-	/**
-	 * @param string $className
-	 *
-	 * @return Parameter
-	 */
-	public function setClassName($className)
-	{
-		$this->className = $className;
+    /**
+     * @return string
+     */
+    public function getClassName()
+    {
+        return $this->className;
+    }
 
-		return $this;
-	}
+    /**
+     * @param string $className
+     *
+     * @return Parameter
+     */
+    public function setClassName($className)
+    {
+        $this->className = $className;
 
-	/**
-	 * @return \Closure
-	 */
-	public function getConstructor()
-	{
-		return $this->constructor;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param \Closure $constructor
-	 *
-	 * @return Parameter
-	 */
-	public function setConstructor(\Closure $constructor)
-	{
-		$this->constructor = $constructor;
+    /**
+     * @return \Closure
+     */
+    public function getConstructor()
+    {
+        return $this->constructor;
+    }
 
-		return $this;
-	}
+    /**
+     * @param \Closure $constructor
+     *
+     * @return Parameter
+     */
+    public function setConstructor(\Closure $constructor)
+    {
+        $this->constructor = $constructor;
 
-	/**
-	 * @return \Closure
-	 */
-	public function getExternalNameConstructor()
-	{
-		return $this->externalNameConstructor;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param \Closure $externalNameConstructor
-	 *
-	 * @return Parameter
-	 */
-	public function setExternalNameConstructor(\Closure $externalNameConstructor)
-	{
-		$this->externalNameConstructor = $externalNameConstructor;
+    /**
+     * @return \Closure
+     */
+    public function getExternalNameConstructor()
+    {
+        return $this->externalNameConstructor;
+    }
 
-		return $this;
-	}
+    /**
+     * @param \Closure $externalNameConstructor
+     *
+     * @return Parameter
+     */
+    public function setExternalNameConstructor(\Closure $externalNameConstructor)
+    {
+        $this->externalNameConstructor = $externalNameConstructor;
 
-	protected function needToMapExternalData()
-	{
-		return $this->externalNameConstructor !== null;
-	}
+        return $this;
+    }
 
-	public function generateExternalName()
-	{
-		return call_user_func_array($this->getExternalNameConstructor(), func_get_args());
-	}
+    protected function needToMapExternalData()
+    {
+        return $this->externalNameConstructor !== null;
+    }
+
+    public function generateExternalName()
+    {
+        return call_user_func_array($this->getExternalNameConstructor(), func_get_args());
+    }
 }

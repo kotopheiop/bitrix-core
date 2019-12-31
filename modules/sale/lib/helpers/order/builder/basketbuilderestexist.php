@@ -11,8 +11,8 @@ namespace Bitrix\Sale\Helpers\Order\Builder;
  */
 final class BasketBuildeRestExist extends BasketBuilderExist
 {
-	public function getItemFromBasket($basketCode, $productData)
-	{
-		return $this->builder->getBasket()->getItemByBasketCode($basketCode);
-	}
+    public function getItemFromBasket($basketCode, $productData)
+    {
+        return $this->builder->getBasket()->getItemByBasketCode($basketCode);
+    }
 }

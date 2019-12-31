@@ -12,154 +12,149 @@ use Bitrix\Seo\Retargeting\IService;
  */
 class Service implements IService
 {
-	const GROUP = 'leadads';
-	const TYPE_FACEBOOK = 'facebook';
-	const TYPE_VKONTAKTE = 'vkontakte';
+    const GROUP = 'leadads';
+    const TYPE_FACEBOOK = 'facebook';
+    const TYPE_VKONTAKTE = 'vkontakte';
 
-	/**
-	 * Get instance.
-	 *
-	 * @return static
-	 */
-	public static function getInstance()
-	{
-		static $instance = null;
-		if ($instance === null)
-		{
-			$instance = new static();
-		}
+    /**
+     * Get instance.
+     *
+     * @return static
+     */
+    public static function getInstance()
+    {
+        static $instance = null;
+        if ($instance === null) {
+            $instance = new static();
+        }
 
-		return $instance;
-	}
+        return $instance;
+    }
 
-	/**
-	 * Get engine code by type.
-	 *
-	 * @param string $type Type
-	 * @return string
-	 */
-	public static function getEngineCode($type)
-	{
-		return static::GROUP . '.' . $type;
-	}
+    /**
+     * Get engine code by type.
+     *
+     * @param string $type Type
+     * @return string
+     */
+    public static function getEngineCode($type)
+    {
+        return static::GROUP . '.' . $type;
+    }
 
-	/**
-	 * Get Form by type.
-	 *
-	 * @param string $type Type
-	 * @return Form
-	 */
-	public static function getForm($type)
-	{
-		static $form = null;
-		if ($form === null)
-		{
-			$form = Form::create($type)->setService(static::getInstance());
-		}
+    /**
+     * Get Form by type.
+     *
+     * @param string $type Type
+     * @return Form
+     */
+    public static function getForm($type)
+    {
+        static $form = null;
+        if ($form === null) {
+            $form = Form::create($type)->setService(static::getInstance());
+        }
 
-		return $form;
-	}
+        return $form;
+    }
 
-	/**
-	 * Get group auth.
-	 *
-	 * @param string $type Type
-	 * @return AuthAdapter
-	 */
-	public static function getGroupAuth($type)
-	{
-		static $auth = null;
-		if ($auth === null)
-		{
-			$auth = Form::create($type)->setService(static::getInstance())->getGroupAuthAdapter();
-		}
+    /**
+     * Get group auth.
+     *
+     * @param string $type Type
+     * @return AuthAdapter
+     */
+    public static function getGroupAuth($type)
+    {
+        static $auth = null;
+        if ($auth === null) {
+            $auth = Form::create($type)->setService(static::getInstance())->getGroupAuthAdapter();
+        }
 
-		return $auth;
-	}
+        return $auth;
+    }
 
-	/**
-	 * Register group.
-	 *
-	 * @param string $type Type.
-	 * @param string $groupId Group ID.
-	 * @return bool
-	 */
-	public static function registerGroup($type, $groupId)
-	{
-		return Form::create($type)
-			->setService(static::getInstance())
-			->registerGroup($groupId);
-	}
+    /**
+     * Register group.
+     *
+     * @param string $type Type.
+     * @param string $groupId Group ID.
+     * @return bool
+     */
+    public static function registerGroup($type, $groupId)
+    {
+        return Form::create($type)
+            ->setService(static::getInstance())
+            ->registerGroup($groupId);
+    }
 
-	/**
-	 * UnRegister group.
-	 *
-	 * @param string $type Type.
-	 * @param string $groupId Group ID.
-	 * @return bool
-	 */
-	public static function unRegisterGroup($type, $groupId)
-	{
-		return Form::create($type)
-			->setService(static::getInstance())
-			->unRegisterGroup($groupId);
-	}
+    /**
+     * UnRegister group.
+     *
+     * @param string $type Type.
+     * @param string $groupId Group ID.
+     * @return bool
+     */
+    public static function unRegisterGroup($type, $groupId)
+    {
+        return Form::create($type)
+            ->setService(static::getInstance())
+            ->unRegisterGroup($groupId);
+    }
 
-	/**
-	 * Remove group auth.
-	 *
-	 * @param string $type Type
-	 * @return void
-	 */
-	public static function removeGroupAuth($type)
-	{
-		static::getGroupAuth($type)->removeAuth();
-	}
+    /**
+     * Remove group auth.
+     *
+     * @param string $type Type
+     * @return void
+     */
+    public static function removeGroupAuth($type)
+    {
+        static::getGroupAuth($type)->removeAuth();
+    }
 
-	/**
-	 * Get Account by type.
-	 *
-	 * @param string $type Type
-	 * @return Account
-	 */
-	public static function getAccount($type)
-	{
-		static $account = null;
-		if ($account === null)
-		{
-			$account = Account::create($type)->setService(static::getInstance());
-		}
+    /**
+     * Get Account by type.
+     *
+     * @param string $type Type
+     * @return Account
+     */
+    public static function getAccount($type)
+    {
+        static $account = null;
+        if ($account === null) {
+            $account = Account::create($type)->setService(static::getInstance());
+        }
 
-		return $account;
-	}
+        return $account;
+    }
 
-	/**
-	 * Get type list.
-	 *
-	 * @return array
-	 */
-	public static function getTypes()
-	{
-		return array(
-			static::TYPE_FACEBOOK,
-			static::TYPE_VKONTAKTE,
-		);
-	}
+    /**
+     * Get type list.
+     *
+     * @return array
+     */
+    public static function getTypes()
+    {
+        return array(
+            static::TYPE_FACEBOOK,
+            static::TYPE_VKONTAKTE,
+        );
+    }
 
-	/**
-	 * Get auth adapter.
-	 *
-	 * @param string $type Type
-	 * @return AuthAdapter
-	 */
-	public static function getAuthAdapter($type)
-	{
-		static $adapter = null;
-		if ($adapter === null)
-		{
-			$adapter = AuthAdapter::create($type)->setService(static::getInstance());
-		}
+    /**
+     * Get auth adapter.
+     *
+     * @param string $type Type
+     * @return AuthAdapter
+     */
+    public static function getAuthAdapter($type)
+    {
+        static $adapter = null;
+        if ($adapter === null) {
+            $adapter = AuthAdapter::create($type)->setService(static::getInstance());
+        }
 
-		return $adapter;
-	}
+        return $adapter;
+    }
 }

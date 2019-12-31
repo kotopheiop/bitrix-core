@@ -5,28 +5,28 @@ namespace Bitrix\Sale\Discount\Gift;
 
 class Gift
 {
-	protected $productId;
-	protected $isSku;
+    protected $productId;
+    protected $isSku;
 
-	/**
-	 * Gift constructor.
-	 * @param $productId
-	 */
-	public function __construct($productId)
-	{
-		$this->productId = $productId;
-	}
+    /**
+     * Gift constructor.
+     * @param $productId
+     */
+    public function __construct($productId)
+    {
+        $this->productId = $productId;
+    }
 
-	/**
-	 * @return int|string
-	 */
-	public function getProductId()
-	{
-		return $this->productId;
-	}
+    /**
+     * @return int|string
+     */
+    public function getProductId()
+    {
+        return $this->productId;
+    }
 
-	public function getProduct()
-	{
-		//lazy load data from CCatalog
-	}
+    public function getProduct()
+    {
+        //lazy load data from CCatalog
+    }
 }

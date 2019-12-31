@@ -16,209 +16,180 @@ use Bitrix\Sale\Result;
 
 class Client
 {
-	protected $clientId;
-	protected $clientSecret;
-	protected $serviceUrl;
-	protected $refreshToken;
+    protected $clientId;
+    protected $clientSecret;
+    protected $serviceUrl;
+    protected $refreshToken;
 
-	const HTTP_SOCKET_TIMEOUT = 10;
-	const HTTP_STREAM_TIMEOUT = 10;
-	const SERVICE_PATH = "/rest/";
-	const B24_APP_GRANT_TYPE = 'refresh_token';
+    const HTTP_SOCKET_TIMEOUT = 10;
+    const HTTP_STREAM_TIMEOUT = 10;
+    const SERVICE_PATH = "/rest/";
+    const B24_APP_GRANT_TYPE = 'refresh_token';
 
-	public function __construct($clientId, $clientSecret, $serviceUrl)
-	{
-		$this->clientId = $clientId;
-		$this->clientSecret = $clientSecret;
-		$this->serviceUrl = $serviceUrl;
-	}
+    public function __construct($clientId, $clientSecret, $serviceUrl)
+    {
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        $this->serviceUrl = $serviceUrl;
+    }
 
-	protected function getHttpClient()
-	{
-		return new HttpClient(array(
-			'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
-			'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
-		));
-	}
-	protected function getRequestUrl($methodName)
-	{
-		return $this->serviceUrl.self::SERVICE_PATH.$methodName;
-	}
+    protected function getHttpClient()
+    {
+        return new HttpClient(array(
+            'socketTimeout' => static::HTTP_SOCKET_TIMEOUT,
+            'streamTimeout' => static::HTTP_STREAM_TIMEOUT,
+        ));
+    }
 
-	public function call($methodName, $additionalParams=[])
-	{
-		$result = new Result();
+    protected function getRequestUrl($methodName)
+    {
+        return $this->serviceUrl . self::SERVICE_PATH . $methodName;
+    }
 
-		if($this->clientId && $this->clientSecret)
-		{
-			$httpClient = $this->getHttpClient();
+    public function call($methodName, $additionalParams = [])
+    {
+        $result = new Result();
 
-			$additionalParams = $this->prepareRequest($additionalParams);
+        if ($this->clientId && $this->clientSecret) {
+            $httpClient = $this->getHttpClient();
 
-			LoggerDiag::addMessage('CLIENT_CALL_REQUEST', var_export([
-				'getRequestUrl'=>$this->getRequestUrl($methodName),
-				'additionalParams'=>$additionalParams,
-			], true));
+            $additionalParams = $this->prepareRequest($additionalParams);
 
-			$httpResult = $httpClient->post(
-				$this->getRequestUrl($methodName),
-				$additionalParams
-			);
+            LoggerDiag::addMessage('CLIENT_CALL_REQUEST', var_export([
+                'getRequestUrl' => $this->getRequestUrl($methodName),
+                'additionalParams' => $additionalParams,
+            ], true));
 
-			LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT', var_export([
-				'result'=>$httpResult,
-				'status'=>$httpClient->getStatus()
-			], true));
+            $httpResult = $httpClient->post(
+                $this->getRequestUrl($methodName),
+                $additionalParams
+            );
 
-			$respons = $this->prepareResponse($httpResult);
+            LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT', var_export([
+                'result' => $httpResult,
+                'status' => $httpClient->getStatus()
+            ], true));
 
-			if($respons)
-			{
-				LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT_SUCCESS');
+            $respons = $this->prepareResponse($httpResult);
 
-				if(isset($respons['error']))
-				{
-					$result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
-					LoggerDiag::addMessage('CLIENT_CALL_RESULT_ERROR');
-				}
-				else
-				{
-					$result->setData(['DATA'=>$respons]);
-					LoggerDiag::addMessage('CLIENT_CALL_RESULT_SUCCESS', var_export($respons, true));
-				}
-			}
-			else
-			{
-				$result->addError(new Error('Strange answer from Bitrix Service! '.$httpResult, 'STRANGE_ANSWER'));
-				LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT_ERROR');
-			}
-		}
-		else
-		{
-			$result->addError(new Error('No client credentials for refresh token'));
-			LoggerDiag::addMessage('CLIENT_CALL_CLIENT_ID_EMPTY');
-		}
+            if ($respons) {
+                LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT_SUCCESS');
 
-		return $result;
-	}
+                if (isset($respons['error'])) {
+                    $result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
+                    LoggerDiag::addMessage('CLIENT_CALL_RESULT_ERROR');
+                } else {
+                    $result->setData(['DATA' => $respons]);
+                    LoggerDiag::addMessage('CLIENT_CALL_RESULT_SUCCESS', var_export($respons, true));
+                }
+            } else {
+                $result->addError(new Error('Strange answer from Bitrix Service! ' . $httpResult, 'STRANGE_ANSWER'));
+                LoggerDiag::addMessage('CLIENT_CALL_PROCESS_RESULT_ERROR');
+            }
+        } else {
+            $result->addError(new Error('No client credentials for refresh token'));
+            LoggerDiag::addMessage('CLIENT_CALL_CLIENT_ID_EMPTY');
+        }
 
-	protected function prepareResponse($result)
-	{
-		try
-		{
-			return Json::decode($result);
-		}
-		catch(ArgumentException $e)
-		{
-			return false;
-		}
-	}
+        return $result;
+    }
 
-	protected function prepareRequest($params)
-	{
-		if(!is_array($params))
-		{
-			$params = array();
-		}
-		else
-		{
-			$params = Encoding::convertEncoding($params, LANG_CHARSET, "utf-8");
-		}
+    protected function prepareResponse($result)
+    {
+        try {
+            return Json::decode($result);
+        } catch (ArgumentException $e) {
+            return false;
+        }
+    }
 
-		return $params;
-	}
+    protected function prepareRequest($params)
+    {
+        if (!is_array($params)) {
+            $params = array();
+        } else {
+            $params = Encoding::convertEncoding($params, LANG_CHARSET, "utf-8");
+        }
 
-	public function refreshToken($refreshToken)
-	{
-		$result = new Result();
+        return $params;
+    }
 
-		if($refreshToken=='')
-		{
-			$result->addError(new Error('Refresh token is empty'));
-			LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_EMPTY');
-		}
+    public function refreshToken($refreshToken)
+    {
+        $result = new Result();
 
-		if(!$this->clientId || !$this->clientSecret)
-		{
-			$result->addError(new Error('No client credentials for refresh token'));
-			LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_CLIENT_ID_EMPTY');
-		}
+        if ($refreshToken == '') {
+            $result->addError(new Error('Refresh token is empty'));
+            LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_EMPTY');
+        }
 
-		if($result->isSuccess())
-		{
-			$request = OAuthService::SERVICE_URL.'/oauth/token/'.'?'.http_build_query(
-					[
-						'grant_type'=>self::B24_APP_GRANT_TYPE,
-						'client_id'=>$this->clientId,
-						'client_secret'=>$this->clientSecret,
-						'refresh_token'=>$refreshToken
-					]);
+        if (!$this->clientId || !$this->clientSecret) {
+            $result->addError(new Error('No client credentials for refresh token'));
+            LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_CLIENT_ID_EMPTY');
+        }
 
-			LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_REQUEST', var_export($request,true));
+        if ($result->isSuccess()) {
+            $request = OAuthService::SERVICE_URL . '/oauth/token/' . '?' . http_build_query(
+                    [
+                        'grant_type' => self::B24_APP_GRANT_TYPE,
+                        'client_id' => $this->clientId,
+                        'client_secret' => $this->clientSecret,
+                        'refresh_token' => $refreshToken
+                    ]);
 
-			$httpClient = $this->getHttpClient();
-			$httpResult = $httpClient->get($request);
+            LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_REQUEST', var_export($request, true));
 
-			LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT', var_export([
-				'result'=>$httpResult,
-				'status'=>$httpClient->getStatus()
-			], true));
+            $httpClient = $this->getHttpClient();
+            $httpResult = $httpClient->get($request);
 
-			$respons = $this->prepareResponse($httpResult);
-			if($respons)
-			{
-				LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT_SUCCESS');
+            LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT', var_export([
+                'result' => $httpResult,
+                'status' => $httpClient->getStatus()
+            ], true));
 
-				if(isset($respons['error']))
-				{
-					$result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
-					LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_RESULT_ERROR');
-				}
-				else
-				{
-					$result->setData(['DATA'=>$respons]);
-					LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_RESULT_SUCCESS', var_export($respons, true));
-				}
-			}
-			else
-			{
-				$result->addError(new Error('Strange answer from Bitrix Service! ', 'STRANGE_ANSWER_REFRESH_TOKEN'));
-				LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT_ERROR');
-			}
-		}
+            $respons = $this->prepareResponse($httpResult);
+            if ($respons) {
+                LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT_SUCCESS');
 
-		return $result;
-	}
+                if (isset($respons['error'])) {
+                    $result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
+                    LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_RESULT_ERROR');
+                } else {
+                    $result->setData(['DATA' => $respons]);
+                    LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_RESULT_SUCCESS', var_export($respons, true));
+                }
+            } else {
+                $result->addError(new Error('Strange answer from Bitrix Service! ', 'STRANGE_ANSWER_REFRESH_TOKEN'));
+                LoggerDiag::addMessage('CLIENT_REFRESH_TOKEN_PROCESS_RESULT_ERROR');
+            }
+        }
 
-	public function checkAccessToken($accessToken)
-	{
-		$result = new Result();
+        return $result;
+    }
 
-		if(!Loader::includeModule('rest'))
-			$result->addError(new Error('Module REST is not included'));
+    public function checkAccessToken($accessToken)
+    {
+        $result = new Result();
 
-		if($result->isSuccess())
-		{
-			if(!\Bitrix\Rest\OAuthService::getEngine()->isRegistered())
-			{
-				try
-				{
-					\Bitrix\Rest\OAuthService::register();
-				}
-				catch(\Bitrix\Main\SystemException $e)
-				{
-					$result->addError(new Error('OAuthServiceError', '	OAUTH_SERVICE_ERROR'));
-				}
-			}
+        if (!Loader::includeModule('rest'))
+            $result->addError(new Error('Module REST is not included'));
 
-			if($result->isSuccess())
-			{
-				$client = \Bitrix\Rest\OAuthService::getEngine()->getClient();
-				$respons = $client->call('app.info', ['auth' => $accessToken]);
-				if(isset($respons['error']))
-					$result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
-			}
-		}
-		return $result;
-	}
+        if ($result->isSuccess()) {
+            if (!\Bitrix\Rest\OAuthService::getEngine()->isRegistered()) {
+                try {
+                    \Bitrix\Rest\OAuthService::register();
+                } catch (\Bitrix\Main\SystemException $e) {
+                    $result->addError(new Error('OAuthServiceError', '	OAUTH_SERVICE_ERROR'));
+                }
+            }
+
+            if ($result->isSuccess()) {
+                $client = \Bitrix\Rest\OAuthService::getEngine()->getClient();
+                $respons = $client->call('app.info', ['auth' => $accessToken]);
+                if (isset($respons['error']))
+                    $result->addError(new Error($respons['error_description'], strtoupper($respons['error'])));
+            }
+        }
+        return $result;
+    }
 }

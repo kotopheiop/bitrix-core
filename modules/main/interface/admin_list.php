@@ -56,9 +56,9 @@ class CAdminList
 	}
 
 	/**
-	 * @deprecated
 	 * @param string $table_id
 	 * @param CAdminSorting|bool $sort
+	 *@deprecated
 	 */
 	public function CAdminList($table_id, $sort = false)
 	{
@@ -1068,9 +1068,9 @@ class CAdminListRow
 		$this->isPublicMode = (defined("PUBLIC_MODE") && PUBLIC_MODE == 1);
 	}
 
-	/** @deprecated
-	* @param array &$aHeaders
+	/** @param array &$aHeaders
 	* @param string $table_id
+	*@deprecated
 	*/
 	public function CAdminListRow(&$aHeaders, $table_id)
 	{

@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale;
 
 use Bitrix\Sale\Internals;

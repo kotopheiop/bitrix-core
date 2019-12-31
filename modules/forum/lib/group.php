@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Forum;
 
 use Bitrix\Main\Entity;
@@ -21,31 +22,31 @@ use Bitrix\Main\Entity;
  */
 class GroupTable extends Entity\DataManager
 {
-	/**
-	 * Returns DB table name for entity
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_forum_group';
-	}
+    /**
+     * Returns DB table name for entity
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_forum_group';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return [
-			new Entity\IntegerField('ID', ['primary' => true, 'autocomplete' => true]),
-			new Entity\IntegerField('SORT', ['default_value' => 150]),
-			new Entity\IntegerField('PARENT_ID'),
-			new Entity\IntegerField('LEFT_MARGIN'),
-			new Entity\IntegerField('RIGHT_MARGIN'),
-			new Entity\IntegerField('DEPTH_LEVEL'),
-			new Entity\StringField('XML_ID', ['size' => 255]),
-		];
-	}
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return [
+            new Entity\IntegerField('ID', ['primary' => true, 'autocomplete' => true]),
+            new Entity\IntegerField('SORT', ['default_value' => 150]),
+            new Entity\IntegerField('PARENT_ID'),
+            new Entity\IntegerField('LEFT_MARGIN'),
+            new Entity\IntegerField('RIGHT_MARGIN'),
+            new Entity\IntegerField('DEPTH_LEVEL'),
+            new Entity\StringField('XML_ID', ['size' => 255]),
+        ];
+    }
 }

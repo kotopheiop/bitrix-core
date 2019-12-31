@@ -8,8 +8,8 @@ use Bitrix\Sale\TradingPlatformTable;
 
 class TradingPlatform extends Entity
 {
-	protected function getEntityTable()
-	{
-		return new TradingPlatformTable();
-	}
+    protected function getEntityTable()
+    {
+        return new TradingPlatformTable();
+    }
 }

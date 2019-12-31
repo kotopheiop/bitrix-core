@@ -3,12 +3,11 @@ define("NO_KEEP_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
 define("NO_AGENT_CHECK", true);
 
-if(isset($_REQUEST['tpl']) && isset($_REQUEST['tpls']))
-{
-	define('SITE_TEMPLATE_ID', $_REQUEST['tpl']);
+if (isset($_REQUEST['tpl']) && isset($_REQUEST['tpls'])) {
+    define('SITE_TEMPLATE_ID', $_REQUEST['tpl']);
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
 /**
  * Bitrix vars
@@ -21,24 +20,22 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter());
 
-if(check_bitrix_sessid())
-{
-	$action = $request['ACTION'];
+if (check_bitrix_sessid()) {
+    $action = $request['ACTION'];
 
-	switch($action)
-	{
-		case 'getCountries':
-			$result = GetCountries();
-			break;
-		default:
-			$result = array(
-				'ERROR' => 'Unknown action'
-			);
-			break;
-	}
+    switch ($action) {
+        case 'getCountries':
+            $result = GetCountries();
+            break;
+        default:
+            $result = array(
+                'ERROR' => 'Unknown action'
+            );
+            break;
+    }
 
-	Header('Content-Type: application/json');
-	echo \Bitrix\Main\Web\Json::encode($result);
+    Header('Content-Type: application/json');
+    echo \Bitrix\Main\Web\Json::encode($result);
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_after.php");

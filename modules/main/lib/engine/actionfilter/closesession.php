@@ -11,29 +11,28 @@ use Bitrix\Main\Event;
  */
 final class CloseSession extends Base
 {
-	/**
-	 * @var bool
-	 */
-	private $enabled;
+    /**
+     * @var bool
+     */
+    private $enabled;
 
-	/**
-	 * Close session constructor.
-	 * @param bool $enabled
-	 */
-	public function __construct($enabled = true)
-	{
-		$this->enabled = $enabled;
+    /**
+     * Close session constructor.
+     * @param bool $enabled
+     */
+    public function __construct($enabled = true)
+    {
+        $this->enabled = $enabled;
 
-		parent::__construct();
-	}
+        parent::__construct();
+    }
 
-	public function onBeforeAction(Event $event)
-	{
-		if (!$this->enabled)
-		{
-			return;
-		}
+    public function onBeforeAction(Event $event)
+    {
+        if (!$this->enabled) {
+            return;
+        }
 
-		session_write_close();
-	}
+        session_write_close();
+    }
 }

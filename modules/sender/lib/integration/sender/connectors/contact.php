@@ -20,104 +20,100 @@ Loc::loadMessages(__FILE__);
 
 class Contact extends Connector\BaseFilter
 {
-	/**
-	 * @return string
-	 */
-	public function getName()
-	{
-		return Loc::getMessage('SENDER_INTEGRATION_SENDER_CONNECTOR_CONTACT_NAME1');
-	}
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return Loc::getMessage('SENDER_INTEGRATION_SENDER_CONNECTOR_CONTACT_NAME1');
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getCode()
-	{
-		return "contact_list";
-	}
+    /**
+     * @return string
+     */
+    public function getCode()
+    {
+        return "contact_list";
+    }
 
-	/**
-	 * Get data count by type.
-	 *
-	 * @return null|array
-	 */
-	public function getDataCountByType()
-	{
-		$listId = $this->getFieldValue('LIST_ID', null);
-		if (!$listId)
-		{
-			return array();
-		}
+    /**
+     * Get data count by type.
+     *
+     * @return null|array
+     */
+    public function getDataCountByType()
+    {
+        $listId = $this->getFieldValue('LIST_ID', null);
+        if (!$listId) {
+            return array();
+        }
 
-		$query = ContactTable::query();
-		$query->addSelect('TYPE_ID');
-		$query->addSelect(new Entity\ExpressionField('CNT', 'COUNT(TYPE_ID)'));
-		$query->addFilter('=CONTACT_LIST.LIST_ID', $listId);
-		$query->addGroup('TYPE_ID');
-		$list = $query->exec();
+        $query = ContactTable::query();
+        $query->addSelect('TYPE_ID');
+        $query->addSelect(new Entity\ExpressionField('CNT', 'COUNT(TYPE_ID)'));
+        $query->addFilter('=CONTACT_LIST.LIST_ID', $listId);
+        $query->addGroup('TYPE_ID');
+        $list = $query->exec();
 
-		$result = array();
-		foreach ($list as $item)
-		{
-			$typeName = RecipientType::getCode($item['TYPE_ID']);
-			$result[$typeName] = $item['CNT'];
-		}
+        $result = array();
+        foreach ($list as $item) {
+            $typeName = RecipientType::getCode($item['TYPE_ID']);
+            $result[$typeName] = $item['CNT'];
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * @return \Bitrix\Main\DB\Result|array
-	 */
-	public function getData()
-	{
-		$listId = $this->getFieldValue('LIST_ID', null);
-		if (!$listId)
-		{
-			return array();
-		}
+    /**
+     * @return \Bitrix\Main\DB\Result|array
+     */
+    public function getData()
+    {
+        $listId = $this->getFieldValue('LIST_ID', null);
+        if (!$listId) {
+            return array();
+        }
 
-		$resultDb = ContactTable::getList(array(
-			'select' => array('NAME', 'TYPE_ID', 'CODE', 'USER_ID'),
-			'filter' => array(
-				'=CONTACT_LIST.LIST_ID' => $listId
-			)
-		));
-		$resultDb->addFetchDataModifier(
-			function ($data)
-			{
-				$row = array(
-					'NAME' => $data['NAME'],
-					'USER_ID' => $data['USER_ID'],
-				);
+        $resultDb = ContactTable::getList(array(
+            'select' => array('NAME', 'TYPE_ID', 'CODE', 'USER_ID'),
+            'filter' => array(
+                '=CONTACT_LIST.LIST_ID' => $listId
+            )
+        ));
+        $resultDb->addFetchDataModifier(
+            function ($data) {
+                $row = array(
+                    'NAME' => $data['NAME'],
+                    'USER_ID' => $data['USER_ID'],
+                );
 
-				$key = RecipientType::getCode($data['TYPE_ID']);
-				$row[$key] = $data['CODE'];
+                $key = RecipientType::getCode($data['TYPE_ID']);
+                $row[$key] = $data['CODE'];
 
-				return $row;
-			}
-		);
+                return $row;
+            }
+        );
 
-		return $resultDb;
-	}
+        return $resultDb;
+    }
 
-	/**
-	 * Get filter fields.
-	 *
-	 * @return array
-	 */
-	public static function getUiFilterFields()
-	{
-		$list = array();
+    /**
+     * Get filter fields.
+     *
+     * @return array
+     */
+    public static function getUiFilterFields()
+    {
+        $list = array();
 
-		$list[] = array(
-			"id" => "LIST_ID",
-			"name" => Loc::getMessage('SENDER_INTEGRATION_SENDER_CONNECTOR_CONTACT_FILTER_LIST_ID'),
-			"type" => "list",
-			"items" => ListTable::getList(array('select' => array('VALUE' => 'ID', 'NAME')))->fetchAll(),
-			"default" => true
-		);
+        $list[] = array(
+            "id" => "LIST_ID",
+            "name" => Loc::getMessage('SENDER_INTEGRATION_SENDER_CONNECTOR_CONTACT_FILTER_LIST_ID'),
+            "type" => "list",
+            "items" => ListTable::getList(array('select' => array('VALUE' => 'ID', 'NAME')))->fetchAll(),
+            "default" => true
+        );
 
-		return $list;
-	}
+        return $list;
+    }
 }

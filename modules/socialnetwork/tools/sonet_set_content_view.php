@@ -6,22 +6,22 @@ define("NOT_CHECK_PERMISSIONS", true);
 define("PUBLIC_AJAX_MODE", true);
 define('BX_SECURITY_SESSION_READONLY', true);
 
-$site_id = (isset($_REQUEST["site"]) && is_string($_REQUEST["site"])) ? trim($_REQUEST["site"]): "";
+$site_id = (isset($_REQUEST["site"]) && is_string($_REQUEST["site"])) ? trim($_REQUEST["site"]) : "";
 $site_id = substr(preg_replace("/[^a-z0-9_]/i", "", $site_id), 0, 2);
 
 define("SITE_ID", $site_id);
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/bx_root.php");
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/bx_root.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
 $xmlIdList = (
-	isset($_REQUEST["viewXMLIdList"])
-	&& is_array($_REQUEST["viewXMLIdList"])
-		? $_REQUEST["viewXMLIdList"]
-		: array()
+isset($_REQUEST["viewXMLIdList"])
+&& is_array($_REQUEST["viewXMLIdList"])
+    ? $_REQUEST["viewXMLIdList"]
+    : array()
 );
 
-$action = (isset($_REQUEST["action"]) && is_string($_REQUEST["action"])) ? trim($_REQUEST["action"]): "";
+$action = (isset($_REQUEST["action"]) && is_string($_REQUEST["action"])) ? trim($_REQUEST["action"]) : "";
 $action = preg_replace("/[^a-z0-9_]/i", "", $action);
 
 $contentId = (isset($_REQUEST["contentId"]) && is_string($_REQUEST["contentId"])) ? trim($_REQUEST["contentId"]) : "";
@@ -33,72 +33,63 @@ $pathToUserProfile = (isset($_REQUEST["pathToUserProfile"]) && is_string($_REQUE
 use Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main\Loader;
 
-if(Loader::includeModule("compression"))
-{
-	CCompress::Disable2048Spaces();
+if (Loader::includeModule("compression")) {
+    CCompress::Disable2048Spaces();
 }
 
 $result = array();
-if(
-	check_bitrix_sessid()
-	&& Loader::includeModule("socialnetwork")
-	&& in_array($action, array('set_content_view', 'get_view_list'))
-)
-{
-	if (
-		$action == 'set_content_view'
-		&& !empty($xmlIdList)
-	)
-	{
-		foreach($xmlIdList as $val)
-		{
-			$xmlId = $val['xmlId'];
-			$save = (!isset($val['save']) || $val['save'] != 'N');
+if (
+    check_bitrix_sessid()
+    && Loader::includeModule("socialnetwork")
+    && in_array($action, array('set_content_view', 'get_view_list'))
+) {
+    if (
+        $action == 'set_content_view'
+        && !empty($xmlIdList)
+    ) {
+        foreach ($xmlIdList as $val) {
+            $xmlId = $val['xmlId'];
+            $save = (!isset($val['save']) || $val['save'] != 'N');
 
-			$tmp = explode('-', $xmlId, 2);
-			$entityType = trim($tmp[0]);
-			$entityId = intval($tmp[1]);
+            $tmp = explode('-', $xmlId, 2);
+            $entityType = trim($tmp[0]);
+            $entityId = intval($tmp[1]);
 
-			if (
-				!empty($entityType)
-				&& $entityId > 0
-			)
-			{
-				$provider = Livefeed\Provider::init(array(
-					'ENTITY_TYPE' => $entityType,
-					'ENTITY_ID' => $entityId,
-				));
-				if ($provider)
-				{
-					$provider->setContentView(array(
-						'save' => $save
-					));
-				}
-			}
-		}
-	}
-	elseif (
-		$action == 'get_view_list'
-		&& !empty($contentId)
-	)
-	{
-		$userList = \Bitrix\Socialnetwork\Item\UserContentView::getUserList(array(
-			'contentId' => $contentId,
-			'page' => $page,
-			'pathToUserProfile' => $pathToUserProfile
-		));
+            if (
+                !empty($entityType)
+                && $entityId > 0
+            ) {
+                $provider = Livefeed\Provider::init(array(
+                    'ENTITY_TYPE' => $entityType,
+                    'ENTITY_ID' => $entityId,
+                ));
+                if ($provider) {
+                    $provider->setContentView(array(
+                        'save' => $save
+                    ));
+                }
+            }
+        }
+    } elseif (
+        $action == 'get_view_list'
+        && !empty($contentId)
+    ) {
+        $userList = \Bitrix\Socialnetwork\Item\UserContentView::getUserList(array(
+            'contentId' => $contentId,
+            'page' => $page,
+            'pathToUserProfile' => $pathToUserProfile
+        ));
 
-		$result['items'] = $userList['items'];
-		$result['itemsCount'] = count($result['items']);
-		$result['hiddenCount'] = $userList['hiddenCount'];
-	}
+        $result['items'] = $userList['items'];
+        $result['itemsCount'] = count($result['items']);
+        $result['hiddenCount'] = $userList['hiddenCount'];
+    }
 
-	$result["SUCCESS"] = "Y";
+    $result["SUCCESS"] = "Y";
 }
 
-if (empty($_REQUEST['mobile_action']))
-{
-	header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
+if (empty($_REQUEST['mobile_action'])) {
+    header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
 }
 echo CUtil::PhpToJSObject($result);
 \CMain::finalActions();

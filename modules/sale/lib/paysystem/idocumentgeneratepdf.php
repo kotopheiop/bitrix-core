@@ -10,10 +10,10 @@ use Bitrix\Sale\Payment;
  */
 interface IDocumentGeneratePdf extends IPdf
 {
-	/**
-	 * @param Payment $payment
-	 * @param $params
-	 * @return mixed
-	 */
-	public function registerCallbackOnGenerate(Payment $payment, $params);
+    /**
+     * @param Payment $payment
+     * @param $params
+     * @return mixed
+     */
+    public function registerCallbackOnGenerate(Payment $payment, $params);
 }

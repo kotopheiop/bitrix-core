@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Main\Composite\Data;
 
 use Bitrix\Main;
@@ -6,219 +7,186 @@ use Bitrix\Main\IO\File;
 
 final class FileStorage extends AbstractStorage
 {
-	private $cacheFile = null;
+    private $cacheFile = null;
 
-	function __construct($cacheKey, array $configuration, array $htmlCacheOptions)
-	{
-		parent::__construct($cacheKey, $configuration, $htmlCacheOptions);
+    function __construct($cacheKey, array $configuration, array $htmlCacheOptions)
+    {
+        parent::__construct($cacheKey, $configuration, $htmlCacheOptions);
 
-		$this->cacheFile = new Main\IO\File(Main\IO\Path::convertRelativeToAbsolute(
-			Main\Application::getPersonalRoot()
-			."/html_pages"
-			.$this->cacheKey
-		));
-	}
+        $this->cacheFile = new Main\IO\File(Main\IO\Path::convertRelativeToAbsolute(
+            Main\Application::getPersonalRoot()
+            . "/html_pages"
+            . $this->cacheKey
+        ));
+    }
 
-	public function write($content, $md5)
-	{
-		$written = false;
-		
-		if ($this->cacheFile)
-		{
-			$tempFile = new File($this->cacheFile->getPhysicalPath().".tmp");
+    public function write($content, $md5)
+    {
+        $written = false;
 
-			try
-			{
-				$written = $tempFile->putContents($content);
-				$this->cacheFile->delete();
-				if (!$tempFile->rename($this->cacheFile->getPhysicalPath()))
-				{
-					$written = false;
-				}
-			}
-			catch (\Exception $exception)
-			{
-				$written = false;
-				$this->cacheFile->delete();
-				$tempFile->delete();
-			}
-		}
+        if ($this->cacheFile) {
+            $tempFile = new File($this->cacheFile->getPhysicalPath() . ".tmp");
 
-		return $written;
-	}
+            try {
+                $written = $tempFile->putContents($content);
+                $this->cacheFile->delete();
+                if (!$tempFile->rename($this->cacheFile->getPhysicalPath())) {
+                    $written = false;
+                }
+            } catch (\Exception $exception) {
+                $written = false;
+                $this->cacheFile->delete();
+                $tempFile->delete();
+            }
+        }
 
-	public function read()
-	{
-		if ($this->exists())
-		{
-			try
-			{
-				return $this->cacheFile->getContents();
-			}
-			catch (\Exception $exception)
-			{
+        return $written;
+    }
 
-			}
-		}
+    public function read()
+    {
+        if ($this->exists()) {
+            try {
+                return $this->cacheFile->getContents();
+            } catch (\Exception $exception) {
 
-		return false;
-	}
+            }
+        }
 
-	public function exists()
-	{
-		if ($this->cacheFile)
-		{
-			return $this->cacheFile->isExists();
-		}
-		else
-		{
-			return false;
-		}
-	}
+        return false;
+    }
 
-	public function delete()
-	{
-		$fileSize = false;
-		if ($this->cacheFile && $this->cacheFile->isExists())
-		{
-			try
-			{
-				$cacheDirectory = $this->cacheFile->getDirectory();
-				$fileSize = $this->cacheFile->getSize();
-				$this->cacheFile->delete();
+    public function exists()
+    {
+        if ($this->cacheFile) {
+            return $this->cacheFile->isExists();
+        } else {
+            return false;
+        }
+    }
 
-				//Try to cleanup directory
-				$children = $cacheDirectory->getChildren();
-				if (empty($children))
-				{
-					$cacheDirectory->delete();
-				}
-			}
-			catch (\Exception $exception)
-			{
+    public function delete()
+    {
+        $fileSize = false;
+        if ($this->cacheFile && $this->cacheFile->isExists()) {
+            try {
+                $cacheDirectory = $this->cacheFile->getDirectory();
+                $fileSize = $this->cacheFile->getSize();
+                $this->cacheFile->delete();
 
-			}
-		}
+                //Try to cleanup directory
+                $children = $cacheDirectory->getChildren();
+                if (empty($children)) {
+                    $cacheDirectory->delete();
+                }
+            } catch (\Exception $exception) {
 
-		return $fileSize;
-	}
+            }
+        }
 
-	public function deleteAll()
-	{
-		return (bool)self::deleteRecursive("/");
-	}
+        return $fileSize;
+    }
 
-	public function getMd5()
-	{
-		if ($this->exists())
-		{
-			$content = $this->read();
-			return $content !== false ? substr($content, -35, 32) : false;
-		}
+    public function deleteAll()
+    {
+        return (bool)self::deleteRecursive("/");
+    }
 
-		return false;
-	}
+    public function getMd5()
+    {
+        if ($this->exists()) {
+            $content = $this->read();
+            return $content !== false ? substr($content, -35, 32) : false;
+        }
 
-	/**
-	 * Should we count a quota limit
-	 * @return bool
-	 */
-	public function shouldCountQuota()
-	{
-		return true;
-	}
+        return false;
+    }
 
-	public function getLastModified()
-	{
-		if ($this->exists())
-		{
-			try
-			{
-				return $this->cacheFile->getModificationTime();
-			}
-			catch (\Exception $exception)
-			{
+    /**
+     * Should we count a quota limit
+     * @return bool
+     */
+    public function shouldCountQuota()
+    {
+        return true;
+    }
 
-			}
-		}
+    public function getLastModified()
+    {
+        if ($this->exists()) {
+            try {
+                return $this->cacheFile->getModificationTime();
+            } catch (\Exception $exception) {
 
-		return false;
-	}
+            }
+        }
 
-	/**
-	 * Returns cache size
-	 * @return int|false
-	 */
-	public function getSize()
-	{
-		if ($this->cacheFile && $this->cacheFile->isExists())
-		{
-			try
-			{
-				return $this->cacheFile->getSize();
-			}
-			catch (\Exception $exception)
-			{
+        return false;
+    }
 
-			}
-		}
+    /**
+     * Returns cache size
+     * @return int|false
+     */
+    public function getSize()
+    {
+        if ($this->cacheFile && $this->cacheFile->isExists()) {
+            try {
+                return $this->cacheFile->getSize();
+            } catch (\Exception $exception) {
 
-		return false;
-	}
+            }
+        }
 
-	public function getCacheFile()
-	{
-		return $this->cacheFile;
-	}
+        return false;
+    }
 
-	/**
-	 * Deletes all above html_pages
-	 * @param string $relativePath [optional]
-	 * @param int $validTime [optional] unix timestamp
-	 * @return float
-	 */
-	public static function deleteRecursive($relativePath = "", $validTime = 0)
-	{
-		$bytes = 0.0;
-		if (strpos($relativePath, "..") !== false)
-		{
-			return $bytes;
-		}
+    public function getCacheFile()
+    {
+        return $this->cacheFile;
+    }
 
-		$relativePath = rtrim($relativePath, "/");
-		$baseDir = $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/html_pages";
-		$absPath = $baseDir.$relativePath;
+    /**
+     * Deletes all above html_pages
+     * @param string $relativePath [optional]
+     * @param int $validTime [optional] unix timestamp
+     * @return float
+     */
+    public static function deleteRecursive($relativePath = "", $validTime = 0)
+    {
+        $bytes = 0.0;
+        if (strpos($relativePath, "..") !== false) {
+            return $bytes;
+        }
 
-		if (is_file($absPath))
-		{
-			if (
-				($validTime && filemtime($absPath) > $validTime) ||
-				in_array($relativePath, array("/.enabled", "/.config.php", "/.htaccess", "/.size", "/404.php")))
-			{
-				return $bytes;
-			}
+        $relativePath = rtrim($relativePath, "/");
+        $baseDir = $_SERVER["DOCUMENT_ROOT"] . BX_PERSONAL_ROOT . "/html_pages";
+        $absPath = $baseDir . $relativePath;
 
-			$bytes = filesize($absPath);
-			@unlink($absPath);
-			return doubleval($bytes);
-		}
-		elseif (is_dir($absPath) && ($handle = opendir($absPath)) !== false)
-		{
-			while (($file = readdir($handle)) !== false)
-			{
-				if ($file === "." || $file === "..")
-				{
-					continue;
-				}
+        if (is_file($absPath)) {
+            if (
+                ($validTime && filemtime($absPath) > $validTime) ||
+                in_array($relativePath, array("/.enabled", "/.config.php", "/.htaccess", "/.size", "/404.php"))) {
+                return $bytes;
+            }
 
-				$bytes += self::deleteRecursive($relativePath."/".$file, $validTime);
-			}
-			closedir($handle);
-			@rmdir($absPath);
-		}
+            $bytes = filesize($absPath);
+            @unlink($absPath);
+            return doubleval($bytes);
+        } elseif (is_dir($absPath) && ($handle = opendir($absPath)) !== false) {
+            while (($file = readdir($handle)) !== false) {
+                if ($file === "." || $file === "..") {
+                    continue;
+                }
 
-		return doubleval($bytes);
-	}
+                $bytes += self::deleteRecursive($relativePath . "/" . $file, $validTime);
+            }
+            closedir($handle);
+            @rmdir($absPath);
+        }
+
+        return doubleval($bytes);
+    }
 }
 
 class_alias("Bitrix\\Main\\Composite\\Data\\FileStorage", "Bitrix\\Main\\Data\\StaticHtmlFileStorage");

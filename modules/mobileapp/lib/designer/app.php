@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\MobileApp\Designer;
 
 use Bitrix\Main\Entity;

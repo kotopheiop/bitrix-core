@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Delivery\Restrictions;
 
 use Bitrix\Sale\Delivery;

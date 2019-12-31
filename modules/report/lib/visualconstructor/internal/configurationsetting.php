@@ -13,31 +13,31 @@ use Bitrix\Main\Entity\TextField;
  */
 class ConfigurationSettingTable extends DataManager
 {
-	/**
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_report_visual_report_configuration';
-	}
+    /**
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_report_visual_report_configuration';
+    }
 
-	/**
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			new IntegerField('ID', array(
-				'primary' => true,
-				'autocomplete' => true,
-			)),
-			new IntegerField('WEIGHT'),
-			new StringField('GID'),
-			new StringField('UKEY'),
-			new StringField('CONFIGURATION_FIELD_CLASS'),
-			new TextField('SETTINGS'),
-			new DateField('CREATED_DATE'),
-			new DateField('UPDATED_DATE'),
-		);
-	}
+    /**
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            new IntegerField('ID', array(
+                'primary' => true,
+                'autocomplete' => true,
+            )),
+            new IntegerField('WEIGHT'),
+            new StringField('GID'),
+            new StringField('UKEY'),
+            new StringField('CONFIGURATION_FIELD_CLASS'),
+            new TextField('SETTINGS'),
+            new DateField('CREATED_DATE'),
+            new DateField('UPDATED_DATE'),
+        );
+    }
 }

@@ -10,73 +10,70 @@ use Bitrix\Sale\Exchange\Internals\LoggerDiag;
 
 abstract class ManagerBase
 {
-	const EXCHANGE_DIRECTION_IMPORT = 'I';
-	const EXCHANGE_DIRECTION_EXPORT = 'E';
+    const EXCHANGE_DIRECTION_IMPORT = 'I';
+    const EXCHANGE_DIRECTION_EXPORT = 'E';
 
-	protected static $instance = null;
-	/** @var ISettingsImport|ISettingsExport $settings */
-	protected $settings = null;
-	/** @var LoggerDiag $logger */
-	protected $logger = null;
+    protected static $instance = null;
+    /** @var ISettingsImport|ISettingsExport $settings */
+    protected $settings = null;
+    /** @var LoggerDiag $logger */
+    protected $logger = null;
 
-	/**
-	 * @return string
-	 */
-	static public function getDirectionType()
-	{
-		throw new NotImplementedException('The method is not implemented.');
-	}
+    /**
+     * @return string
+     */
+    static public function getDirectionType()
+    {
+        throw new NotImplementedException('The method is not implemented.');
+    }
 
-	/**
-	 * @return static
-	 */
-	private static function getInstance()
-	{
-		if(self::$instance === null)
-		{
-			self::$instance = new static();
-		}
-		return self::$instance;
-	}
+    /**
+     * @return static
+     */
+    private static function getInstance()
+    {
+        if (self::$instance === null) {
+            self::$instance = new static();
+        }
+        return self::$instance;
+    }
 
-	/**
-	 * Get import by Type ID.
-	 * @param $typeId
-	 * @return null|static
-	 * @throws ArgumentOutOfRangeException
-	 */
-	static protected function getImportByType($typeId)
-	{
-		static::IsDefinedTypeId($typeId);
+    /**
+     * Get import by Type ID.
+     * @param $typeId
+     * @return null|static
+     * @throws ArgumentOutOfRangeException
+     */
+    static protected function getImportByType($typeId)
+    {
+        static::IsDefinedTypeId($typeId);
 
-		$import = static::getInstance();
-		return isset($import[$typeId]) ? $import[$typeId] : null;
-	}
+        $import = static::getInstance();
+        return isset($import[$typeId]) ? $import[$typeId] : null;
+    }
 
-	/**
-	 * @param ImportBase $entity
-	 * @throws NotImplementedException
-	 */
-	static public function configure(ImportBase $entity)
-	{
-		throw new NotImplementedException('The method is not implemented.');
-	}
+    /**
+     * @param ImportBase $entity
+     * @throws NotImplementedException
+     */
+    static public function configure(ImportBase $entity)
+    {
+        throw new NotImplementedException('The method is not implemented.');
+    }
 
-	static public function deleteLoggingDate()
-	{
-		ExchangeLogTable::deleteOldRecords(static::getDirectionType());
-	}
+    static public function deleteLoggingDate()
+    {
+        ExchangeLogTable::deleteOldRecords(static::getDirectionType());
+    }
 
-	static protected function IsDefinedTypeId($typeId)
-	{
-		if(!is_int($typeId))
-		{
-			$typeId = (int)$typeId;
-		}
+    static protected function IsDefinedTypeId($typeId)
+    {
+        if (!is_int($typeId)) {
+            $typeId = (int)$typeId;
+        }
 
-		if(!EntityType::IsDefined($typeId))
-		{
-			throw new ArgumentOutOfRangeException('Is not defined', EntityType::FIRST, EntityType::LAST);
-		}
-	}
+        if (!EntityType::IsDefined($typeId)) {
+            throw new ArgumentOutOfRangeException('Is not defined', EntityType::FIRST, EntityType::LAST);
+        }
+    }
 }

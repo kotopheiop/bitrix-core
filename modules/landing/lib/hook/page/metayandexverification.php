@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Manager;
@@ -9,68 +10,65 @@ Loc::loadMessages(__FILE__);
 
 class MetaYandexVerification extends \Bitrix\Landing\Hook\Page
 {
-	/**
-	 * Map of the field.
-	 * @return array
-	 */
-	protected function getMap()
-	{
-		$helpUrl = \Bitrix\Landing\Help::getHelpUrl('META_YANDEX_VERIFICATION');
-		return array(
-			'USE' => new Field\Checkbox('USE', array(
-				'title' => Loc::getMessage('LANDING_HOOK_YANDEX_VERIF_TITLE')
-			)),
-			'META' => new Field\Text('META', array(
-				'title' => Loc::getMessage('LANDING_HOOK_YANDEX_VERIF_TITLE'),
-				'placeholder' => '<meta name="yandex-verification" content="9fe8a037d323d50a5faed82923c1438f" />',
-				'help' => $helpUrl
-					? '<a href="' . $helpUrl . '" target="_blank">' .
-					 		Loc::getMessage('LANDING_HOOK_DETAIL_HELP') .
-					  '</a>'
-					: ''
-			))
-		);
-	}
+    /**
+     * Map of the field.
+     * @return array
+     */
+    protected function getMap()
+    {
+        $helpUrl = \Bitrix\Landing\Help::getHelpUrl('META_YANDEX_VERIFICATION');
+        return array(
+            'USE' => new Field\Checkbox('USE', array(
+                'title' => Loc::getMessage('LANDING_HOOK_YANDEX_VERIF_TITLE')
+            )),
+            'META' => new Field\Text('META', array(
+                'title' => Loc::getMessage('LANDING_HOOK_YANDEX_VERIF_TITLE'),
+                'placeholder' => '<meta name="yandex-verification" content="9fe8a037d323d50a5faed82923c1438f" />',
+                'help' => $helpUrl
+                    ? '<a href="' . $helpUrl . '" target="_blank">' .
+                    Loc::getMessage('LANDING_HOOK_DETAIL_HELP') .
+                    '</a>'
+                    : ''
+            ))
+        );
+    }
 
-	/**
-	 * Enable or not the hook.
-	 * @return boolean
-	 */
-	public function enabled()
-	{
-		if ($this->issetCustomExec())
-		{
-			return true;
-		}
+    /**
+     * Enable or not the hook.
+     * @return boolean
+     */
+    public function enabled()
+    {
+        if ($this->issetCustomExec()) {
+            return true;
+        }
 
-		return $this->fields['USE']->getValue() == 'Y';
-	}
+        return $this->fields['USE']->getValue() == 'Y';
+    }
 
-	/**
-	 * Exec or not hook in edit mode.
-	 * @return bool
-	 */
-	public function enabledInEditMode()
-	{
-		return false;
-	}
+    /**
+     * Exec or not hook in edit mode.
+     * @return bool
+     */
+    public function enabledInEditMode()
+    {
+        return false;
+    }
 
-	/**
-	 * Exec hook.
-	 * @return void
-	 */
-	public function exec()
-	{
-		if ($this->execCustom())
-		{
-			return;
-		}
+    /**
+     * Exec hook.
+     * @return void
+     */
+    public function exec()
+    {
+        if ($this->execCustom()) {
+            return;
+        }
 
-		$meta = trim($this->fields['META']);
+        $meta = trim($this->fields['META']);
 
-		if (preg_match('#<meta\s+name="[^"]+"\s+content="[^"]+"\s+/*>#', $meta))
-		{
-			Manager::setPageView('BeforeHeadClose', $meta);
-		}
-	}
+        if (preg_match('#<meta\s+name="[^"]+"\s+content="[^"]+"\s+/*>#', $meta)) {
+            Manager::setPageView('BeforeHeadClose', $meta);
+        }
+    }
 }

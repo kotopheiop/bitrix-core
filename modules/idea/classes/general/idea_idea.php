@@ -1,288 +1,279 @@
 <?
+
 Class CIdeaManagmentIdea
 {
-	private $IdeaId = false;
-	private $CacheStorage = array();
-	private static $CategoryIB = false;
-	private static $instance = null;
+    private $IdeaId = false;
+    private $CacheStorage = array();
+    private static $CategoryIB = false;
+    private static $instance = null;
 
-	function __construct($IdeaId = false)
-	{
-		$this->SetId($IdeaId);
-	}
+    function __construct($IdeaId = false)
+    {
+        $this->SetId($IdeaId);
+    }
 
-	public static function GetInstance($IdeaId)
-	{
-		if (self::$instance === null || is_object(self::$instance) && self::$instance->IdeaId !== $IdeaId)
-		{
-			$c = __CLASS__;
-			self::$instance = new $c($IdeaId);
-		}
+    public static function GetInstance($IdeaId)
+    {
+        if (self::$instance === null || is_object(self::$instance) && self::$instance->IdeaId !== $IdeaId) {
+            $c = __CLASS__;
+            self::$instance = new $c($IdeaId);
+        }
 
-		return self::$instance;
-	}
+        return self::$instance;
+    }
 
-	public function IsAvailable()
-	{
-		return $this->IdeaId>0;
-	}
+    public function IsAvailable()
+    {
+        return $this->IdeaId > 0;
+    }
 
-	public function SetID($IdeaId)
-	{
-		$this->IdeaId = $IdeaId;
-		return $this;
-	}
+    public function SetID($IdeaId)
+    {
+        $this->IdeaId = $IdeaId;
+        return $this;
+    }
 
-	public function SetCategoryListID($ID)
-	{
-		if(intval($ID)>0)
-			self::$CategoryIB = intval($ID);
+    public function SetCategoryListID($ID)
+    {
+        if (intval($ID) > 0)
+            self::$CategoryIB = intval($ID);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function GetCategoryListID()
-	{
-		return (int)self::$CategoryIB;
-	}
-	/*
-	 * Not for USE Can be changed
-	 */
-	public function GetSubCategoryList($CategoryCode)
-	{
-		if(self::$CategoryIB <= 0)
-			return array();
+    public function GetCategoryListID()
+    {
+        return (int)self::$CategoryIB;
+    }
 
-		$arCategoryList = $this->GetCategoryList();
-		$arSubCategoryList = array($CategoryCode);
-		$arSubCategoryListId = array();
+    /*
+     * Not for USE Can be changed
+     */
+    public function GetSubCategoryList($CategoryCode)
+    {
+        if (self::$CategoryIB <= 0)
+            return array();
 
-		if(is_array($arCategoryList[$CategoryCode]) && $arCategoryList[$CategoryCode]["ID"]>0)
-			$arSubCategoryListId[] = $arCategoryList[$CategoryCode]["ID"];
+        $arCategoryList = $this->GetCategoryList();
+        $arSubCategoryList = array($CategoryCode);
+        $arSubCategoryListId = array();
 
-		if($arCategoryList && !empty($arSubCategoryListId))
-		{
-			foreach($arCategoryList as $key=>$arCategory)
-			{
-				if(in_array($arCategory["IBLOCK_SECTION_ID"], $arSubCategoryListId))
-				{
-					$arSubCategoryList[] = $key;
-					$arSubCategoryListId[] = $arCategory["ID"];
-				}
-			}
-		}
+        if (is_array($arCategoryList[$CategoryCode]) && $arCategoryList[$CategoryCode]["ID"] > 0)
+            $arSubCategoryListId[] = $arCategoryList[$CategoryCode]["ID"];
 
-		return array("CODE" => $arSubCategoryList, "ID" => $arSubCategoryListId);
-	}
-	/*
-	 * Not for USE Can be changed
-	 */
-	public function GetCategorySequence($CODE)
-	{
-		if(self::$CategoryIB <= 0 || !$CODE)
-			return array();
+        if ($arCategoryList && !empty($arSubCategoryListId)) {
+            foreach ($arCategoryList as $key => $arCategory) {
+                if (in_array($arCategory["IBLOCK_SECTION_ID"], $arSubCategoryListId)) {
+                    $arSubCategoryList[] = $key;
+                    $arSubCategoryListId[] = $arCategory["ID"];
+                }
+            }
+        }
 
-		$arCategoryListXML = $this->GetCategoryList();
-		$arCategoryList = array();
-		foreach($arCategoryListXML as $arCategory)
-			$arCategoryList[$arCategory["ID"]] = $arCategory;
+        return array("CODE" => $arSubCategoryList, "ID" => $arSubCategoryListId);
+    }
 
-		$arSequnce = array("CATEGORY_1" => false, "CATEGORY_2" => false);
-		$CODE = ToUpper($CODE);
+    /*
+     * Not for USE Can be changed
+     */
+    public function GetCategorySequence($CODE)
+    {
+        if (self::$CategoryIB <= 0 || !$CODE)
+            return array();
 
-		$arFullSequence = array();
-		while(array_key_exists($CODE, $arCategoryListXML))
-		{
-			array_unshift($arFullSequence, ToLower($CODE));
-			if($arCategoryListXML[$CODE]["IBLOCK_SECTION_ID"]>0 && $arCategoryList[$arCategoryListXML[$CODE]["IBLOCK_SECTION_ID"]])
-				$CODE = ToUpper($arCategoryList[$arCategoryListXML[$CODE]["IBLOCK_SECTION_ID"]]["CODE"]);
-			else
-				break;
-		}
+        $arCategoryListXML = $this->GetCategoryList();
+        $arCategoryList = array();
+        foreach ($arCategoryListXML as $arCategory)
+            $arCategoryList[$arCategory["ID"]] = $arCategory;
 
-		if(array_key_exists(0, $arFullSequence))
-			$arSequnce["CATEGORY_1"] = $arFullSequence[0];
-		if(count($arFullSequence)>1)
-			$arSequnce["CATEGORY_2"] = end($arFullSequence);
+        $arSequnce = array("CATEGORY_1" => false, "CATEGORY_2" => false);
+        $CODE = ToUpper($CODE);
 
-		$arSequnce["FULL"] = $arFullSequence;
+        $arFullSequence = array();
+        while (array_key_exists($CODE, $arCategoryListXML)) {
+            array_unshift($arFullSequence, ToLower($CODE));
+            if ($arCategoryListXML[$CODE]["IBLOCK_SECTION_ID"] > 0 && $arCategoryList[$arCategoryListXML[$CODE]["IBLOCK_SECTION_ID"]])
+                $CODE = ToUpper($arCategoryList[$arCategoryListXML[$CODE]["IBLOCK_SECTION_ID"]]["CODE"]);
+            else
+                break;
+        }
 
-		return $arSequnce;
-	}
+        if (array_key_exists(0, $arFullSequence))
+            $arSequnce["CATEGORY_1"] = $arFullSequence[0];
+        if (count($arFullSequence) > 1)
+            $arSequnce["CATEGORY_2"] = end($arFullSequence);
 
-	public function GetCategoryList($CategoryIB = false)
-	{
-		if(self::$CategoryIB <= 0)
-			return array();
+        $arSequnce["FULL"] = $arFullSequence;
 
-		$arCategory = array();
-		//Return an empty array if IB isn't set
-		if($CategoryIB <= 0)
-			if(($CategoryIB = self::$CategoryIB) === false)
-				return $arCategory;
+        return $arSequnce;
+    }
 
-		if(is_array($this->CacheStorage["CATEGORY_LIST"]) && array_key_exists($CategoryIB, $this->CacheStorage["CATEGORY_LIST"]))
-			return $this->CacheStorage["CATEGORY_LIST"][$CategoryIB];
+    public function GetCategoryList($CategoryIB = false)
+    {
+        if (self::$CategoryIB <= 0)
+            return array();
 
-		$obCache = new CPHPCache;
-		$life_time = 60*60*24*30; //over 1 month
-		$cache_id = 'idea_category_list_'.$CategoryIB; //no need to keep unique all time, just caching for 1 day if no changes
-		$cache_path = '/'.SITE_ID.'/idea/category_list/'.$CategoryIB.'/';
+        $arCategory = array();
+        //Return an empty array if IB isn't set
+        if ($CategoryIB <= 0)
+            if (($CategoryIB = self::$CategoryIB) === false)
+                return $arCategory;
 
-		global $CACHE_MANAGER;
+        if (is_array($this->CacheStorage["CATEGORY_LIST"]) && array_key_exists($CategoryIB, $this->CacheStorage["CATEGORY_LIST"]))
+            return $this->CacheStorage["CATEGORY_LIST"][$CategoryIB];
 
-		if($obCache->StartDataCache($life_time, $cache_id, $cache_path))
-		{
-			if(defined("BX_COMP_MANAGED_CACHE")) //Tag Cache
-			{
-				$CACHE_MANAGER->StartTagCache($cache_path);
-				$CACHE_MANAGER->RegisterTag("iblock_id_".$CategoryIB);
-			}
+        $obCache = new CPHPCache;
+        $life_time = 60 * 60 * 24 * 30; //over 1 month
+        $cache_id = 'idea_category_list_' . $CategoryIB; //no need to keep unique all time, just caching for 1 day if no changes
+        $cache_path = '/' . SITE_ID . '/idea/category_list/' . $CategoryIB . '/';
 
-			$obSec = CIBlockSection::GetList(array("left_margin"=>"ASC"), array("IBLOCK_ID" => $CategoryIB, "ACTIVE" => "Y"));
-			while($r = $obSec->GetNext())
-				if(strlen($r["CODE"])>0)
-					$arCategory[ToUpper($r["CODE"])] = $r;
-				//else
-				//	$arCategory[$r["ID"]] = $r;
+        global $CACHE_MANAGER;
 
-			if(!empty($arCategory))
-			{
-				if(defined("BX_COMP_MANAGED_CACHE")) //Tag Cache
-					$CACHE_MANAGER->EndTagCache();
+        if ($obCache->StartDataCache($life_time, $cache_id, $cache_path)) {
+            if (defined("BX_COMP_MANAGED_CACHE")) //Tag Cache
+            {
+                $CACHE_MANAGER->StartTagCache($cache_path);
+                $CACHE_MANAGER->RegisterTag("iblock_id_" . $CategoryIB);
+            }
 
-				$obCache->EndDataCache($arCategory);
-			}
-			else
-				$obCache->AbortDataCache();
-		}
-		else
-			$arCategory = $obCache->GetVars();
+            $obSec = CIBlockSection::GetList(array("left_margin" => "ASC"), array("IBLOCK_ID" => $CategoryIB, "ACTIVE" => "Y"));
+            while ($r = $obSec->GetNext())
+                if (strlen($r["CODE"]) > 0)
+                    $arCategory[ToUpper($r["CODE"])] = $r;
+            //else
+            //	$arCategory[$r["ID"]] = $r;
 
-		return $this->CacheStorage["CATEGORY_LIST"][$CategoryIB] = $arCategory;
-	}
-	/*
-	 * Not for USE Can be changed
-	 */
-	public function GetDefaultStatus($arStatusPriority = array())
-	{
-		if(!is_array($arStatusPriority))
-			$arStatusPriority = array();
+            if (!empty($arCategory)) {
+                if (defined("BX_COMP_MANAGED_CACHE")) //Tag Cache
+                    $CACHE_MANAGER->EndTagCache();
 
-		$arDefaultStatus = array();
-		$arStatusPriority = array_unique($arStatusPriority);
-		$arStatusList = $this->GetStatusList();
+                $obCache->EndDataCache($arCategory);
+            } else
+                $obCache->AbortDataCache();
+        } else
+            $arCategory = $obCache->GetVars();
 
-		foreach ($arStatusPriority as $StatusId)
-		{
-			if(array_key_exists($StatusId, $arStatusList))
-			{
-				$arDefaultStatus = $arStatusList[$StatusId];
-				break;
-			}
-		}
-		//Not found in priority
-		if(!$arDefaultStatus)
-		{
-			foreach($arStatusList as $arStatus)
-			{
-				if(!$arDefaultStatus)
-					$arDefaultStatus = $arStatus;
+        return $this->CacheStorage["CATEGORY_LIST"][$CategoryIB] = $arCategory;
+    }
 
-				if($arStatus["DEF"] == "Y")
-				{
-					$arDefaultStatus = $arStatus;
-					break;
-				}
-			}
-		}
+    /*
+     * Not for USE Can be changed
+     */
+    public function GetDefaultStatus($arStatusPriority = array())
+    {
+        if (!is_array($arStatusPriority))
+            $arStatusPriority = array();
 
-		return $arDefaultStatus;
-	}
+        $arDefaultStatus = array();
+        $arStatusPriority = array_unique($arStatusPriority);
+        $arStatusList = $this->GetStatusList();
 
-	public function GetStatusList($XML_ID = false)
-	{
-		if(is_array($this->CacheStorage["STATUS_LIST"]) && array_key_exists(intval($XML_ID), $this->CacheStorage["STATUS_LIST"]))
-			return $this->CacheStorage["STATUS_LIST"][intval($XML_ID)];
+        foreach ($arStatusPriority as $StatusId) {
+            if (array_key_exists($StatusId, $arStatusList)) {
+                $arDefaultStatus = $arStatusList[$StatusId];
+                break;
+            }
+        }
+        //Not found in priority
+        if (!$arDefaultStatus) {
+            foreach ($arStatusList as $arStatus) {
+                if (!$arDefaultStatus)
+                    $arDefaultStatus = $arStatus;
 
-		$obCache = new CPHPCache;
-		$life_time = 60*60*24*30; //over 1 month
-		$cache_id = 'idea_status_list'; //no need to keep unique all time, just caching for 1 day if no changes
-		$cache_path = '/'.SITE_ID.'/idea/status_list/';
+                if ($arStatus["DEF"] == "Y") {
+                    $arDefaultStatus = $arStatus;
+                    break;
+                }
+            }
+        }
 
-		$arStatus = array();
-		if($obCache->StartDataCache($life_time, $cache_id, $cache_path))
-		{
-			$arStatusField = CUserTypeEntity::GetList(
-				array(),
-				array(
-					"ENTITY_ID" => "BLOG_POST",
-					"FIELD_NAME" => CIdeaManagment::UFStatusField
-				)
-			)->Fetch();
-			if($arStatusField)
-			{
-				$oStatus = CUserFieldEnum::GetList(array(), array("USER_FIELD_ID" => $arStatusField["ID"]));
-				while($r = $oStatus->Fetch())
-					$arStatus[$r["ID"]] = $r;
+        return $arDefaultStatus;
+    }
 
-				$obCache->EndDataCache($arStatus);
-			}
-			else
-				$obCache->AbortDataCache();
-		}
-		else
-			$arStatus = $obCache->GetVars();
+    public function GetStatusList($XML_ID = false)
+    {
+        if (is_array($this->CacheStorage["STATUS_LIST"]) && array_key_exists(intval($XML_ID), $this->CacheStorage["STATUS_LIST"]))
+            return $this->CacheStorage["STATUS_LIST"][intval($XML_ID)];
 
-		if($XML_ID)
-		{
-			$arStatusXML = array();
-			foreach($arStatus as $Status)
-				$arStatusXML[$Status["XML_ID"]] = $Status;
-			$arStatus = $arStatusXML;
-		}
+        $obCache = new CPHPCache;
+        $life_time = 60 * 60 * 24 * 30; //over 1 month
+        $cache_id = 'idea_status_list'; //no need to keep unique all time, just caching for 1 day if no changes
+        $cache_path = '/' . SITE_ID . '/idea/status_list/';
 
-		return $this->CacheStorage["STATUS_LIST"][intval($XML_ID)] = $arStatus;
-	}
+        $arStatus = array();
+        if ($obCache->StartDataCache($life_time, $cache_id, $cache_path)) {
+            $arStatusField = CUserTypeEntity::GetList(
+                array(),
+                array(
+                    "ENTITY_ID" => "BLOG_POST",
+                    "FIELD_NAME" => CIdeaManagment::UFStatusField
+                )
+            )->Fetch();
+            if ($arStatusField) {
+                $oStatus = CUserFieldEnum::GetList(array(), array("USER_FIELD_ID" => $arStatusField["ID"]));
+                while ($r = $oStatus->Fetch())
+                    $arStatus[$r["ID"]] = $r;
 
-	public function SetStatus($StatusId)
-	{
-		if(!$this->IsAvailable())
-			return false;
+                $obCache->EndDataCache($arStatus);
+            } else
+                $obCache->AbortDataCache();
+        } else
+            $arStatus = $obCache->GetVars();
 
-		$arStatusList = $this->GetStatusList();
-		$arStatusListXML = $this->GetStatusList(true);
+        if ($XML_ID) {
+            $arStatusXML = array();
+            foreach ($arStatus as $Status)
+                $arStatusXML[$Status["XML_ID"]] = $Status;
+            $arStatus = $arStatusXML;
+        }
 
-		$arPost = CBlogPost::GetList(
-			array(),
-			array("ID" => $this->IdeaId),
-			false,
-			false,
-			array("ID", CIdeaManagment::UFStatusField)
-		)->Fetch();
+        return $this->CacheStorage["STATUS_LIST"][intval($XML_ID)] = $arStatus;
+    }
 
-		$bUpdate = false;
-		//Get Status ID from XML List
-		if(array_key_exists($StatusId, $arStatusListXML))
-			$StatusId = $arStatusListXML[$StatusId]["ID"];
-		//Status Exists and not current
-		if(array_key_exists($StatusId, $arStatusList))
-			$bUpdate = $arPost[CIdeaManagment::UFStatusField] != $StatusId;
+    public function SetStatus($StatusId)
+    {
+        if (!$this->IsAvailable())
+            return false;
 
-		if($arPost && $bUpdate)
-			return CBlogPost::Update(
-				$this->IdeaId,
-				array(
-					CIdeaManagment::UFStatusField => $StatusId,
-				)
-			);
+        $arStatusList = $this->GetStatusList();
+        $arStatusListXML = $this->GetStatusList(true);
 
-		return false;
-	}
+        $arPost = CBlogPost::GetList(
+            array(),
+            array("ID" => $this->IdeaId),
+            false,
+            false,
+            array("ID", CIdeaManagment::UFStatusField)
+        )->Fetch();
 
-	//%TODO%
-	public function BindDuplicate(){}
-	//%TODO%
-	public function UnBindDuplicate(){}
+        $bUpdate = false;
+        //Get Status ID from XML List
+        if (array_key_exists($StatusId, $arStatusListXML))
+            $StatusId = $arStatusListXML[$StatusId]["ID"];
+        //Status Exists and not current
+        if (array_key_exists($StatusId, $arStatusList))
+            $bUpdate = $arPost[CIdeaManagment::UFStatusField] != $StatusId;
+
+        if ($arPost && $bUpdate)
+            return CBlogPost::Update(
+                $this->IdeaId,
+                array(
+                    CIdeaManagment::UFStatusField => $StatusId,
+                )
+            );
+
+        return false;
+    }
+
+    //%TODO%
+    public function BindDuplicate()
+    {
+    }
+
+    //%TODO%
+    public function UnBindDuplicate()
+    {
+    }
 }
+
 ?>

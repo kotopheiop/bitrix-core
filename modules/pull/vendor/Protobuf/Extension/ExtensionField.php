@@ -49,22 +49,22 @@ class ExtensionField
     private $tag;
 
     /**
-     * @param string   $extendee
-     * @param string   $name
-     * @param integer  $tag
+     * @param string $extendee
+     * @param string $name
+     * @param integer $tag
      * @param callback $reader
      * @param callback $writer
      * @param callback $sizeCalculator
-     * @param string   $method
+     * @param string $method
      */
     public function __construct($extendee, $name, $tag, $reader, $writer, $sizeCalculator, $method = null)
     {
-        $this->tag            = $tag;
-        $this->name           = $name;
-        $this->reader         = $reader;
-        $this->writer         = $writer;
-        $this->method         = $method;
-        $this->extendee       = $extendee;
+        $this->tag = $tag;
+        $this->name = $name;
+        $this->reader = $reader;
+        $this->writer = $writer;
+        $this->method = $method;
+        $this->extendee = $extendee;
         $this->sizeCalculator = $sizeCalculator;
     }
 
@@ -102,7 +102,7 @@ class ExtensionField
 
     /**
      * @param \Protobuf\ComputeSizeContext $context
-     * @param mixed                        $value
+     * @param mixed $value
      *
      * @return integer
      */
@@ -113,7 +113,7 @@ class ExtensionField
 
     /**
      * @param \Protobuf\WriteContext $context
-     * @param mixed                  $value
+     * @param mixed $value
      */
     public function writeTo(WriteContext $context, $value)
     {
@@ -122,7 +122,7 @@ class ExtensionField
 
     /**
      * @param \Protobuf\ReadContext $context
-     * @param integer               $wire
+     * @param integer $wire
      *
      * @return mixed
      */

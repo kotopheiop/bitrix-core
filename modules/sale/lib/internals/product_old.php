@@ -8,6 +8,7 @@
  * @ignore
  * @see \Bitrix\Catalog\ProductTable
  */
+
 namespace Bitrix\Sale;
 
 use Bitrix\Sale\Internals;

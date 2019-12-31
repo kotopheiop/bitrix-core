@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Delivery\Restrictions;
 
 use Bitrix\Main\Localization\Loc;
@@ -15,87 +16,83 @@ Loc::loadMessages(__FILE__);
  */
 class ExcludeLocation extends ByLocation
 {
-	public static $easeSort = 200;
+    public static $easeSort = 200;
 
 
-	public static function getClassTitle()
-	{
-		return Loc::getMessage("SALE_DLVR_RSTR_EX_LOCATION_NAME");
-	}
+    public static function getClassTitle()
+    {
+        return Loc::getMessage("SALE_DLVR_RSTR_EX_LOCATION_NAME");
+    }
 
-	public static function getClassDescription()
-	{
-		return Loc::getMessage("SALE_DLVR_RSTR_EX_LOCATION_DESCRIPT");
-	}
+    public static function getClassDescription()
+    {
+        return Loc::getMessage("SALE_DLVR_RSTR_EX_LOCATION_DESCRIPT");
+    }
 
-	protected static function getD2LClass()
-	{
-		return '\Bitrix\Sale\Delivery\DeliveryLocationExcludeTable';
-	}
+    protected static function getD2LClass()
+    {
+        return '\Bitrix\Sale\Delivery\DeliveryLocationExcludeTable';
+    }
 
-	/**
-	 * This function should accept only location CODE, not ID, being a part of modern API
-	 * @inheritdoc
-	 */
-	public static function check($locationCode, array $restrictionParams, $deliveryId = 0)
-	{
-		return !parent::check($locationCode, $restrictionParams, $deliveryId);
-	}
+    /**
+     * This function should accept only location CODE, not ID, being a part of modern API
+     * @inheritdoc
+     */
+    public static function check($locationCode, array $restrictionParams, $deliveryId = 0)
+    {
+        return !parent::check($locationCode, $restrictionParams, $deliveryId);
+    }
 
-	public static function getParamsStructure($deliveryId = 0)
-	{
-		$result =  array(
-			"LOCATION" => array(
-				"TYPE" => "LOCATION_MULTI_EXCLUDE"
-			)
-		);
+    public static function getParamsStructure($deliveryId = 0)
+    {
+        $result = array(
+            "LOCATION" => array(
+                "TYPE" => "LOCATION_MULTI_EXCLUDE"
+            )
+        );
 
-		if($deliveryId > 0 )
-		{
-			$result["LOCATION"]["DELIVERY_ID"] = $deliveryId;
-		}
+        if ($deliveryId > 0) {
+            $result["LOCATION"]["DELIVERY_ID"] = $deliveryId;
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * @param Shipment $shipment
-	 * @param array $restrictionFields
-	 * @return array
-	 */
-	public static function filterServicesArray(Shipment $shipment, array $restrictionFields)
-	{
-		if(empty($restrictionFields))
-			return array();
+    /**
+     * @param Shipment $shipment
+     * @param array $restrictionFields
+     * @return array
+     */
+    public static function filterServicesArray(Shipment $shipment, array $restrictionFields)
+    {
+        if (empty($restrictionFields))
+            return array();
 
-		$shpLocCode = self::extractParams($shipment);
+        $shpLocCode = self::extractParams($shipment);
 
-		//if location not defined in shipment
-		if(strlen($shpLocCode) < 0)
-			return array_keys($restrictionFields);
+        //if location not defined in shipment
+        if (strlen($shpLocCode) < 0)
+            return array_keys($restrictionFields);
 
-		$res = LocationTable::getList(array(
-			'filter' => array('=CODE' => $shpLocCode),
-			'select' => array('CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN')
-		));
+        $res = LocationTable::getList(array(
+            'filter' => array('=CODE' => $shpLocCode),
+            'select' => array('CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN')
+        ));
 
-		//if location doesn't exists
-		if(!$shpLocParams = $res->fetch())
-			return array_keys($restrictionFields);
+        //if location doesn't exists
+        if (!$shpLocParams = $res->fetch())
+            return array_keys($restrictionFields);
 
-		$srvLocCodesCompat = static::getLocationsCompat($restrictionFields, $shpLocParams['LEFT_MARGIN'], $shpLocParams['RIGHT_MARGIN']);
+        $srvLocCodesCompat = static::getLocationsCompat($restrictionFields, $shpLocParams['LEFT_MARGIN'], $shpLocParams['RIGHT_MARGIN']);
 
-		foreach($srvLocCodesCompat as $locCode => $deliveries)
-		{
-			foreach($deliveries as $deliveryId)
-			{
-				if(isset($restrictionFields[$deliveryId]))
-				{
-					unset($restrictionFields[$deliveryId]);
-				}
-			}
-		}
+        foreach ($srvLocCodesCompat as $locCode => $deliveries) {
+            foreach ($deliveries as $deliveryId) {
+                if (isset($restrictionFields[$deliveryId])) {
+                    unset($restrictionFields[$deliveryId]);
+                }
+            }
+        }
 
-		return array_keys($restrictionFields);
-	}
+        return array_keys($restrictionFields);
+    }
 }

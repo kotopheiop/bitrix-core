@@ -7,16 +7,12 @@
 
 $oldClassName = "CHTMLPagesCache";
 $newClassName = "Bitrix\\Main\\Composite\\Helper";
-$newClassFile = $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/lib/composite/helper.php";
+$newClassFile = $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/lib/composite/helper.php";
 
-if (!class_exists($oldClassName, false))
-{
-	if (class_exists($newClassName, false))
-	{
-		class_alias($newClassName, $oldClassName, false);
-	}
-	else if (file_exists($newClassFile))
-	{
-		require_once($newClassFile);
-	}
+if (!class_exists($oldClassName, false)) {
+    if (class_exists($newClassName, false)) {
+        class_alias($newClassName, $oldClassName, false);
+    } else if (file_exists($newClassFile)) {
+        require_once($newClassFile);
+    }
 }

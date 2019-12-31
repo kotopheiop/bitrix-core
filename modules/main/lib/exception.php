@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Main;
 
 /**
@@ -6,25 +7,24 @@ namespace Bitrix\Main;
  */
 class SystemException extends \Exception
 {
-	/**
-	 * Creates new exception object.
-	 *
-	 * @param string $message
-	 * @param int $code
-	 * @param string $file
-	 * @param int $line
-	 * @param \Exception $previous
-	 */
-	public function __construct($message = "", $code = 0, $file = "", $line = 0, \Exception $previous = null)
-	{
-		parent::__construct($message, $code, $previous);
+    /**
+     * Creates new exception object.
+     *
+     * @param string $message
+     * @param int $code
+     * @param string $file
+     * @param int $line
+     * @param \Exception $previous
+     */
+    public function __construct($message = "", $code = 0, $file = "", $line = 0, \Exception $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
 
-		if (!empty($file) && !empty($line))
-		{
-			$this->file = $file;
-			$this->line = $line;
-		}
-	}
+        if (!empty($file) && !empty($line)) {
+            $this->file = $file;
+            $this->line = $line;
+        }
+    }
 }
 
 /**
@@ -32,18 +32,18 @@ class SystemException extends \Exception
  */
 class ArgumentException extends SystemException
 {
-	protected $parameter;
+    protected $parameter;
 
-	public function __construct($message = "", $parameter = "", \Exception $previous = null)
-	{
-		parent::__construct($message, 100, '', 0, $previous);
-		$this->parameter = $parameter;
-	}
+    public function __construct($message = "", $parameter = "", \Exception $previous = null)
+    {
+        parent::__construct($message, 100, '', 0, $previous);
+        $this->parameter = $parameter;
+    }
 
-	public function getParameter()
-	{
-		return $this->parameter;
-	}
+    public function getParameter()
+    {
+        return $this->parameter;
+    }
 }
 
 
@@ -52,11 +52,11 @@ class ArgumentException extends SystemException
  */
 class ArgumentNullException extends ArgumentException
 {
-	public function __construct($parameter, \Exception $previous = null)
-	{
-		$message = sprintf("Argument '%s' is null or empty", $parameter);
-		parent::__construct($message, $parameter, $previous);
-	}
+    public function __construct($parameter, \Exception $previous = null)
+    {
+        $message = sprintf("Argument '%s' is null or empty", $parameter);
+        parent::__construct($message, $parameter, $previous);
+    }
 }
 
 
@@ -65,78 +65,78 @@ class ArgumentNullException extends ArgumentException
  */
 class ArgumentOutOfRangeException extends ArgumentException
 {
-	protected $lowerLimit;
-	protected $upperLimit;
+    protected $lowerLimit;
+    protected $upperLimit;
 
-	/**
-	 * Creates new exception object.
-	 *
-	 * @param string $parameter Argument that generates exception
-	 * @param null $lowerLimit Either lower limit of the allowable range of values or an array of allowable values
-	 * @param null $upperLimit Upper limit of the allowable values
-	 * @param \Exception $previous
-	 */
-	public function __construct($parameter, $lowerLimit = null, $upperLimit = null, \Exception $previous = null)
-	{
-		if (is_array($lowerLimit))
-			$message = sprintf("The value of an argument '%s' is outside the allowable range of values: %s", $parameter, implode(", ", $lowerLimit));
-		elseif (($lowerLimit !== null) && ($upperLimit !== null))
-			$message = sprintf("The value of an argument '%s' is outside the allowable range of values: from %s to %s", $parameter, $lowerLimit, $upperLimit);
-		elseif (($lowerLimit === null) && ($upperLimit !== null))
-			$message = sprintf("The value of an argument '%s' is outside the allowable range of values: not greater than %s", $parameter, $upperLimit);
-		elseif (($lowerLimit !== null) && ($upperLimit === null))
-			$message = sprintf("The value of an argument '%s' is outside the allowable range of values: not less than %s", $parameter, $lowerLimit);
-		else
-			$message = sprintf("The value of an argument '%s' is outside the allowable range of values", $parameter);
+    /**
+     * Creates new exception object.
+     *
+     * @param string $parameter Argument that generates exception
+     * @param null $lowerLimit Either lower limit of the allowable range of values or an array of allowable values
+     * @param null $upperLimit Upper limit of the allowable values
+     * @param \Exception $previous
+     */
+    public function __construct($parameter, $lowerLimit = null, $upperLimit = null, \Exception $previous = null)
+    {
+        if (is_array($lowerLimit))
+            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: %s", $parameter, implode(", ", $lowerLimit));
+        elseif (($lowerLimit !== null) && ($upperLimit !== null))
+            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: from %s to %s", $parameter, $lowerLimit, $upperLimit);
+        elseif (($lowerLimit === null) && ($upperLimit !== null))
+            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: not greater than %s", $parameter, $upperLimit);
+        elseif (($lowerLimit !== null) && ($upperLimit === null))
+            $message = sprintf("The value of an argument '%s' is outside the allowable range of values: not less than %s", $parameter, $lowerLimit);
+        else
+            $message = sprintf("The value of an argument '%s' is outside the allowable range of values", $parameter);
 
-		$this->lowerLimit = $lowerLimit;
-		$this->upperLimit = $upperLimit;
+        $this->lowerLimit = $lowerLimit;
+        $this->upperLimit = $upperLimit;
 
-		parent::__construct($message, $parameter, $previous);
-	}
+        parent::__construct($message, $parameter, $previous);
+    }
 
-	public function getLowerLimitType()
-	{
-		return $this->lowerLimit;
-	}
+    public function getLowerLimitType()
+    {
+        return $this->lowerLimit;
+    }
 
-	public function getUpperType()
-	{
-		return $this->upperLimit;
-	}
+    public function getUpperType()
+    {
+        return $this->upperLimit;
+    }
 }
 
 
 /**
  * Exception is thrown when the type of an argument is not accepted by function.
  */
-class ArgumentTypeException	extends ArgumentException
+class ArgumentTypeException extends ArgumentException
 {
-	protected $requiredType;
+    protected $requiredType;
 
-	/**
-	 * Creates new exception object
-	 *
-	 * @param string $parameter Argument that generates exception
-	 * @param string $requiredType Required type
-	 * @param \Exception $previous
-	 */
-	public function __construct($parameter, $requiredType = "", \Exception $previous = null)
-	{
-		if (!empty($requiredType))
-			$message = sprintf("The value of an argument '%s' must be of type %s", $parameter, $requiredType);
-		else
-			$message = sprintf("The value of an argument '%s' has an invalid type", $parameter);
+    /**
+     * Creates new exception object
+     *
+     * @param string $parameter Argument that generates exception
+     * @param string $requiredType Required type
+     * @param \Exception $previous
+     */
+    public function __construct($parameter, $requiredType = "", \Exception $previous = null)
+    {
+        if (!empty($requiredType))
+            $message = sprintf("The value of an argument '%s' must be of type %s", $parameter, $requiredType);
+        else
+            $message = sprintf("The value of an argument '%s' has an invalid type", $parameter);
 
-		$this->requiredType = $requiredType;
+        $this->requiredType = $requiredType;
 
-		parent::__construct($message, $parameter, $previous);
-	}
+        parent::__construct($message, $parameter, $previous);
+    }
 
-	public function getRequiredType()
-	{
-		return $this->requiredType;
-	}
+    public function getRequiredType()
+    {
+        return $this->requiredType;
+    }
 }
 
 
@@ -145,10 +145,10 @@ class ArgumentTypeException	extends ArgumentException
  */
 class NotImplementedException extends SystemException
 {
-	public function __construct($message = "", \Exception $previous = null)
-	{
-		parent::__construct($message, 140, '', 0, $previous);
-	}
+    public function __construct($message = "", \Exception $previous = null)
+    {
+        parent::__construct($message, 140, '', 0, $previous);
+    }
 }
 
 
@@ -157,10 +157,10 @@ class NotImplementedException extends SystemException
  */
 class NotSupportedException extends SystemException
 {
-	public function __construct($message = "", \Exception $previous = null)
-	{
-		parent::__construct($message, 150, '', 0, $previous);
-	}
+    public function __construct($message = "", \Exception $previous = null)
+    {
+        parent::__construct($message, 150, '', 0, $previous);
+    }
 }
 
 /**
@@ -168,10 +168,10 @@ class NotSupportedException extends SystemException
  */
 class InvalidOperationException extends SystemException
 {
-	public function __construct($message = "", \Exception $previous = null)
-	{
-		parent::__construct($message, 160, '', 0, $previous);
-	}
+    public function __construct($message = "", \Exception $previous = null)
+    {
+        parent::__construct($message, 160, '', 0, $previous);
+    }
 }
 
 /**
@@ -179,10 +179,10 @@ class InvalidOperationException extends SystemException
  */
 class ObjectPropertyException extends ArgumentException
 {
-	public function __construct($parameter = "", \Exception $previous = null)
-	{
-		parent::__construct("Object property \"".$parameter."\" not found.", $parameter, $previous);
-	}
+    public function __construct($parameter = "", \Exception $previous = null)
+    {
+        parent::__construct("Object property \"" . $parameter . "\" not found.", $parameter, $previous);
+    }
 }
 
 /**
@@ -190,10 +190,10 @@ class ObjectPropertyException extends ArgumentException
  */
 class ObjectException extends SystemException
 {
-	public function __construct($message = "", \Exception $previous = null)
-	{
-		parent::__construct($message, 500, '', 0, $previous);
-	}
+    public function __construct($message = "", \Exception $previous = null)
+    {
+        parent::__construct($message, 500, '', 0, $previous);
+    }
 }
 
 /**
@@ -201,10 +201,10 @@ class ObjectException extends SystemException
  */
 class ObjectNotFoundException extends SystemException
 {
-	public function __construct($message = "", \Exception $previous = null)
-	{
-		parent::__construct($message, 510, '', 0, $previous);
-	}
+    public function __construct($message = "", \Exception $previous = null)
+    {
+        parent::__construct($message, 510, '', 0, $previous);
+    }
 }
 
 /**
@@ -212,12 +212,12 @@ class ObjectNotFoundException extends SystemException
  */
 class AccessDeniedException extends SystemException
 {
-	public function __construct($message = "", \Exception $previous = null)
-	{
-		parent::__construct(($message ?: "Access denied."), 510, '', 0, $previous);
-	}
+    public function __construct($message = "", \Exception $previous = null)
+    {
+        parent::__construct(($message ?: "Access denied."), 510, '', 0, $previous);
+    }
 }
 
-class DecodingException	extends SystemException
+class DecodingException extends SystemException
 {
 }

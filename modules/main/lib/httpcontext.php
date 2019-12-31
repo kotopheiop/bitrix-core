@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Main;
 
 /**
@@ -6,40 +7,40 @@ namespace Bitrix\Main;
  * @package Bitrix\Main
  */
 class HttpContext
-	extends Context
+    extends Context
 {
-	protected $session;
+    protected $session;
 
-	/**
-	 * Creates new instance of context.
-	 *
-	 * @param HttpApplication $application
-	 */
-	public function __construct(HttpApplication $application)
-	{
-		parent::__construct($application);
-	}
+    /**
+     * Creates new instance of context.
+     *
+     * @param HttpApplication $application
+     */
+    public function __construct(HttpApplication $application)
+    {
+        parent::__construct($application);
+    }
 
-	public function getSession()
-	{
-		return $this->session;
-	}
+    public function getSession()
+    {
+        return $this->session;
+    }
 
-	public function rewriteUri($url, $queryString, $redirectStatus = null)
-	{
-		/** @var $request HttpRequest */
-		$request = $this->request;
-		$request->modifyByQueryString($queryString);
+    public function rewriteUri($url, $queryString, $redirectStatus = null)
+    {
+        /** @var $request HttpRequest */
+        $request = $this->request;
+        $request->modifyByQueryString($queryString);
 
-		$this->server->rewriteUri($url, $queryString, $redirectStatus);
-	}
+        $this->server->rewriteUri($url, $queryString, $redirectStatus);
+    }
 
-	public function transferUri($url, $queryString)
-	{
-		/** @var $request HttpRequest */
-		$request = $this->request;
-		$request->modifyByQueryString($queryString);
+    public function transferUri($url, $queryString)
+    {
+        /** @var $request HttpRequest */
+        $request = $this->request;
+        $request->modifyByQueryString($queryString);
 
-		$this->server->transferUri($url, $queryString);
-	}
+        $this->server->transferUri($url, $queryString);
+    }
 }

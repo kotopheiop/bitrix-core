@@ -1,6 +1,6 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><?
+<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
 $psTitle = "WorldPay";
-$psDescription  = "Select Junior Integration (HTTP integration method) <a href=\"http://www.worldpay.com\">http://www.worldpay.com</a><br><br>";
+$psDescription = "Select Junior Integration (HTTP integration method) <a href=\"http://www.worldpay.com\">http://www.worldpay.com</a><br><br>";
 $psDescription .= "If you want to get Payment Response automatically, please read the following:<br>";
 $psDescription .= "Once a shopping cart or web site has sent the purchase details through to WorldPay, callback is the facility offered to inform the site about what ";
 $psDescription .= "happened on the WorldPay Payment Gateway. The callback will occur in the following circumstances:<br>";
@@ -17,65 +17,65 @@ $psDescription .= "You should use the string like <nobr>http://your_site/bitrix/
 $psDescription .= "- <b>Callback enabled</b><br>Tick this checkbox";
 
 $arPSCorrespondence = array(
-		"TEST_TRANSACTION" => array(
-				"NAME" => "Test transaction",
-				"DESCR" => "Indicates whether the transaction should be processed as a test transaction: 0 - real transaction; 100, 101 - test transactions",
-				"VALUE" => "",
-				"TYPE" => ""
-			),
-		"SHOP_ID" => array(
-				"NAME" => "WorldPay ID",
-				"DESCR" => "WorldPay ID",
-				"VALUE" => "",
-				"TYPE" => ""
-			),
-		"PAYER_NAME" => array(
-				"NAME" => "Buyer",
-				"DESCR" => "Buyer name",
-				"VALUE" => "PAYER_NAME",
-				"TYPE" => "PROPERTY"
-			),
-		"PHONE" => array(
-				"NAME" => "Buyer phone",
-				"DESCR" => "Buyer phone",
-				"VALUE" => "PHONE",
-				"TYPE" => "PROPERTY"
-			),
-		"EMAIL" => array(
-				"NAME" => "Buyer EMail",
-				"DESCR" => "",
-				"VALUE" => "EMAIL",
-				"TYPE" => "PROPERTY"
-			),
-		"FAX" => array(
-				"NAME" => "Buyer FAX",
-				"DESCR" => "Buyer FAX",
-				"VALUE" => "FAX",
-				"TYPE" => "PROPERTY"
-			),
-		"ADDRESS" => array(
-				"NAME" => "Buyer address",
-				"DESCR" => "",
-				"VALUE" => "ADDRESS",
-				"TYPE" => "PROPERTY"
-			),
-		"ZIP" => array(
-				"NAME" => "Buyer ZIP",
-				"DESCR" => "",
-				"VALUE" => "ZIP",
-				"TYPE" => "PROPERTY"
-			),
-		"COUNTRY" => array(
-				"NAME" => "Buyer country",
-				"DESCR" => "",
-				"VALUE" => "COUNTRY",
-				"TYPE" => "PROPERTY"
-			),
-		"CALLBACK_PASSWORD" => array(
-				"NAME" => "Password",
-				"DESCR" => "If you have set a Callback password for your installation on the WorldPay Customer Management System, than you should fill this variable with that password. As the value of this is only known to this and WorldPay it can be used as a basic security check.",
-				"VALUE" => "",
-				"TYPE" => ""
-			)
-	);
+    "TEST_TRANSACTION" => array(
+        "NAME" => "Test transaction",
+        "DESCR" => "Indicates whether the transaction should be processed as a test transaction: 0 - real transaction; 100, 101 - test transactions",
+        "VALUE" => "",
+        "TYPE" => ""
+    ),
+    "SHOP_ID" => array(
+        "NAME" => "WorldPay ID",
+        "DESCR" => "WorldPay ID",
+        "VALUE" => "",
+        "TYPE" => ""
+    ),
+    "PAYER_NAME" => array(
+        "NAME" => "Buyer",
+        "DESCR" => "Buyer name",
+        "VALUE" => "PAYER_NAME",
+        "TYPE" => "PROPERTY"
+    ),
+    "PHONE" => array(
+        "NAME" => "Buyer phone",
+        "DESCR" => "Buyer phone",
+        "VALUE" => "PHONE",
+        "TYPE" => "PROPERTY"
+    ),
+    "EMAIL" => array(
+        "NAME" => "Buyer EMail",
+        "DESCR" => "",
+        "VALUE" => "EMAIL",
+        "TYPE" => "PROPERTY"
+    ),
+    "FAX" => array(
+        "NAME" => "Buyer FAX",
+        "DESCR" => "Buyer FAX",
+        "VALUE" => "FAX",
+        "TYPE" => "PROPERTY"
+    ),
+    "ADDRESS" => array(
+        "NAME" => "Buyer address",
+        "DESCR" => "",
+        "VALUE" => "ADDRESS",
+        "TYPE" => "PROPERTY"
+    ),
+    "ZIP" => array(
+        "NAME" => "Buyer ZIP",
+        "DESCR" => "",
+        "VALUE" => "ZIP",
+        "TYPE" => "PROPERTY"
+    ),
+    "COUNTRY" => array(
+        "NAME" => "Buyer country",
+        "DESCR" => "",
+        "VALUE" => "COUNTRY",
+        "TYPE" => "PROPERTY"
+    ),
+    "CALLBACK_PASSWORD" => array(
+        "NAME" => "Password",
+        "DESCR" => "If you have set a Callback password for your installation on the WorldPay Customer Management System, than you should fill this variable with that password. As the value of this is only known to this and WorldPay it can be used as a basic security check.",
+        "VALUE" => "",
+        "TYPE" => ""
+    )
+);
 ?>

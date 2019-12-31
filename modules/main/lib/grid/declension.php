@@ -9,66 +9,61 @@ namespace Bitrix\Main\Grid;
  */
 class Declension
 {
-	/**
-	 * @var string
-	 */
-	public $oneItem;
+    /**
+     * @var string
+     */
+    public $oneItem;
 
-	/**
-	 * @var string
-	 */
-	public $fourItem;
+    /**
+     * @var string
+     */
+    public $fourItem;
 
-	/**
-	 * @var string
-	 */
-	public $fiveItem;
-
-
-	/**
-	 * Declension constructor.
-	 *
-	 * @param string $one
-	 * @param string $four
-	 * @param string $five
-	 */
-	public function __construct($one = "", $four = "", $five = "")
-	{
-		$this->oneItem = $one;
-		$this->fourItem = $four;
-		$this->fiveItem = $five;
-	}
+    /**
+     * @var string
+     */
+    public $fiveItem;
 
 
-	/**
-	 * Gets declension
-	 * @param number|string $number
-	 * @return string
-	 */
-	public function get($number)
-	{
-		$result = $this->fiveItem;
-		$number = $number % 100;
+    /**
+     * Declension constructor.
+     *
+     * @param string $one
+     * @param string $four
+     * @param string $five
+     */
+    public function __construct($one = "", $four = "", $five = "")
+    {
+        $this->oneItem = $one;
+        $this->fourItem = $four;
+        $this->fiveItem = $five;
+    }
 
-		if ($number >= 11 && $number <= 19)
-		{
-			$result = $this->fiveItem;
-		}
-		else
-		{
-			$number = $number % 10;
 
-			if ($number === 1)
-			{
-				$result = $this->oneItem;
-			}
+    /**
+     * Gets declension
+     * @param number|string $number
+     * @return string
+     */
+    public function get($number)
+    {
+        $result = $this->fiveItem;
+        $number = $number % 100;
 
-			if ($number >= 2 && $number <= 4)
-			{
-				$result = $this->fourItem;
-			}
-		}
+        if ($number >= 11 && $number <= 19) {
+            $result = $this->fiveItem;
+        } else {
+            $number = $number % 10;
 
-		return $result;
-	}
+            if ($number === 1) {
+                $result = $this->oneItem;
+            }
+
+            if ($number >= 2 && $number <= 4) {
+                $result = $this->fourItem;
+            }
+        }
+
+        return $result;
+    }
 }

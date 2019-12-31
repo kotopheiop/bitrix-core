@@ -15,499 +15,477 @@ Loc::loadLanguageFile(__FILE__);
 
 class BaseButton implements Contract\Renderable
 {
-	const UNIQ_ID_DATA_ATTR      = 'btn-uniqid';
-	const JSON_OPTIONS_DATA_ATTR = 'json-options';
+    const UNIQ_ID_DATA_ATTR = 'btn-uniqid';
+    const JSON_OPTIONS_DATA_ATTR = 'json-options';
 
-	/** @var string */
-	protected $id;
-	/** @var string */
-	protected $text;
-	/** @var string */
-	protected $tag = Tag::BUTTON;
-	/** @var string */
-	protected $baseClass = "ui-btn";
-	/** @var string */
-	protected $link;
-	/** @var array */
-	protected $events = [];
-	/** @var ButtonAttributes */
-	private $attributes;
+    /** @var string */
+    protected $id;
+    /** @var string */
+    protected $text;
+    /** @var string */
+    protected $tag = Tag::BUTTON;
+    /** @var string */
+    protected $baseClass = "ui-btn";
+    /** @var string */
+    protected $link;
+    /** @var array */
+    protected $events = [];
+    /** @var ButtonAttributes */
+    private $attributes;
 
-	final public function __construct(array $params = [])
-	{
-		$this->attributes = new ButtonAttributes();
-		$this->attributes->addDataAttribute(self::UNIQ_ID_DATA_ATTR, $this->generateUniqid());
-		$this->addClass($this->getBaseClass());
+    final public function __construct(array $params = [])
+    {
+        $this->attributes = new ButtonAttributes();
+        $this->attributes->addDataAttribute(self::UNIQ_ID_DATA_ATTR, $this->generateUniqid());
+        $this->addClass($this->getBaseClass());
 
-		$this->init($params);
-	}
+        $this->init($params);
+    }
 
-	/**
-	 * @return array
-	 */
-	protected function getDefaultParameters()
-	{
-		return [];
-	}
+    /**
+     * @return array
+     */
+    protected function getDefaultParameters()
+    {
+        return [];
+    }
 
-	protected function init(array $params = [])
-	{
-		$this->buildFromArray(array_merge(
-			$this->getDefaultParameters(),
-			$params
-		));
-	}
+    protected function init(array $params = [])
+    {
+        $this->buildFromArray(array_merge(
+            $this->getDefaultParameters(),
+            $params
+        ));
+    }
 
-	final public static function create(array $params = [])
-	{
-		return new static($params);
-	}
+    final public static function create(array $params = [])
+    {
+        return new static($params);
+    }
 
-	protected function buildFromArray($params)
-	{
-		if (isset($params['text']))
-		{
-			$this->setText($params['text']);
-		}
+    protected function buildFromArray($params)
+    {
+        if (isset($params['text'])) {
+            $this->setText($params['text']);
+        }
 
-		if (!empty($params['styles']))
-		{
-			$this->setStyles($params['styles']);
-		}
+        if (!empty($params['styles'])) {
+            $this->setStyles($params['styles']);
+        }
 
-		if (!empty($params['maxWidth']))
-		{
-			$this->setMaxWidth($params['maxWidth']);
-		}
+        if (!empty($params['maxWidth'])) {
+            $this->setMaxWidth($params['maxWidth']);
+        }
 
-		if (!empty($params['className']) && is_string($params['className']))
-		{
-			$params['classList'] = array_filter(explode(' ', $params['className']));
-		}
+        if (!empty($params['className']) && is_string($params['className'])) {
+            $params['classList'] = array_filter(explode(' ', $params['className']));
+        }
 
-		if (empty($params['classList']))
-		{
-			$params['classList'] = [];
-		}
+        if (empty($params['classList'])) {
+            $params['classList'] = [];
+        }
 
-		$params['classList'] = array_merge(
-			[$this->getBaseClass()],
-			$params['classList']
-		);
+        $params['classList'] = array_merge(
+            [$this->getBaseClass()],
+            $params['classList']
+        );
 
-		$this->getAttributeCollection()->setClassList($params['classList']);
+        $this->getAttributeCollection()->setClassList($params['classList']);
 
-		if (!empty($params['link']))
-		{
-			$this->setLink($params['link']);
-		}
+        if (!empty($params['link'])) {
+            $this->setLink($params['link']);
+        }
 
-		if (!empty($params['id']))
-		{
-			$this->setId($params['id']);
-		}
+        if (!empty($params['id'])) {
+            $this->setId($params['id']);
+        }
 
-		if (!empty($params['tag']))
-		{
-			$this->setTag($params['tag']);
-		}
+        if (!empty($params['tag'])) {
+            $this->setTag($params['tag']);
+        }
 
-		if (!empty($params['click']))
-		{
-			$this->bindEvent('click', $params['click']);
-		}
+        if (!empty($params['click'])) {
+            $this->bindEvent('click', $params['click']);
+        }
 
-		if (!empty($params['events']))
-		{
-			$this->bindEvents($params['events']);
-		}
-	}
+        if (!empty($params['events'])) {
+            $this->bindEvents($params['events']);
+        }
+    }
 
-	protected function listExtensions()
-	{
-		return [];
-	}
+    protected function listExtensions()
+    {
+        return [];
+    }
 
-	public static function getJsClass()
-	{
-		return 'BX.UI.' . (new \ReflectionClass(get_called_class()))->getShortName();
-	}
+    public static function getJsClass()
+    {
+        return 'BX.UI.' . (new \ReflectionClass(get_called_class()))->getShortName();
+    }
 
-	protected function appendDefaultJsonOption(ButtonAttributes $attributes)
-	{
-		$attributes
-			->addJsonOption('jsClass', static::getJsClass())
-			->addJsonOption('text', $this->getText())
-			->addJsonOption('baseClass', $this->getBaseClass())
-			->addJsonOption('events', $this->getEvents())
-		;
+    protected function appendDefaultJsonOption(ButtonAttributes $attributes)
+    {
+        $attributes
+            ->addJsonOption('jsClass', static::getJsClass())
+            ->addJsonOption('text', $this->getText())
+            ->addJsonOption('baseClass', $this->getBaseClass())
+            ->addJsonOption('events', $this->getEvents());
 
-		return $attributes;
-	}
+        return $attributes;
+    }
 
-	public function render()
-	{
-		Extension::load($this->listExtensions());
+    public function render()
+    {
+        Extension::load($this->listExtensions());
 
-		$output = '';
-		$tagName = $this->getTag();
-		$attributes = clone $this->getAttributeCollection();
-		$this->appendDefaultJsonOption($attributes);
+        $output = '';
+        $tagName = $this->getTag();
+        $attributes = clone $this->getAttributeCollection();
+        $this->appendDefaultJsonOption($attributes);
 
-		switch ($tagName)
-		{
-			case Tag::LINK:
-			case Tag::BUTTON:
-				if ($tagName === Tag::LINK && $this->getLink())
-				{
-					$attributes['href'] = $this->getLink();
-				}
+        switch ($tagName) {
+            case Tag::LINK:
+            case Tag::BUTTON:
+                if ($tagName === Tag::LINK && $this->getLink()) {
+                    $attributes['href'] = $this->getLink();
+                }
 
-				$inner = $this->renderInner();
-				$output = "<{$tagName} {$attributes}>{$inner}</{$tagName}>";
-				break;
-			case Tag::INPUT:
-			case Tag::SUBMIT:
-				$attributes['value'] = htmlspecialcharsbx($this->getText());
-				$attributes['type'] = Tag::BUTTON;
+                $inner = $this->renderInner();
+                $output = "<{$tagName} {$attributes}>{$inner}</{$tagName}>";
+                break;
+            case Tag::INPUT:
+            case Tag::SUBMIT:
+                $attributes['value'] = htmlspecialcharsbx($this->getText());
+                $attributes['type'] = Tag::BUTTON;
 
-				if ($tagName === Tag::SUBMIT)
-				{
-					$tagName = Tag::INPUT;
-					$attributes['type'] = Tag::SUBMIT;
-				}
+                if ($tagName === Tag::SUBMIT) {
+                    $tagName = Tag::INPUT;
+                    $attributes['type'] = Tag::SUBMIT;
+                }
 
-				$output = "<{$tagName} {$attributes}/>";
-				break;
-		}
+                $output = "<{$tagName} {$attributes}/>";
+                break;
+        }
 
-		$js = $this->renderJavascript();
-		if ($js)
-		{
-			$output .= "<script>BX.ready(function(){ {$js} });</script>";
-		}
+        $js = $this->renderJavascript();
+        if ($js) {
+            $output .= "<script>BX.ready(function(){ {$js} });</script>";
+        }
 
-		return $output;
-	}
+        return $output;
+    }
 
-	protected function generateUniqid()
-	{
-		return 'uibtn-' . Random::getString(8);
-	}
+    protected function generateUniqid()
+    {
+        return 'uibtn-' . Random::getString(8);
+    }
 
-	public function isInputTag()
-	{
-		return $this->isInputType();
-	}
+    public function isInputTag()
+    {
+        return $this->isInputType();
+    }
 
-	public function isInputType()
-	{
-		return in_array($this->tag, [
-			Tag::INPUT,
-			Tag::SUBMIT,
-		], true);
-	}
+    public function isInputType()
+    {
+        return in_array($this->tag, [
+            Tag::INPUT,
+            Tag::SUBMIT,
+        ], true);
+    }
 
-	protected function renderInner()
-	{
-		return htmlspecialcharsbx($this->getText());
-	}
+    protected function renderInner()
+    {
+        return htmlspecialcharsbx($this->getText());
+    }
 
-	protected function renderJavascript()
-	{
-		$selector = $this->getQuerySelector();
+    protected function renderJavascript()
+    {
+        $selector = $this->getQuerySelector();
 
-		return "
+        return "
 			BX.UI.ButtonManager.createFromNode(document.querySelector('{$selector}'));
 		";
-	}
+    }
 
-	protected function getQuerySelector()
-	{
-		$tag = $this->getTag();
-		$uniqId = $this->getUniqId();
-		$uniqIdName = "data-" . self::UNIQ_ID_DATA_ATTR;
+    protected function getQuerySelector()
+    {
+        $tag = $this->getTag();
+        $uniqId = $this->getUniqId();
+        $uniqIdName = "data-" . self::UNIQ_ID_DATA_ATTR;
 
-		return "{$tag}[{$uniqIdName}=\"{$uniqId}\"]";
-	}
+        return "{$tag}[{$uniqIdName}=\"{$uniqId}\"]";
+    }
 
-	public function getUniqId()
-	{
-		return $this->getAttributeCollection()->getDataAttribute(self::UNIQ_ID_DATA_ATTR);
-	}
+    public function getUniqId()
+    {
+        return $this->getAttributeCollection()->getDataAttribute(self::UNIQ_ID_DATA_ATTR);
+    }
 
-	public function getId()
-	{
-		return $this->id;
-	}
+    public function getId()
+    {
+        return $this->id;
+    }
 
-	public function setId($id)
-	{
-		$this->id = $id;
+    public function setId($id)
+    {
+        $this->id = $id;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getMaxWidth()
-	{
-		return isset($this->getAttributeCollection()['style']['max-width'])?
-			$this->getAttributeCollection()['style']['max-width'] : null;
-	}
+    public function getMaxWidth()
+    {
+        return isset($this->getAttributeCollection()['style']['max-width']) ?
+            $this->getAttributeCollection()['style']['max-width'] : null;
+    }
 
-	public function setMaxWidth($width)
-	{
-		if (!isset($this->getAttributeCollection()['style']))
-		{
-			$this->getAttributeCollection()['style'] = [];
-		}
+    public function setMaxWidth($width)
+    {
+        if (!isset($this->getAttributeCollection()['style'])) {
+            $this->getAttributeCollection()['style'] = [];
+        }
 
-		$this->getAttributeCollection()['style']['max-width'] = $width;
+        $this->getAttributeCollection()['style']['max-width'] = $width;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getLink()
-	{
-		return $this->link;
-	}
+    public function getLink()
+    {
+        return $this->link;
+    }
 
-	public function setLink($link)
-	{
-		$this->link = $link;
+    public function setLink($link)
+    {
+        $this->link = $link;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function addClass($className)
-	{
-		$this->getAttributeCollection()->addClass($className);
+    public function addClass($className)
+    {
+        $this->getAttributeCollection()->addClass($className);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function unsetClass($className)
-	{
-		$this->getAttributeCollection()->removeClass($className);
+    public function unsetClass($className)
+    {
+        $this->getAttributeCollection()->removeClass($className);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function removeClass($className)
-	{
-		return $this->unsetClass($className);
-	}
+    public function removeClass($className)
+    {
+        return $this->unsetClass($className);
+    }
 
-	public function getClassList()
-	{
-		return $this->getAttributeCollection()['class']?: [];
-	}
+    public function getClassList()
+    {
+        return $this->getAttributeCollection()['class'] ?: [];
+    }
 
-	public function addAttribute($name, $value = null)
-	{
-		if (strtolower($name) === 'class')
-		{
-			throw new ArgumentException('Could not add "class" attribute. You should use ::addClass()', 'class');
-		}
+    public function addAttribute($name, $value = null)
+    {
+        if (strtolower($name) === 'class') {
+            throw new ArgumentException('Could not add "class" attribute. You should use ::addClass()', 'class');
+        }
 
-		$this->getAttributeCollection()[$name] = $value;
+        $this->getAttributeCollection()[$name] = $value;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function unsetAttribute($name)
-	{
-		unset($this->getAttributeCollection()[$name]);
+    public function unsetAttribute($name)
+    {
+        unset($this->getAttributeCollection()[$name]);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function removeAttribute($name)
-	{
-		return $this->unsetAttribute($name);
-	}
+    public function removeAttribute($name)
+    {
+        return $this->unsetAttribute($name);
+    }
 
-	public function getAttribute($name, $defaultValue = null)
-	{
-		return $this->getAttributeCollection()->getAttribute($name, $defaultValue);
-	}
+    public function getAttribute($name, $defaultValue = null)
+    {
+        return $this->getAttributeCollection()->getAttribute($name, $defaultValue);
+    }
 
-	public function addDataAttribute($name, $value = null)
-	{
-		$this->getAttributeCollection()->addDataAttribute($name, $value);
+    public function addDataAttribute($name, $value = null)
+    {
+        $this->getAttributeCollection()->addDataAttribute($name, $value);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getDataAttribute($name, $defaultValue = null)
-	{
-		return $this->getAttributeCollection()->getDataAttribute($name, $defaultValue);
-	}
+    public function getDataAttribute($name, $defaultValue = null)
+    {
+        return $this->getAttributeCollection()->getDataAttribute($name, $defaultValue);
+    }
 
-	public function setDataRole($dataRole)
-	{
-		$this->addDataAttribute('role', $dataRole);
+    public function setDataRole($dataRole)
+    {
+        $this->addDataAttribute('role', $dataRole);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getDataRole()
-	{
-		return $this->getDataAttribute('role');
-	}
+    public function getDataRole()
+    {
+        return $this->getDataAttribute('role');
+    }
 
-	public function setStyles(array $styles)
-	{
-		$this->getAttributeCollection()['style'] = $styles;
-	}
+    public function setStyles(array $styles)
+    {
+        $this->getAttributeCollection()['style'] = $styles;
+    }
 
-	public function getStyles()
-	{
-		return $this->getAttributeCollection()['style'];
-	}
+    public function getStyles()
+    {
+        return $this->getAttributeCollection()['style'];
+    }
 
-	/**
-	 * @return ButtonAttributes
-	 */
-	public function getAttributeCollection()
-	{
-		return $this->attributes;
-	}
+    /**
+     * @return ButtonAttributes
+     */
+    public function getAttributeCollection()
+    {
+        return $this->attributes;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getText()
-	{
-		return $this->text;
-	}
+    /**
+     * @return string
+     */
+    public function getText()
+    {
+        return $this->text;
+    }
 
-	/**
-	 * @param string $text
-	 *
-	 * @return static
-	 */
-	public function setText($text)
-	{
-		$this->text = $text;
+    /**
+     * @param string $text
+     *
+     * @return static
+     */
+    public function setText($text)
+    {
+        $this->text = $text;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getTag()
-	{
-		return $this->tag;
-	}
+    /**
+     * @return string
+     */
+    public function getTag()
+    {
+        return $this->tag;
+    }
 
-	/**
-	 * @param string $tag
-	 *
-	 * @return static
-	 */
-	public function setTag($tag)
-	{
-		$this->tag = $tag;
+    /**
+     * @param string $tag
+     *
+     * @return static
+     */
+    public function setTag($tag)
+    {
+        $this->tag = $tag;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getBaseClass()
-	{
-		return $this->baseClass;
-	}
+    /**
+     * @return string
+     */
+    public function getBaseClass()
+    {
+        return $this->baseClass;
+    }
 
-	/**
-	 * @param bool $flag
-	 * @return static
-	 */
-	public function setDisabled($flag = true)
-	{
-		if ($flag === false)
-		{
-			unset($this->getAttributeCollection()['disabled']);
-		}
-		else
-		{
-			$this->getAttributeCollection()['disabled'] = true;
-		}
+    /**
+     * @param bool $flag
+     * @return static
+     */
+    public function setDisabled($flag = true)
+    {
+        if ($flag === false) {
+            unset($this->getAttributeCollection()['disabled']);
+        } else {
+            $this->getAttributeCollection()['disabled'] = true;
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function isDisabled()
-	{
-		return $this->getAttributeCollection()['disabled'] === true;
-	}
+    /**
+     * @return bool
+     */
+    public function isDisabled()
+    {
+        return $this->getAttributeCollection()['disabled'] === true;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getEvents()
-	{
-		return $this->events;
-	}
+    /**
+     * @return array
+     */
+    public function getEvents()
+    {
+        return $this->events;
+    }
 
-	/**
-	 * @param string $eventName
-	 * @param string|JsHandler $fn Link to js function which will be invoked.
-	 * @see in js BX.UI.BaseButton.handleEvent to know order of arguments in event handler.
-	 *
-	 * @return $this
-	 */
-	public function bindEvent($eventName, $fn)
-	{
-		if (is_string($fn))
-		{
-			$fn = new JsHandler($fn);
-		}
+    /**
+     * @param string $eventName
+     * @param string|JsHandler $fn Link to js function which will be invoked.
+     * @return $this
+     * @see in js BX.UI.BaseButton.handleEvent to know order of arguments in event handler.
+     *
+     */
+    public function bindEvent($eventName, $fn)
+    {
+        if (is_string($fn)) {
+            $fn = new JsHandler($fn);
+        }
 
-		$this->events[$eventName] = $fn;
+        $this->events[$eventName] = $fn;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param array $events
-	 *
-	 * @return $this
-	 */
-	public function bindEvents(array $events)
-	{
-		foreach ($events as $name => $fn)
-		{
-			$this->bindEvent($name, $fn);
-		}
+    /**
+     * @param array $events
+     *
+     * @return $this
+     */
+    public function bindEvents(array $events)
+    {
+        foreach ($events as $name => $fn) {
+            $this->bindEvent($name, $fn);
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param string $eventName
-	 *
-	 * @return $this
-	 */
-	public function unbindEvent($eventName)
-	{
-		unset($this->events[$eventName]);
+    /**
+     * @param string $eventName
+     *
+     * @return $this
+     */
+    public function unbindEvent($eventName)
+    {
+        unset($this->events[$eventName]);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return $this
-	 */
-	public function unbindEvents()
-	{
-		unset($this->events);
+    /**
+     * @return $this
+     */
+    public function unbindEvents()
+    {
+        unset($this->events);
 
-		return $this;
-	}
+        return $this;
+    }
 }

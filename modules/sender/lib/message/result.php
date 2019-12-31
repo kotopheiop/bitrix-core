@@ -16,28 +16,28 @@ use Bitrix\Main\Result as MainResult;
  */
 class Result extends MainResult
 {
-	/** @var integer|string|null $id ID. */
-	protected $id;
+    /** @var integer|string|null $id ID. */
+    protected $id;
 
-	/**
-	 * Get ID.
-	 *
-	 * @return integer|string|null
-	 */
-	public function getId()
-	{
-		return $this->id;
-	}
+    /**
+     * Get ID.
+     *
+     * @return integer|string|null
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
-	/**
-	 * Set ID.
-	 *
-	 * @param integer|string|null
-	 * @return $this
-	 */
-	public function setId($id)
-	{
-		$this->id = $id;
-		return $this;
-	}
+    /**
+     * Set ID.
+     *
+     * @param integer|string|null
+     * @return $this
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
 }

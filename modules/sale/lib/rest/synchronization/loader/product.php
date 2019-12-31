@@ -10,72 +10,66 @@ use Bitrix\Sale\Registry;
 
 class Product extends Entity
 {
-	public function getFieldsByExternalId($code)
-	{
-		$result = array();
+    public function getFieldsByExternalId($code)
+    {
+        $result = array();
 
-		Loader::includeModule('iblock');
-		Loader::includeModule('catalog');
+        Loader::includeModule('iblock');
+        Loader::includeModule('catalog');
 
-		$iblockIds = [];
-		$row = \Bitrix\Catalog\CatalogIblockTable::getList([
-			'select' => ['IBLOCK_ID'],
-			'filter' => ['=IBLOCK.ACTIVE'=>'Y']
-		]);
-		while ($res = $row->fetch())
-			$iblockIds[] = $res['IBLOCK_ID'];
+        $iblockIds = [];
+        $row = \Bitrix\Catalog\CatalogIblockTable::getList([
+            'select' => ['IBLOCK_ID'],
+            'filter' => ['=IBLOCK.ACTIVE' => 'Y']
+        ]);
+        while ($res = $row->fetch())
+            $iblockIds[] = $res['IBLOCK_ID'];
 
-		//TODO: необходимо переделать на вызов метода каталога, который на вход полчучает произвольный product_xml_id и возвращает продукт каталога.
-		if (empty($iblockIds))
-		{
-				// nothing here
-		}
-		else
-		{
-			$r = \CIBlockElement::GetList(array(),
-				array("=XML_ID" => $code, "ACTIVE" => "Y", "CHECK_PERMISSIONS" => "Y", "IBLOCK_ID"=>$iblockIds),
-				false,
-				false,
-				array("ID", "IBLOCK_ID", "XML_ID", "NAME", "DETAIL_PAGE_URL")
-			);
-			if($ar = $r->GetNext())
-			{
-				$result = $ar;
-				$product = \CCatalogProduct::GetByID($ar["ID"]);
+        //TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ product_xml_id пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+        if (empty($iblockIds)) {
+            // nothing here
+        } else {
+            $r = \CIBlockElement::GetList(array(),
+                array("=XML_ID" => $code, "ACTIVE" => "Y", "CHECK_PERMISSIONS" => "Y", "IBLOCK_ID" => $iblockIds),
+                false,
+                false,
+                array("ID", "IBLOCK_ID", "XML_ID", "NAME", "DETAIL_PAGE_URL")
+            );
+            if ($ar = $r->GetNext()) {
+                $result = $ar;
+                $product = \CCatalogProduct::GetByID($ar["ID"]);
 
-				$result["WEIGHT"] = $product["WEIGHT"];
-				$result["CATALOG_GROUP_NAME"] = $product["CATALOG_GROUP_NAME"];
+                $result["WEIGHT"] = $product["WEIGHT"];
+                $result["CATALOG_GROUP_NAME"] = $product["CATALOG_GROUP_NAME"];
 
-				$productIBlock = static::getIBlockProduct($ar["IBLOCK_ID"]);
-				$result["IBLOCK_XML_ID"] = $productIBlock[$ar["IBLOCK_ID"]]["XML_ID"];
-			}
-		}
+                $productIBlock = static::getIBlockProduct($ar["IBLOCK_ID"]);
+                $result["IBLOCK_XML_ID"] = $productIBlock[$ar["IBLOCK_ID"]]["XML_ID"];
+            }
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	public function getCodeAfterDelimiter($code)
-	{
-		$result = '';
+    public function getCodeAfterDelimiter($code)
+    {
+        $result = '';
 
-		if(strpos($code, '#') !== false)
-		{
-			$code = explode('#', $code);
-			$result = $code[1];
-		}
-		return $result;
-	}
+        if (strpos($code, '#') !== false) {
+            $code = explode('#', $code);
+            $result = $code[1];
+        }
+        return $result;
+    }
 
-	private static function getIBlockProduct($iblockId)
-	{
-		static $iblock_fields = null;
+    private static function getIBlockProduct($iblockId)
+    {
+        static $iblock_fields = null;
 
-		if($iblock_fields[$iblockId] == null)
-		{
-			$r = \CIBlock::GetList(array(), array("ID" => $iblockId));
-			if ($ar = $r->Fetch())
-				$iblock_fields[$iblockId] = $ar;
-		}
-		return $iblock_fields;
-	}
+        if ($iblock_fields[$iblockId] == null) {
+            $r = \CIBlock::GetList(array(), array("ID" => $iblockId));
+            if ($ar = $r->Fetch())
+                $iblock_fields[$iblockId] = $ar;
+        }
+        return $iblock_fields;
+    }
 }

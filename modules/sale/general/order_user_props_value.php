@@ -1,155 +1,146 @@
 <?
+
 class CAllSaleOrderUserPropsValue
 {
-	function GetByID($ID)
-	{
-		global $DB;
+    function GetByID($ID)
+    {
+        global $DB;
 
-		$ID = IntVal($ID);
+        $ID = IntVal($ID);
 
-		if(CSaleLocation::isLocationProMigrated())
-		{
-			$strSql =
-				"SELECT V.ID, V.USER_PROPS_ID, V.ORDER_PROPS_ID, V.NAME, ".self::getPropertyValueFieldSelectSql('V').", P.TYPE ".
-				"FROM b_sale_user_props_value V ".
-				"INNER JOIN b_sale_order_props P ON (V.ORDER_PROPS_ID = P.ID) ".
-				self::getLocationTableJoinSql('V').
-				"WHERE V.ID = ".$ID."";
-		}
-		else
-		{
-			$strSql =
-				"SELECT * ".
-				"FROM b_sale_user_props_value ".
-				"WHERE ID = ".$ID."";
-		}
+        if (CSaleLocation::isLocationProMigrated()) {
+            $strSql =
+                "SELECT V.ID, V.USER_PROPS_ID, V.ORDER_PROPS_ID, V.NAME, " . self::getPropertyValueFieldSelectSql('V') . ", P.TYPE " .
+                "FROM b_sale_user_props_value V " .
+                "INNER JOIN b_sale_order_props P ON (V.ORDER_PROPS_ID = P.ID) " .
+                self::getLocationTableJoinSql('V') .
+                "WHERE V.ID = " . $ID . "";
+        } else {
+            $strSql =
+                "SELECT * " .
+                "FROM b_sale_user_props_value " .
+                "WHERE ID = " . $ID . "";
+        }
 
-		$db_res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+        $db_res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-		if ($res = $db_res->Fetch())
-		{
-			return $res;
-		}
-		return False;
-	}
+        if ($res = $db_res->Fetch()) {
+            return $res;
+        }
+        return False;
+    }
 
-	function Delete($ID)
-	{
-		global $DB;
-		$ID = IntVal($ID);
-		return $DB->Query("DELETE FROM b_sale_user_props_value WHERE ID = ".$ID."", true);
-	}
+    function Delete($ID)
+    {
+        global $DB;
+        $ID = IntVal($ID);
+        return $DB->Query("DELETE FROM b_sale_user_props_value WHERE ID = " . $ID . "", true);
+    }
 
-	function DeleteAll($ID)
-	{
-		global $DB;
-		$ID = IntVal($ID);
-		return $DB->Query("DELETE FROM b_sale_user_props_value WHERE USER_PROPS_ID = ".$ID."", true);
-	}
-	
-	function Update($ID, $arFields)
-	{
-		global $DB;
-		$ID = IntVal($ID);
+    function DeleteAll($ID)
+    {
+        global $DB;
+        $ID = IntVal($ID);
+        return $DB->Query("DELETE FROM b_sale_user_props_value WHERE USER_PROPS_ID = " . $ID . "", true);
+    }
 
-		// need to check here if we got CODE or ID came
-		if(isset($arFields['VALUE']) && ((string) $arFields['VALUE'] != '') && CSaleLocation::isLocationProMigrated())
-		{
-			$propValue = self::GetByID($ID);
+    function Update($ID, $arFields)
+    {
+        global $DB;
+        $ID = IntVal($ID);
 
-			if($propValue['TYPE'] == 'LOCATION')
-			{
-				$arFields['VALUE'] = CSaleLocation::tryTranslateIDToCode($arFields['VALUE']);
-			}
-		}
+        // need to check here if we got CODE or ID came
+        if (isset($arFields['VALUE']) && ((string)$arFields['VALUE'] != '') && CSaleLocation::isLocationProMigrated()) {
+            $propValue = self::GetByID($ID);
 
-		$strUpdate = $DB->PrepareUpdate("b_sale_user_props_value", $arFields);
-		$strSql = 
-			"UPDATE b_sale_user_props_value SET ".
-			"	".$strUpdate." ".
-			"WHERE ID = ".$ID." ";
-		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+            if ($propValue['TYPE'] == 'LOCATION') {
+                $arFields['VALUE'] = CSaleLocation::tryTranslateIDToCode($arFields['VALUE']);
+            }
+        }
 
-		return $ID;
-	}
+        $strUpdate = $DB->PrepareUpdate("b_sale_user_props_value", $arFields);
+        $strSql =
+            "UPDATE b_sale_user_props_value SET " .
+            "	" . $strUpdate . " " .
+            "WHERE ID = " . $ID . " ";
+        $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
-	protected static function getPropertyValueFieldSelectSql($tableAlias = 'PV', $propTableAlias = 'P')
-	{
-		$tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
-		$propTableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($propTableAlias);
+        return $ID;
+    }
 
-		if(CSaleLocation::isLocationProMigrated())
-			return "
+    protected static function getPropertyValueFieldSelectSql($tableAlias = 'PV', $propTableAlias = 'P')
+    {
+        $tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
+        $propTableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($propTableAlias);
+
+        if (CSaleLocation::isLocationProMigrated())
+            return "
 				CASE
 
 					WHEN
-						".$propTableAlias.".TYPE = 'LOCATION'
+						" . $propTableAlias . ".TYPE = 'LOCATION'
 					THEN
-						CAST(L.ID as ".\Bitrix\Sale\Location\DB\Helper::getSqlForDataType('char', 255).")
+						CAST(L.ID as " . \Bitrix\Sale\Location\DB\Helper::getSqlForDataType('char', 255) . ")
 
 					ELSE
-						".$tableAlias.".VALUE
-				END as VALUE, ".$tableAlias.".VALUE as VALUE_ORIG";
-		else
-			return $tableAlias.".VALUE";
-	}
+						" . $tableAlias . ".VALUE
+				END as VALUE, " . $tableAlias . ".VALUE as VALUE_ORIG";
+        else
+            return $tableAlias . ".VALUE";
+    }
 
-	protected static function getLocationTableJoinSql($tableAlias = 'PV', $propTableAlias = 'P')
-	{
-		$tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
-		$propTableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($propTableAlias);
+    protected static function getLocationTableJoinSql($tableAlias = 'PV', $propTableAlias = 'P')
+    {
+        $tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
+        $propTableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($propTableAlias);
 
-		if(CSaleLocation::isLocationProMigrated())
-			return "LEFT JOIN b_sale_location L ON (".$propTableAlias.".TYPE = 'LOCATION' AND ".$tableAlias.".VALUE IS NOT NULL AND (".$tableAlias.".VALUE = L.CODE))";
-		else
-			return " ";
-	}
+        if (CSaleLocation::isLocationProMigrated())
+            return "LEFT JOIN b_sale_location L ON (" . $propTableAlias . ".TYPE = 'LOCATION' AND " . $tableAlias . ".VALUE IS NOT NULL AND (" . $tableAlias . ".VALUE = L.CODE))";
+        else
+            return " ";
+    }
 
-	protected static function translateLocationIDToCode($id, $orderPropId)
-	{
-		if(!CSaleLocation::isLocationProMigrated())
-			return $id;
+    protected static function translateLocationIDToCode($id, $orderPropId)
+    {
+        if (!CSaleLocation::isLocationProMigrated())
+            return $id;
 
-		$prop = CSaleOrderProps::GetByID($orderPropId);
-		if(isset($prop['TYPE']) && $prop['TYPE'] == 'LOCATION')
-		{
-			if((string) $id === (string) intval($id)) // real ID, need to translate
-			{
-				return CSaleLocation::tryTranslateIDToCode($id);
-			}
-		}
+        $prop = CSaleOrderProps::GetByID($orderPropId);
+        if (isset($prop['TYPE']) && $prop['TYPE'] == 'LOCATION') {
+            if ((string)$id === (string)intval($id)) // real ID, need to translate
+            {
+                return CSaleLocation::tryTranslateIDToCode($id);
+            }
+        }
 
-		return $id;
-	}
+        return $id;
+    }
 
-	protected static function addPropertyValueField($tableAlias = 'V', &$arFields, &$arSelectFields)
-	{
-		$tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
+    protected static function addPropertyValueField($tableAlias = 'V', &$arFields, &$arSelectFields)
+    {
+        $tableAlias = \Bitrix\Main\HttpApplication::getConnection()->getSqlHelper()->forSql($tableAlias);
 
-		// locations kept in CODEs, but must be shown as IDs
-		if(CSaleLocation::isLocationProMigrated())
-		{
-			$arSelectFields = array_merge(array('PROP_TYPE'), $arSelectFields); // P.TYPE should be there and go above our join
+        // locations kept in CODEs, but must be shown as IDs
+        if (CSaleLocation::isLocationProMigrated()) {
+            $arSelectFields = array_merge(array('PROP_TYPE'), $arSelectFields); // P.TYPE should be there and go above our join
 
-			$arFields['VALUE'] = array("FIELD" => "
+            $arFields['VALUE'] = array("FIELD" => "
 				CASE
 
 					WHEN
 						P.TYPE = 'LOCATION'
 					THEN
-						CAST(L.ID as ".\Bitrix\Sale\Location\DB\Helper::getSqlForDataType('char', 255).")
+						CAST(L.ID as " . \Bitrix\Sale\Location\DB\Helper::getSqlForDataType('char', 255) . ")
 
 					ELSE
-						".$tableAlias.".VALUE
+						" . $tableAlias . ".VALUE
 				END
-			", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location L ON (P.TYPE = 'LOCATION' AND ".$tableAlias.".VALUE IS NOT NULL AND ".$tableAlias.".VALUE = L.CODE)");
-			$arFields['VALUE_ORIG'] = array("FIELD" => $tableAlias.".VALUE", "TYPE" => "string");
-		}
-		else
-		{
-			$arFields['VALUE'] = array("FIELD" => $tableAlias.".VALUE", "TYPE" => "string");
-		}
-	}
+			", "TYPE" => "string", "FROM" => "LEFT JOIN b_sale_location L ON (P.TYPE = 'LOCATION' AND " . $tableAlias . ".VALUE IS NOT NULL AND " . $tableAlias . ".VALUE = L.CODE)");
+            $arFields['VALUE_ORIG'] = array("FIELD" => $tableAlias . ".VALUE", "TYPE" => "string");
+        } else {
+            $arFields['VALUE'] = array("FIELD" => $tableAlias . ".VALUE", "TYPE" => "string");
+        }
+    }
 
 //	protected static function getList15($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
 //	{
@@ -197,4 +188,5 @@ class CAllSaleOrderUserPropsValue
 //		));
 //	}
 }
+
 ?>

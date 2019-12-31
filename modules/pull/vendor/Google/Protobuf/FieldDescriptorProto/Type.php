@@ -417,25 +417,44 @@ class Type extends \Protobuf\Enum
     public static function valueOf($value)
     {
         switch ($value) {
-            case 1: return self::TYPE_DOUBLE();
-            case 2: return self::TYPE_FLOAT();
-            case 3: return self::TYPE_INT64();
-            case 4: return self::TYPE_UINT64();
-            case 5: return self::TYPE_INT32();
-            case 6: return self::TYPE_FIXED64();
-            case 7: return self::TYPE_FIXED32();
-            case 8: return self::TYPE_BOOL();
-            case 9: return self::TYPE_STRING();
-            case 10: return self::TYPE_GROUP();
-            case 11: return self::TYPE_MESSAGE();
-            case 12: return self::TYPE_BYTES();
-            case 13: return self::TYPE_UINT32();
-            case 14: return self::TYPE_ENUM();
-            case 15: return self::TYPE_SFIXED32();
-            case 16: return self::TYPE_SFIXED64();
-            case 17: return self::TYPE_SINT32();
-            case 18: return self::TYPE_SINT64();
-            default: return null;
+            case 1:
+                return self::TYPE_DOUBLE();
+            case 2:
+                return self::TYPE_FLOAT();
+            case 3:
+                return self::TYPE_INT64();
+            case 4:
+                return self::TYPE_UINT64();
+            case 5:
+                return self::TYPE_INT32();
+            case 6:
+                return self::TYPE_FIXED64();
+            case 7:
+                return self::TYPE_FIXED32();
+            case 8:
+                return self::TYPE_BOOL();
+            case 9:
+                return self::TYPE_STRING();
+            case 10:
+                return self::TYPE_GROUP();
+            case 11:
+                return self::TYPE_MESSAGE();
+            case 12:
+                return self::TYPE_BYTES();
+            case 13:
+                return self::TYPE_UINT32();
+            case 14:
+                return self::TYPE_ENUM();
+            case 15:
+                return self::TYPE_SFIXED32();
+            case 16:
+                return self::TYPE_SFIXED64();
+            case 17:
+                return self::TYPE_SINT32();
+            case 18:
+                return self::TYPE_SINT64();
+            default:
+                return null;
         }
     }
 

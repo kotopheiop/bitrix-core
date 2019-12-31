@@ -21,129 +21,123 @@ use Bitrix\Main\Type\Date;
  */
 class DateField extends ScalarField
 {
-	protected $format = null;
+    protected $format = null;
 
-	/**
-	 * DateField constructor.
-	 *
-	 * @param       $name
-	 * @param array $parameters deprecated, use configure* and add* methods instead
-	 *
-	 * @throws Main\SystemException
-	 */
-	public function __construct($name, $parameters = array())
-	{
-		parent::__construct($name, $parameters);
+    /**
+     * DateField constructor.
+     *
+     * @param       $name
+     * @param array $parameters deprecated, use configure* and add* methods instead
+     *
+     * @throws Main\SystemException
+     */
+    public function __construct($name, $parameters = array())
+    {
+        parent::__construct($name, $parameters);
 
-		$this->addFetchDataModifier(array($this, 'assureValueObject'));
-	}
+        $this->addFetchDataModifier(array($this, 'assureValueObject'));
+    }
 
-	public function configureFormat($format)
-	{
-		$this->format = $format;
+    public function configureFormat($format)
+    {
+        $this->format = $format;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return array|\Bitrix\Main\ORM\Fields\Validators\Validator[]|callback[]
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
-	 */
-	public function getValidators()
-	{
-		$validators = parent::getValidators();
+    /**
+     * @return array|\Bitrix\Main\ORM\Fields\Validators\Validator[]|callback[]
+     * @throws Main\ArgumentTypeException
+     * @throws Main\SystemException
+     */
+    public function getValidators()
+    {
+        $validators = parent::getValidators();
 
-		if ($this->validation === null)
-		{
-			$validators[] = new Validators\DateValidator;
-		}
+        if ($this->validation === null) {
+            $validators[] = new Validators\DateValidator;
+        }
 
-		return $validators;
-	}
+        return $validators;
+    }
 
-	/**
-	 * @param $value
-	 *
-	 * @return Type\Date
-	 * @throws Main\ObjectException
-	 */
-	public function assureValueObject($value)
-	{
-		if ($value instanceof Type\DateTime)
-		{
-			// oracle sql helper returns datetime instead of date - it doesn't see the difference
-			$value = new Type\Date(
-				$value->format(Main\UserFieldTable::MULTIPLE_DATE_FORMAT),
-				Main\UserFieldTable::MULTIPLE_DATE_FORMAT
-			);
-		}
+    /**
+     * @param $value
+     *
+     * @return Type\Date
+     * @throws Main\ObjectException
+     */
+    public function assureValueObject($value)
+    {
+        if ($value instanceof Type\DateTime) {
+            // oracle sql helper returns datetime instead of date - it doesn't see the difference
+            $value = new Type\Date(
+                $value->format(Main\UserFieldTable::MULTIPLE_DATE_FORMAT),
+                Main\UserFieldTable::MULTIPLE_DATE_FORMAT
+            );
+        }
 
-		return $value;
-	}
+        return $value;
+    }
 
-	/**
-	 * @param mixed $value
-	 *
-	 * @return Type\Date
-	 * @throws Main\ObjectException
-	 */
-	public function cast($value)
-	{
-		if (!empty($value) && !($value instanceof Type\Date))
-		{
-			return new Type\Date($value, $this->format);
-		}
+    /**
+     * @param mixed $value
+     *
+     * @return Type\Date
+     * @throws Main\ObjectException
+     */
+    public function cast($value)
+    {
+        if (!empty($value) && !($value instanceof Type\Date)) {
+            return new Type\Date($value, $this->format);
+        }
 
-		return $value;
-	}
+        return $value;
+    }
 
-	/**
-	 * @param mixed $value
-	 *
-	 * @return Type\Date
-	 * @throws Main\ObjectException
-	 * @throws Main\SystemException
-	 */
-	public function convertValueFromDb($value)
-	{
-		return $this->getConnection()->getSqlHelper()->convertFromDbDate($value);
-	}
+    /**
+     * @param mixed $value
+     *
+     * @return Type\Date
+     * @throws Main\ObjectException
+     * @throws Main\SystemException
+     */
+    public function convertValueFromDb($value)
+    {
+        return $this->getConnection()->getSqlHelper()->convertFromDbDate($value);
+    }
 
-	/**
-	 * @param mixed $value
-	 *
-	 * @return string
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
-	 */
-	public function convertValueToDb($value)
-	{
-		try
-		{
-			return $this->getConnection()->getSqlHelper()->convertToDbDate($value);
-		}
-		catch (ArgumentTypeException $e)
-		{
-			throw new ArgumentException(
-				"Type error in `{$this->name}` of `{$this->entity->getFullName()}`: ".$e->getMessage()
-			);
-		}
-	}
+    /**
+     * @param mixed $value
+     *
+     * @return string
+     * @throws Main\ArgumentTypeException
+     * @throws Main\SystemException
+     */
+    public function convertValueToDb($value)
+    {
+        try {
+            return $this->getConnection()->getSqlHelper()->convertToDbDate($value);
+        } catch (ArgumentTypeException $e) {
+            throw new ArgumentException(
+                "Type error in `{$this->name}` of `{$this->entity->getFullName()}`: " . $e->getMessage()
+            );
+        }
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getGetterTypeHint()
-	{
-		return '\\'.Date::class;
-	}
+    /**
+     * @return string
+     */
+    public function getGetterTypeHint()
+    {
+        return '\\' . Date::class;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getSetterTypeHint()
-	{
-		return '\\'.Date::class;
-	}
+    /**
+     * @return string
+     */
+    public function getSetterTypeHint()
+    {
+        return '\\' . Date::class;
+    }
 }

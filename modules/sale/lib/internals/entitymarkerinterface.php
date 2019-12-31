@@ -8,39 +8,39 @@
 
 interface IEntityMarker
 {
-	/**
-	 * @param $value
-	 *
-	 * @return string
-	 */
-	public function getErrorEntity($value);
+    /**
+     * @param $value
+     *
+     * @return string
+     */
+    public function getErrorEntity($value);
 
-	/**
-	 * @param $value
-	 *
-	 * @return bool
-	 */
-	public function canAutoFixError($value);
-	
-	/**
-	 * @return array
-	 */
-	public function getAutoFixErrorsList();
+    /**
+     * @param $value
+     *
+     * @return bool
+     */
+    public function canAutoFixError($value);
 
-	/**
-	 * @param $code
-	 *
-	 * @return \Bitrix\Sale\Result
-	 */
-	public function tryFixError($code);
+    /**
+     * @return array
+     */
+    public function getAutoFixErrorsList();
 
-	/**
-	 * @return bool
-	 */
-	public function canMarked();
+    /**
+     * @param $code
+     *
+     * @return \Bitrix\Sale\Result
+     */
+    public function tryFixError($code);
 
-	/**
-	 * @return string
-	 */
-	public function getMarkField();
+    /**
+     * @return bool
+     */
+    public function canMarked();
+
+    /**
+     * @return string
+     */
+    public function getMarkField();
 }

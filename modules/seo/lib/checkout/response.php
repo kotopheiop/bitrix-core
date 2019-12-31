@@ -10,77 +10,77 @@ use Bitrix\Main\Result;
  */
 abstract class Response extends Result
 {
-	const TYPE_CODE = '';
+    const TYPE_CODE = '';
 
-	protected $type;
-	protected $responseText;
+    protected $type;
+    protected $responseText;
 
-	/* @var Request|null */
-	protected $request;
+    /* @var Request|null */
+    protected $request;
 
-	/**
-	 * Response constructor.
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-		$this->type = static::TYPE_CODE;
-	}
+    /**
+     * Response constructor.
+     */
+    public function __construct()
+    {
+        parent::__construct();
+        $this->type = static::TYPE_CODE;
+    }
 
-	/**
-	 * @param array $data
-	 * @return Result|void
-	 */
-	public function setData(array $data)
-	{
-		parent::setData($data);
-	}
+    /**
+     * @param array $data
+     * @return Result|void
+     */
+    public function setData(array $data)
+    {
+        parent::setData($data);
+    }
 
-	/**
-	 * @param $responseText
-	 */
-	public function setResponseText($responseText)
-	{
-		$this->responseText = $responseText;
-	}
+    /**
+     * @param $responseText
+     */
+    public function setResponseText($responseText)
+    {
+        $this->responseText = $responseText;
+    }
 
-	/**
-	 * @return mixed
-	 */
-	public function getResponseText()
-	{
-		return $this->responseText;
-	}
+    /**
+     * @return mixed
+     */
+    public function getResponseText()
+    {
+        return $this->responseText;
+    }
 
-	/**
-	 * @return Request|null
-	 */
-	public function getRequest()
-	{
-		return $this->request;
-	}
+    /**
+     * @return Request|null
+     */
+    public function getRequest()
+    {
+        return $this->request;
+    }
 
-	/**
-	 * @param Request $request
-	 * @return Request
-	 */
-	public function setRequest(Request $request)
-	{
-		return $this->request = $request;
-	}
+    /**
+     * @param Request $request
+     * @return Request
+     */
+    public function setRequest(Request $request)
+    {
+        return $this->request = $request;
+    }
 
-	/**
-	 * @param $type
-	 * @return static
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	public static function create($type)
-	{
-		return Factory::create(get_called_class(), $type);
-	}
+    /**
+     * @param $type
+     * @return static
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     */
+    public static function create($type)
+    {
+        return Factory::create(get_called_class(), $type);
+    }
 
-	/**
-	 * @param $data
-	 */
-	abstract public function parse($data);
+    /**
+     * @param $data
+     */
+    abstract public function parse($data);
 }

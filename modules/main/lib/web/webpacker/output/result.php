@@ -9,50 +9,50 @@ namespace Bitrix\Main\Web\WebPacker\Output;
  */
 class Result extends \Bitrix\Main\Result
 {
-	protected $id;
-	protected $content;
+    protected $id;
+    protected $content;
 
-	/**
-	 * Get ID.
-	 *
-	 * @return int|null
-	 */
-	public function getId()
-	{
-		return $this->id;
-	}
+    /**
+     * Get ID.
+     *
+     * @return int|null
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
-	/**
-	 * Set ID.
-	 *
-	 * @param int|null $id ID.
-	 * @return $this
-	 */
-	public function setId($id)
-	{
-		$this->id = $id;
-		return $this;
-	}
+    /**
+     * Set ID.
+     *
+     * @param int|null $id ID.
+     * @return $this
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
 
-	/**
-	 * Get content.
-	 *
-	 * @return string| null
-	 */
-	public function getContent()
-	{
-		return $this->content;
-	}
+    /**
+     * Get content.
+     *
+     * @return string| null
+     */
+    public function getContent()
+    {
+        return $this->content;
+    }
 
-	/**
-	 * Set content.
-	 *
-	 * @param string $content Content.
-	 * @return $this
-	 */
-	public function setContent($content)
-	{
-		$this->content = $content;
-		return $this;
-	}
+    /**
+     * Set content.
+     *
+     * @param string $content Content.
+     * @return $this
+     */
+    public function setContent($content)
+    {
+        $this->content = $content;
+        return $this;
+    }
 }

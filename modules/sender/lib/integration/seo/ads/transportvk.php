@@ -18,5 +18,5 @@ Loc::loadMessages(__FILE__);
  */
 class TransportVk extends TransportBase
 {
-	const CODE = self::CODE_ADS_VK;
+    const CODE = self::CODE_ADS_VK;
 }

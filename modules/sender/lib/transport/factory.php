@@ -17,37 +17,37 @@ use Bitrix\Sender\Internals\CodeBasedFactory;
  */
 class Factory extends CodeBasedFactory
 {
-	/**
-	 * Get transport instances.
-	 *
-	 * @return iBase[]
-	 */
-	public static function getTransports()
-	{
-		return static::getObjectInstances(static::getInterface());
-	}
+    /**
+     * Get transport instances.
+     *
+     * @return iBase[]
+     */
+    public static function getTransports()
+    {
+        return static::getObjectInstances(static::getInterface());
+    }
 
-	/**
-	 * Get transport instance by code.
-	 *
-	 * @param string $code Transport code.
-	 *
-	 * @return null|iBase
-	 */
-	public static function getTransport($code)
-	{
-		return static::getObjectInstance(static::getInterface(), $code);
-	}
+    /**
+     * Get transport instance by code.
+     *
+     * @param string $code Transport code.
+     *
+     * @return null|iBase
+     */
+    public static function getTransport($code)
+    {
+        return static::getObjectInstance(static::getInterface(), $code);
+    }
 
-	protected static function getInterface()
-	{
-		return __NAMESPACE__ . '\iBase';
-	}
+    protected static function getInterface()
+    {
+        return __NAMESPACE__ . '\iBase';
+    }
 
-	protected static function getClasses()
-	{
-		return array(
-			iBase::EVENT_NAME => Integration\EventHandler::onSenderTransportList(),
-		);
-	}
+    protected static function getClasses()
+    {
+        return array(
+            iBase::EVENT_NAME => Integration\EventHandler::onSenderTransportList(),
+        );
+    }
 }

@@ -17,141 +17,125 @@ use Bitrix\Main\Application;
  */
 class SqlExpression
 {
-	/** @var string */
-	protected $expression;
+    /** @var string */
+    protected $expression;
 
-	/** @var array */
-	protected $args = array();
+    /** @var array */
+    protected $args = array();
 
-	protected $pattern = '/([^\\\\]|^)(\?[#sif]?)/';
+    protected $pattern = '/([^\\\\]|^)(\?[#sif]?)/';
 
-	protected $i;
+    protected $i;
 
-	/** @var  Connection */
-	protected $connection;
+    /** @var  Connection */
+    protected $connection;
 
-	/**
-	 * @param string $expression Sql expression.
-	 * @param string,... $args Substitutes.
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
-	public function __construct()
-	{
-		$args = func_get_args();
+    /**
+     * @param string $expression Sql expression.
+     * @param string,... $args Substitutes.
+     *
+     * @throws \Bitrix\Main\ArgumentException
+     */
+    public function __construct()
+    {
+        $args = func_get_args();
 
-		if (!isset($args[0]))
-		{
-			throw new \Bitrix\Main\ArgumentException('No pattern has been found for SqlExpression');
-		}
+        if (!isset($args[0])) {
+            throw new \Bitrix\Main\ArgumentException('No pattern has been found for SqlExpression');
+        }
 
-		$this->expression = $args[0];
+        $this->expression = $args[0];
 
-		for ($i = 1, $n = count($args); $i < $n; $i++)
-		{
-			$this->args[] = $args[$i];
-		}
-	}
+        for ($i = 1, $n = count($args); $i < $n; $i++) {
+            $this->args[] = $args[$i];
+        }
+    }
 
-	/**
-	 * Returns $expression with replaced placeholders.
-	 *
-	 * @return string
-	 */
-	public function compile()
-	{
-		$this->i = -1;
+    /**
+     * Returns $expression with replaced placeholders.
+     *
+     * @return string
+     */
+    public function compile()
+    {
+        $this->i = -1;
 
-		if (strpos($this->expression, '\\') === false)
-		{
-			// regular case
-			return preg_replace_callback($this->pattern, array($this, 'execPlaceholders'), $this->expression);
-		}
-		else
-		{
-			// handle escaping \ and \\
-			$parts = explode('\\\\', $this->expression);
+        if (strpos($this->expression, '\\') === false) {
+            // regular case
+            return preg_replace_callback($this->pattern, array($this, 'execPlaceholders'), $this->expression);
+        } else {
+            // handle escaping \ and \\
+            $parts = explode('\\\\', $this->expression);
 
-			foreach ($parts as &$part)
-			{
-				if (!empty($part))
-				{
-					$part = preg_replace_callback($this->pattern, array($this, 'execPlaceholders'), $part);
-				}
-			}
+            foreach ($parts as &$part) {
+                if (!empty($part)) {
+                    $part = preg_replace_callback($this->pattern, array($this, 'execPlaceholders'), $part);
+                }
+            }
 
-			$parts = str_replace('\\?', '?', $parts);
+            $parts = str_replace('\\?', '?', $parts);
 
-			return implode('\\\\', $parts);
-		}
-	}
+            return implode('\\\\', $parts);
+        }
+    }
 
-	/**
-	 * Used by compile method to replace placeholders with values.
-	 *
-	 * @param array $matches Matches found by preg_replace.
-	 *
-	 * @return string
-	 */
-	protected function execPlaceholders($matches)
-	{
-		$sqlHelper = $this->getConnection()->getSqlHelper();
+    /**
+     * Used by compile method to replace placeholders with values.
+     *
+     * @param array $matches Matches found by preg_replace.
+     *
+     * @return string
+     */
+    protected function execPlaceholders($matches)
+    {
+        $sqlHelper = $this->getConnection()->getSqlHelper();
 
-		$this->i++;
+        $this->i++;
 
-		$pre = $matches[1];
-		$ph = $matches[2];
+        $pre = $matches[1];
+        $ph = $matches[2];
 
-		if (isset($this->args[$this->i]))
-		{
-			$value = $this->args[$this->i];
+        if (isset($this->args[$this->i])) {
+            $value = $this->args[$this->i];
 
-			if ($ph == '?' || $ph == '?s')
-			{
-				$value = "'" . $sqlHelper->forSql($value) . "'";
-			}
-			elseif ($ph == '?#')
-			{
-				$value = $sqlHelper->quote($value);
-			}
-			elseif ($ph == '?i')
-			{
-				$value = (int) $value;
-			}
-			elseif ($ph == '?f')
-			{
-				$value = (float) $value;
-			}
+            if ($ph == '?' || $ph == '?s') {
+                $value = "'" . $sqlHelper->forSql($value) . "'";
+            } elseif ($ph == '?#') {
+                $value = $sqlHelper->quote($value);
+            } elseif ($ph == '?i') {
+                $value = (int)$value;
+            } elseif ($ph == '?f') {
+                $value = (float)$value;
+            }
 
-			return $pre . $value;
-		}
+            return $pre . $value;
+        }
 
-		return $matches[0];
-	}
+        return $matches[0];
+    }
 
-	public function __toString()
-	{
-		return $this->compile();
-	}
+    public function __toString()
+    {
+        return $this->compile();
+    }
 
-	/**
-	 * @return Connection
-	 */
-	public function getConnection()
-	{
-		if ($this->connection === null)
-		{
-			$this->connection = Application::getConnection();
-		}
+    /**
+     * @return Connection
+     */
+    public function getConnection()
+    {
+        if ($this->connection === null) {
+            $this->connection = Application::getConnection();
+        }
 
-		return $this->connection;
-	}
+        return $this->connection;
+    }
 
-	/**
-	 * @param Connection $connection
-	 */
-	public function setConnection($connection)
-	{
-		$this->connection = $connection;
-	}
+    /**
+     * @param Connection $connection
+     */
+    public function setConnection($connection)
+    {
+        $this->connection = $connection;
+    }
 }

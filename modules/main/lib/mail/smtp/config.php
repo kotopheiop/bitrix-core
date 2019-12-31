@@ -5,85 +5,83 @@ namespace Bitrix\Main\Mail\Smtp;
 class Config
 {
 
-	protected $from, $host, $port, $protocol, $login, $password;
+    protected $from, $host, $port, $protocol, $login, $password;
 
-	public function __construct(array $params = null)
-	{
-		if (!empty($params) && is_array($params))
-		{
-			foreach ($params as $name => $value)
-			{
-				$setter = sprintf('set%s', $name);
-				if (is_callable(array($this, $setter)))
-					$this->$setter($value);
-			}
-		}
-	}
+    public function __construct(array $params = null)
+    {
+        if (!empty($params) && is_array($params)) {
+            foreach ($params as $name => $value) {
+                $setter = sprintf('set%s', $name);
+                if (is_callable(array($this, $setter)))
+                    $this->$setter($value);
+            }
+        }
+    }
 
-	public function setFrom($from)
-	{
-		$this->from = $from;
-		return $this;
-	}
+    public function setFrom($from)
+    {
+        $this->from = $from;
+        return $this;
+    }
 
-	public function setHost($host)
-	{
-		$this->host = $host;
-		return $this;
-	}
+    public function setHost($host)
+    {
+        $this->host = $host;
+        return $this;
+    }
 
-	public function setPort($port)
-	{
-		$this->port = (int) $port;
-		return $this;
-	}
+    public function setPort($port)
+    {
+        $this->port = (int)$port;
+        return $this;
+    }
 
-	public function setProtocol($protocol)
-	{
-		$this->protocol = $protocol;
-		return $this;
-	}
+    public function setProtocol($protocol)
+    {
+        $this->protocol = $protocol;
+        return $this;
+    }
 
-	public function setLogin($login)
-	{
-		$this->login = $login;
-		return $this;
-	}
+    public function setLogin($login)
+    {
+        $this->login = $login;
+        return $this;
+    }
 
-	public function setPassword($password)
-	{
-		$this->password = $password;
-		return $this;
-	}
+    public function setPassword($password)
+    {
+        $this->password = $password;
+        return $this;
+    }
 
-	public function getFrom()
-	{
-		return $this->from;
-	}
+    public function getFrom()
+    {
+        return $this->from;
+    }
 
-	public function getHost()
-	{
-		return $this->host;
-	}
+    public function getHost()
+    {
+        return $this->host;
+    }
 
-	public function getPort()
-	{
-		return $this->port;
-	}
+    public function getPort()
+    {
+        return $this->port;
+    }
 
-	public function getProtocol()
-	{
-		return $this->protocol;
-	}
+    public function getProtocol()
+    {
+        return $this->protocol;
+    }
 
-	public function getLogin()
-	{
-		return $this->login;
-	}
+    public function getLogin()
+    {
+        return $this->login;
+    }
 
-	public function getPassword()
-	{
-		return $this->password;
-	}
+    public function getPassword()
+    {
+        return $this->password;
+    }
 
 }

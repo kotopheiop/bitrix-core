@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Main\Security\Sign;
 
 use Bitrix\Main\NotImplementedException;
@@ -10,29 +11,29 @@ use Bitrix\Main\NotImplementedException;
  */
 abstract class SigningAlgorithm
 {
-	/**
-	 * Return message signature
-	 *
-	 * @param string $value Message.
-	 * @param string $key Secret password.
-	 * @return string
-	 * @throws \Bitrix\Main\NotImplementedException
-	 */
-	public function getSignature($value, $key)
-	{
-		throw new NotImplementedException('Method getSignature must be overridden');
-	}
+    /**
+     * Return message signature
+     *
+     * @param string $value Message.
+     * @param string $key Secret password.
+     * @return string
+     * @throws \Bitrix\Main\NotImplementedException
+     */
+    public function getSignature($value, $key)
+    {
+        throw new NotImplementedException('Method getSignature must be overridden');
+    }
 
-	/**
-	 * Verify message signature
-	 *
-	 * @param string $value Message.
-	 * @param string $key Secret password used while signing.
-	 * @param string $sig Message signature.
-	 * @return bool
-	 */
-	public function verify($value, $key, $sig)
-	{
-		return $sig === $this->getSignature($value, $key);
-	}
+    /**
+     * Verify message signature
+     *
+     * @param string $value Message.
+     * @param string $key Secret password used while signing.
+     * @param string $sig Message signature.
+     * @return bool
+     */
+    public function verify($value, $key, $sig)
+    {
+        return $sig === $this->getSignature($value, $key);
+    }
 }
