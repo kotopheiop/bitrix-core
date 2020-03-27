@@ -8,47 +8,47 @@ namespace Bitrix\Translate\Controller;
 interface IProcessParameters
 {
 
-	/**
-	 * Returns progress option name.
-	 *
-	 * @return string
-	 */
-	public function getProgressParameterOptionName();
+    /**
+     * Returns progress option name.
+     *
+     * @return string
+     */
+    public function getProgressParameterOptionName();
 
-	/**
-	 * Tells if needed to keep field state as progress parameters.
-	 *
-	 * @param string|string[] $fieldName Name of instance field to keep in progress parameters.
-	 *
-	 * @return self
-	 */
-	public function keepField($fieldName);
+    /**
+     * Tells if needed to keep field state as progress parameters.
+     *
+     * @param string|string[] $fieldName Name of instance field to keep in progress parameters.
+     *
+     * @return self
+     */
+    public function keepField($fieldName);
 
-	/**
-	 * Restore progress state of the instance.
-	 *
-	 * @return self
-	 */
-	public function restoreProgressParameters();
+    /**
+     * Restore progress state of the instance.
+     *
+     * @return self
+     */
+    public function restoreProgressParameters();
 
-	/**
-	 * Save progress parameters.
-	 *
-	 * @return self
-	 */
-	public function saveProgressParameters();
+    /**
+     * Save progress parameters.
+     *
+     * @return self
+     */
+    public function saveProgressParameters();
 
-	/**
-	 * Load progress parameters.
-	 *
-	 * @return array
-	 */
-	public function getProgressParameters();
+    /**
+     * Load progress parameters.
+     *
+     * @return array
+     */
+    public function getProgressParameters();
 
-	/**
-	 * Removes progress parameters.
-	 *
-	 * @return self
-	 */
-	public function clearProgressParameters();
+    /**
+     * Removes progress parameters.
+     *
+     * @return self
+     */
+    public function clearProgressParameters();
 }

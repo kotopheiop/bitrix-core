@@ -16,5 +16,5 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
  */
 class PropertyReference extends Reference
 {
-	use PropertyRelation;
+    use PropertyRelation;
 }

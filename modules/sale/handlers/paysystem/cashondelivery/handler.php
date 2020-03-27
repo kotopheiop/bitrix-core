@@ -14,22 +14,22 @@ Loc::loadMessages(__FILE__);
  */
 class CashOnDeliveryHandler extends PaySystem\BaseServiceHandler
 {
-	/**
-	 * @param Payment $payment
-	 * @param Request|null $request
-	 * @return PaySystem\ServiceResult
-	 */
-	public function initiatePay(Payment $payment, Request $request = null)
-	{
-		return new PaySystem\ServiceResult();
-	}
+    /**
+     * @param Payment $payment
+     * @param Request|null $request
+     * @return PaySystem\ServiceResult
+     */
+    public function initiatePay(Payment $payment, Request $request = null)
+    {
+        return new PaySystem\ServiceResult();
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getCurrencyList()
-	{
-		return array();
-	}
+    /**
+     * @return array
+     */
+    public function getCurrencyList()
+    {
+        return array();
+    }
 
 }

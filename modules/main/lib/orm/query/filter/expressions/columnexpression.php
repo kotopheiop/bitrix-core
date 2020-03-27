@@ -15,32 +15,32 @@ namespace Bitrix\Main\ORM\Query\Filter\Expressions;
  */
 class ColumnExpression extends Expression
 {
-	/**
-	 * @var string
-	 */
-	protected $definition;
+    /**
+     * @var string
+     */
+    protected $definition;
 
-	/**
-	 * @param $definition
-	 */
-	public function __construct($definition)
-	{
-		$this->definition = $definition;
-	}
+    /**
+     * @param $definition
+     */
+    public function __construct($definition)
+    {
+        $this->definition = $definition;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getDefinition()
-	{
-		return $this->definition;
-	}
+    /**
+     * @return string
+     */
+    public function getDefinition()
+    {
+        return $this->definition;
+    }
 
-	/**
-	 * @param string $definition
-	 */
-	public function setDefinition($definition)
-	{
-		$this->definition = $definition;
-	}
+    /**
+     * @param string $definition
+     */
+    public function setDefinition($definition)
+    {
+        $this->definition = $definition;
+    }
 }

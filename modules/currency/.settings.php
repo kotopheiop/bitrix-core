@@ -1,9 +1,9 @@
 <?php
 return array(
-	'controllers' => array(
-		'value' => array(
-			'defaultNamespace' => '\\Bitrix\\Currency\\Controller'
-		),
-		'readonly' => true,
-	)
+    'controllers' => array(
+        'value' => array(
+            'defaultNamespace' => '\\Bitrix\\Currency\\Controller'
+        ),
+        'readonly' => true,
+    )
 );

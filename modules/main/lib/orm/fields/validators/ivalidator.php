@@ -13,13 +13,13 @@ use Bitrix\Main\ORM\Fields\Field;
 
 interface IValidator
 {
-	/**
-	 * @param       $value
-	 * @param       $primary
-	 * @param array $row
-	 * @param Field $field
-	 *
-	 * @return string|boolean|EntityError
-	 */
-	public function validate($value, $primary, array $row, Field $field);
+    /**
+     * @param       $value
+     * @param       $primary
+     * @param array $row
+     * @param Field $field
+     *
+     * @return string|boolean|EntityError
+     */
+    public function validate($value, $primary, array $row, Field $field);
 }

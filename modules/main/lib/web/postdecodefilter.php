@@ -8,23 +8,21 @@ use Bitrix\Main\Type;
 
 class PostDecodeFilter implements Type\IRequestFilter
 {
-	/**
-	 * @param array $values
-	 * @return array
-	 */
-	public function filter(array $values)
-	{
-		if(Application::getInstance()->isUtfMode())
-		{
-			return null;
-		}
-		if(empty($values['post']) || !is_array($values['post']))
-		{
-			return null;
-		}
+    /**
+     * @param array $values
+     * @return array
+     */
+    public function filter(array $values)
+    {
+        if (Application::getInstance()->isUtfMode()) {
+            return null;
+        }
+        if (empty($values['post']) || !is_array($values['post'])) {
+            return null;
+        }
 
-		return array(
-			'post' => Encoding::convertEncoding($values['post'], 'UTF-8', SITE_CHARSET),
-		);
-	}
+        return array(
+            'post' => Encoding::convertEncoding($values['post'], 'UTF-8', SITE_CHARSET),
+        );
+    }
 }

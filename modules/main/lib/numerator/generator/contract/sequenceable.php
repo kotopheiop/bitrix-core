@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Main\Numerator\Generator\Contract;
 
 use Bitrix\Main\Result;
@@ -9,22 +10,23 @@ use Bitrix\Main\Result;
  */
 interface Sequenceable
 {
-	/**
-	 * @param $numeratorId
-	 * @return mixed
-	 */
-	public function getNextNumber($numeratorId);
+    /**
+     * @param $numeratorId
+     * @return mixed
+     */
+    public function getNextNumber($numeratorId);
 
-	/**
-	 * @param $numeratorId
-	 * @param int $newNumber
-	 * @param $whereNumber
-	 * @return Result
-	 */
-	public function setNextNumber($numeratorId, $newNumber, $whereNumber);
-	/**
-	 * @param $numberHash
-	 * @return mixed
-	 */
-	public function setNumberHash($numberHash);
+    /**
+     * @param $numeratorId
+     * @param int $newNumber
+     * @param $whereNumber
+     * @return Result
+     */
+    public function setNextNumber($numeratorId, $newNumber, $whereNumber);
+
+    /**
+     * @param $numberHash
+     * @return mixed
+     */
+    public function setNumberHash($numberHash);
 }

@@ -14,41 +14,40 @@ namespace Bitrix\Iblock\ORM;
  */
 class PropertyValue
 {
-	protected $value;
+    protected $value;
 
-	protected $description;
+    protected $description;
 
-	public function __construct($value, $description = null)
-	{
-		$this->value = $value;
+    public function __construct($value, $description = null)
+    {
+        $this->value = $value;
 
-		if ($description !== null)
-		{
-			$this->description = $description;
-		}
-	}
+        if ($description !== null) {
+            $this->description = $description;
+        }
+    }
 
-	/**
-	 * @return mixed
-	 */
-	public function getValue()
-	{
-		return $this->value;
-	}
+    /**
+     * @return mixed
+     */
+    public function getValue()
+    {
+        return $this->value;
+    }
 
-	/**
-	 * @return null
-	 */
-	public function getDescription()
-	{
-		return $this->description;
-	}
+    /**
+     * @return null
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function hasDescription()
-	{
-		return $this->description !== null;
-	}
+    /**
+     * @return bool
+     */
+    public function hasDescription()
+    {
+        return $this->description !== null;
+    }
 }

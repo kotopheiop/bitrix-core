@@ -11,26 +11,25 @@ use Bitrix\Sale\Result;
 
 class UserProfileContactCompany extends UserProfileImport
 {
-	public function getOwnerTypeId()
-	{
-		return EntityType::USER_PROFILE_CONTACT_COMPANY;
-	}
+    public function getOwnerTypeId()
+    {
+        return EntityType::USER_PROFILE_CONTACT_COMPANY;
+    }
 
-	public function add(array $params)
-	{
-		$result = new Result();
+    public function add(array $params)
+    {
+        $result = new Result();
 
-		$r = parent::add($params);
-		if($r->isSuccess())
-		{
-			$userId = $this->getEntity()->getField('ID');
-			$property = $params["ORDER_PROP"];
+        $r = parent::add($params);
+        if ($r->isSuccess()) {
+            $userId = $this->getEntity()->getField('ID');
+            $property = $params["ORDER_PROP"];
 
-			$order = Order::create($userId);
-			$order->getPropertyCollection()->setValuesFromPost(['PROPERTIES'=>$property], []);
+            $order = Order::create($userId);
+            $order->getPropertyCollection()->setValuesFromPost(['PROPERTIES' => $property], []);
 
-			EntityMatchManager::getInstance()->match($order);
-		}
-		return $result;
-	}
+            EntityMatchManager::getInstance()->match($order);
+        }
+        return $result;
+    }
 }

@@ -15,7 +15,7 @@ abstract class AbstractMessage implements Message
      * Message constructor
      *
      * @param \Protobuf\Stream|resource|string $stream
-     * @param \Protobuf\Configuration          $configuration
+     * @param \Protobuf\Configuration $configuration
      */
     public function __construct($stream = null, \Protobuf\Configuration $configuration = null)
     {
@@ -23,7 +23,7 @@ abstract class AbstractMessage implements Message
             return;
         }
 
-        $config  = $configuration ?: \Protobuf\Configuration::getInstance();
+        $config = $configuration ?: \Protobuf\Configuration::getInstance();
         $context = $config->createReadContext($stream);
 
         $this->readFrom($context);

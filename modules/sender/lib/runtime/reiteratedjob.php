@@ -17,49 +17,46 @@ use Bitrix\Sender\Internals\Model\LetterTable;
  */
 class ReiteratedJob extends Job
 {
-	/**
-	 * Actualize jobs.
+    /**
+     * Actualize jobs.
+     * @return $this
+     */
+    public function actualize()
+    {
+        $agentName = static::getAgentName();
+        self::removeAgent($agentName);
 
-	 * @return $this
-	 */
-	public function actualize()
-	{
-		$agentName = static::getAgentName();
-		self::removeAgent($agentName);
+        if (Env::isReiteratedJobCron()) {
+            return $this;
+        }
 
-		if (Env::isReiteratedJobCron())
-		{
-			return $this;
-		}
+        $reiterated = LetterTable::getRow([
+            'select' => ['AUTO_SEND_TIME'],
+            'filter' => [
+                '=CAMPAIGN.ACTIVE' => 'Y',
+                '=REITERATE' => 'Y',
+                '=STATUS' => LetterTable::STATUS_WAIT,
+            ],
+            'order' => ['AUTO_SEND_TIME' => 'ASC'],
+            'limit' => 1
+        ]);
+        if (!$reiterated) {
+            return $this;
+        }
 
-		$reiterated = LetterTable::getRow([
-			'select' => ['AUTO_SEND_TIME'],
-			'filter' => [
-				'=CAMPAIGN.ACTIVE' => 'Y',
-				'=REITERATE' => 'Y',
-				'=STATUS' => LetterTable::STATUS_WAIT,
-			],
-			'order' => ['AUTO_SEND_TIME' => 'ASC'],
-			'limit' => 1
-		]);
-		if (!$reiterated)
-		{
-			return $this;
-		}
+        $interval = Option::get('sender', 'reiterate_interval');
+        self::addAgent($agentName, $interval, $reiterated['AUTO_SEND_TIME']);
 
-		$interval = Option::get('sender', 'reiterate_interval');
-		self::addAgent($agentName, $interval, $reiterated['AUTO_SEND_TIME']);
+        return $this;
+    }
 
-		return $this;
-	}
-
-	/**
-	 * Get agent name.
-	 *
-	 * @return string
-	 */
-	public static function getAgentName()
-	{
-		return '\Bitrix\Sender\MailingManager::checkPeriod();';
-	}
+    /**
+     * Get agent name.
+     *
+     * @return string
+     */
+    public static function getAgentName()
+    {
+        return '\Bitrix\Sender\MailingManager::checkPeriod();';
+    }
 }

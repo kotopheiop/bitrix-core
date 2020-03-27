@@ -16,11 +16,11 @@ use Bitrix\Sender\Message;
  */
 interface iLimitation
 {
-	/**
-	 * Get limiters.
-	 *
-	 * @param Message\iBase $message Message.
-	 * @return iLimiter[]
-	 */
-	public function getLimiters(Message\iBase $message = null);
+    /**
+     * Get limiters.
+     *
+     * @param Message\iBase $message Message.
+     * @return iLimiter[]
+     */
+    public function getLimiters(Message\iBase $message = null);
 }

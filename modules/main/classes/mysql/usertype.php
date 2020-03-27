@@ -1,17 +1,16 @@
 <?
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/usertype.php");
+require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/usertype.php");
 
 class CUserTypeEntity extends CAllUserTypeEntity
 {
-	function CreatePropertyTables($entity_id)
-	{
-		global $DB, $APPLICATION;
-		if(!$DB->TableExists("b_utm_".strtolower($entity_id)))
-		{
-			if(defined("MYSQL_TABLE_TYPE"))
-				$DB->Query("SET storage_engine = '".MYSQL_TABLE_TYPE."'", true);
-			$rs = $DB->Query("
-				create table IF NOT EXISTS b_utm_".strtolower($entity_id)." (
+    function CreatePropertyTables($entity_id)
+    {
+        global $DB, $APPLICATION;
+        if (!$DB->TableExists("b_utm_" . strtolower($entity_id))) {
+            if (defined("MYSQL_TABLE_TYPE"))
+                $DB->Query("SET storage_engine = '" . MYSQL_TABLE_TYPE . "'", true);
+            $rs = $DB->Query("
+				create table IF NOT EXISTS b_utm_" . strtolower($entity_id) . " (
 					ID int(11) not null auto_increment,
 					VALUE_ID int(11) not null,
 					FIELD_ID int(11) not null,
@@ -19,51 +18,48 @@ class CUserTypeEntity extends CAllUserTypeEntity
 					VALUE_INT int,
 					VALUE_DOUBLE float,
 					VALUE_DATE datetime,
-					INDEX ix_utm_".$entity_id."_1(FIELD_ID),
-					INDEX ix_utm_".$entity_id."_2(VALUE_ID),
+					INDEX ix_utm_" . $entity_id . "_1(FIELD_ID),
+					INDEX ix_utm_" . $entity_id . "_2(VALUE_ID),
 					PRIMARY KEY (ID)
 				)
-			", false, "FILE: ".__FILE__."<br>LINE: ".__LINE__);
-			if(!$rs)
-			{
-				$APPLICATION->ThrowException(GetMessage("USER_TYPE_TABLE_CREATION_ERROR",array(
-					"#ENTITY_ID#"=>htmlspecialcharsbx($entity_id),
-				)));
-				return false;
-			}
-		}
-		if(!$DB->TableExists("b_uts_".strtolower($entity_id)))
-		{
-			if(defined("MYSQL_TABLE_TYPE"))
-				$DB->Query("SET storage_engine = '".MYSQL_TABLE_TYPE."'", true);
+			", false, "FILE: " . __FILE__ . "<br>LINE: " . __LINE__);
+            if (!$rs) {
+                $APPLICATION->ThrowException(GetMessage("USER_TYPE_TABLE_CREATION_ERROR", array(
+                    "#ENTITY_ID#" => htmlspecialcharsbx($entity_id),
+                )));
+                return false;
+            }
+        }
+        if (!$DB->TableExists("b_uts_" . strtolower($entity_id))) {
+            if (defined("MYSQL_TABLE_TYPE"))
+                $DB->Query("SET storage_engine = '" . MYSQL_TABLE_TYPE . "'", true);
 
-			$rs = $DB->Query("
-				create table IF NOT EXISTS b_uts_".strtolower($entity_id)." (
+            $rs = $DB->Query("
+				create table IF NOT EXISTS b_uts_" . strtolower($entity_id) . " (
 					VALUE_ID int(11) not null,
 					PRIMARY KEY (VALUE_ID)
 				)
-			", false, "FILE: ".__FILE__."<br>LINE: ".__LINE__);
-			if(!$rs)
-			{
-				$APPLICATION->ThrowException(GetMessage("USER_TYPE_TABLE_CREATION_ERROR",array(
-					"#ENTITY_ID#"=>htmlspecialcharsbx($entity_id),
-				)));
-				return false;
-			}
-		}
-		return true;
-	}
+			", false, "FILE: " . __FILE__ . "<br>LINE: " . __LINE__);
+            if (!$rs) {
+                $APPLICATION->ThrowException(GetMessage("USER_TYPE_TABLE_CREATION_ERROR", array(
+                    "#ENTITY_ID#" => htmlspecialcharsbx($entity_id),
+                )));
+                return false;
+            }
+        }
+        return true;
+    }
 
-	function DropColumnSQL($strTable, $arColumns)
-	{
-		return array("ALTER TABLE ".$strTable." DROP ".implode(", DROP ", $arColumns));
-	}
+    function DropColumnSQL($strTable, $arColumns)
+    {
+        return array("ALTER TABLE " . $strTable . " DROP " . implode(", DROP ", $arColumns));
+    }
 }
 
 /**
- * Эта переменная содержит экземпляр класса через API которого
- * и происходит работа с пользовательскими свойствами.
- * @global CUserTypeManager $GLOBALS['USER_FIELD_MANAGER']
+ * пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ API пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+ * пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+ * @global CUserTypeManager $GLOBALS ['USER_FIELD_MANAGER']
  * @name $USER_FIELD_MANAGER
  */
 $GLOBALS['USER_FIELD_MANAGER'] = new CUserTypeManager;

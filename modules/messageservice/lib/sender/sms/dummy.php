@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\MessageService\Sender\Sms;
 
 /**
@@ -7,50 +8,50 @@ namespace Bitrix\MessageService\Sender\Sms;
  */
 class Dummy extends \Bitrix\MessageService\Sender\Base
 {
-	public function getId()
-	{
-		return 'dummy';
-	}
+    public function getId()
+    {
+        return 'dummy';
+    }
 
-	public function getName()
-	{
-		return 'Dummy SMS';
-	}
+    public function getName()
+    {
+        return 'Dummy SMS';
+    }
 
-	public function getShortName()
-	{
-		return $this->getName();
-	}
+    public function getShortName()
+    {
+        return $this->getName();
+    }
 
-	public function getFromList()
-	{
-		return [
-			[
-				'id' => 'test',
-				'name' => 'test',
-			]
-		];
-	}
+    public function getFromList()
+    {
+        return [
+            [
+                'id' => 'test',
+                'name' => 'test',
+            ]
+        ];
+    }
 
-	public function sendMessage(array $messageFieldsFields)
-	{
-		AddMessage2Log($messageFieldsFields);
+    public function sendMessage(array $messageFieldsFields)
+    {
+        AddMessage2Log($messageFieldsFields);
 
-		$result = new \Bitrix\MessageService\Sender\Result\SendMessage();
+        $result = new \Bitrix\MessageService\Sender\Result\SendMessage();
 
-		$result->setStatus(\Bitrix\MessageService\MessageStatus::DELIVERED);
-		$result->setExternalId(uniqid());
+        $result->setStatus(\Bitrix\MessageService\MessageStatus::DELIVERED);
+        $result->setExternalId(uniqid());
 
-		return $result;
-	}
+        return $result;
+    }
 
-	public function canUse()
-	{
-		return true;
-	}
+    public function canUse()
+    {
+        return true;
+    }
 
-	public static function onGetSmsSenders()
-	{
-		return [new self()];
-	}
+    public static function onGetSmsSenders()
+    {
+        return [new self()];
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Forum\Copy;
 
 use Bitrix\Forum\Copy\Implement\Comment as CommentImplementer;
@@ -9,53 +10,52 @@ use Bitrix\Main\Copy\EntityCopier;
 
 class TopicManager
 {
-	private $executiveUserId;
-	private $topicIdsToCopy = [];
+    private $executiveUserId;
+    private $topicIdsToCopy = [];
 
-	public function __construct($executiveUserId, array $topicIdsToCopy)
-	{
-		$this->executiveUserId = $executiveUserId;
-		$this->topicIdsToCopy = $topicIdsToCopy;
-	}
+    public function __construct($executiveUserId, array $topicIdsToCopy)
+    {
+        $this->executiveUserId = $executiveUserId;
+        $this->topicIdsToCopy = $topicIdsToCopy;
+    }
 
-	public function startCopy()
-	{
-		$containerCollection = $this->getContainerCollection();
+    public function startCopy()
+    {
+        $containerCollection = $this->getContainerCollection();
 
-		$topicCopier = $this->getTopicCopier();
+        $topicCopier = $this->getTopicCopier();
 
-		return $topicCopier->copy($containerCollection);
-	}
+        return $topicCopier->copy($containerCollection);
+    }
 
-	private function getContainerCollection()
-	{
-		$containerCollection = new ContainerCollection();
+    private function getContainerCollection()
+    {
+        $containerCollection = new ContainerCollection();
 
-		foreach ($this->topicIdsToCopy as $topicId)
-		{
-			$containerCollection[] = new Container($topicId);
-		}
+        foreach ($this->topicIdsToCopy as $topicId) {
+            $containerCollection[] = new Container($topicId);
+        }
 
-		return $containerCollection;
-	}
+        return $containerCollection;
+    }
 
-	private function getTopicCopier()
-	{
-		return new EntityCopier($this->getTopicImplementer());
-	}
+    private function getTopicCopier()
+    {
+        return new EntityCopier($this->getTopicImplementer());
+    }
 
-	private function getTopicImplementer()
-	{
-		global $USER_FIELD_MANAGER;
+    private function getTopicImplementer()
+    {
+        global $USER_FIELD_MANAGER;
 
-		$commentImplementer = new CommentImplementer();
-		$commentImplementer->setUserFieldManager($USER_FIELD_MANAGER);
-		$commentImplementer->setExecutiveUserId($this->executiveUserId);
-		$commentCopier = new EntityCopier($commentImplementer);
+        $commentImplementer = new CommentImplementer();
+        $commentImplementer->setUserFieldManager($USER_FIELD_MANAGER);
+        $commentImplementer->setExecutiveUserId($this->executiveUserId);
+        $commentCopier = new EntityCopier($commentImplementer);
 
-		$topicImplementer = new TopicImplementer();
-		$topicImplementer->setCommentCopier($commentCopier);
+        $topicImplementer = new TopicImplementer();
+        $topicImplementer->setCommentCopier($commentCopier);
 
-		return $topicImplementer;
-	}
+        return $topicImplementer;
+    }
 }

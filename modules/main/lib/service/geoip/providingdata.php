@@ -1,4 +1,5 @@
 <?
+
 namespace Bitrix\Main\Service\GeoIp;
 
 /**
@@ -9,36 +10,36 @@ namespace Bitrix\Main\Service\GeoIp;
  */
 class ProvidingData
 {
-	/** @var bool Country name  */
-	public $countryName = false;
-	/** @var bool Region name  */
-	public $regionName = false;
-	/** @var bool Subregion name  */
-	public $subRegionName = false;
-	/** @var bool City name  */
-	public $cityName = false;
+    /** @var bool Country name */
+    public $countryName = false;
+    /** @var bool Region name */
+    public $regionName = false;
+    /** @var bool Subregion name */
+    public $subRegionName = false;
+    /** @var bool City name */
+    public $cityName = false;
 
-	/** @var bool Country code  */
-	public $countryCode = false;
-	/** @var bool Region code  */
-	public $regionCode = false;
+    /** @var bool Country code */
+    public $countryCode = false;
+    /** @var bool Region code */
+    public $regionCode = false;
 
-	/** @var bool Zip or postal code  */
-	public $zipCode = false;
+    /** @var bool Zip or postal code */
+    public $zipCode = false;
 
-	/** @var bool Latitude*/
-	public $latitude = false;
-	/** @var bool Longitude*/
-	public $longitude = false;
+    /** @var bool Latitude */
+    public $latitude = false;
+    /** @var bool Longitude */
+    public $longitude = false;
 
-	/** @var bool Timezone*/
-	public $timezone = false;
+    /** @var bool Timezone */
+    public $timezone = false;
 
-	/** @var bool Autonomous System Numbers (ASN) */
-	public $asn = false;
-	/** @var bool Internet Service Provider (ISP) name */
-	public $ispName = false;
+    /** @var bool Autonomous System Numbers (ASN) */
+    public $asn = false;
+    /** @var bool Internet Service Provider (ISP) name */
+    public $ispName = false;
 
-	/** @var bool Organization name */
-	public $organizationName = false;
+    /** @var bool Organization name */
+    public $organizationName = false;
 }

@@ -11,17 +11,17 @@ use Bitrix\Main\Web\WebPacker;
  */
 class Simple
 {
-	/**
-	 * Print script.
-	 *
-	 * @return void
-	 */
-	public static function printScript()
-	{
-		$content = (new WebPacker\Builder())
-			->addExtension('ui.webpacker.example.simple')
-			->stringify();
+    /**
+     * Print script.
+     *
+     * @return void
+     */
+    public static function printScript()
+    {
+        $content = (new WebPacker\Builder())
+            ->addExtension('ui.webpacker.example.simple')
+            ->stringify();
 
-		echo '<script>' . ($content) .  '</script>';
-	}
+        echo '<script>' . ($content) . '</script>';
+    }
 }

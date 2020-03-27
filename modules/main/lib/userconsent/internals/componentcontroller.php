@@ -5,6 +5,7 @@
  * @subpackage main
  * @copyright 2001-2016 Bitrix
  */
+
 namespace Bitrix\Main\UserConsent\Internals;
 
 use Bitrix\Main\Context;
@@ -16,87 +17,81 @@ Loc::loadMessages(__FILE__);
 
 abstract class ComponentController
 {
-	protected $errors = array();
-	protected $action = null;
-	protected $responseData = array();
-	protected $requestData = array();
+    protected $errors = array();
+    protected $action = null;
+    protected $responseData = array();
+    protected $requestData = array();
 
-	/** @var HttpRequest $request */
-	protected $request = array();
+    /** @var HttpRequest $request */
+    protected $request = array();
 
-	abstract protected function getActions();
-	abstract protected function checkPermissions();
+    abstract protected function getActions();
 
-	protected function prepareRequestData()
-	{
+    abstract protected function checkPermissions();
 
-	}
+    protected function prepareRequestData()
+    {
 
-	protected function giveResponse()
-	{
-		global $APPLICATION;
-		$APPLICATION->restartBuffer();
+    }
 
-		header('Content-Type:application/json; charset=UTF-8');
-		echo Json::encode(
-			$this->responseData + array(
-				'error' => $this->hasErrors(),
-				'text' => implode('<br>', $this->errors),
-			)
-		);
+    protected function giveResponse()
+    {
+        global $APPLICATION;
+        $APPLICATION->restartBuffer();
 
-		\CMain::finalActions();
-		exit;
-	}
+        header('Content-Type:application/json; charset=UTF-8');
+        echo Json::encode(
+            $this->responseData + array(
+                'error' => $this->hasErrors(),
+                'text' => implode('<br>', $this->errors),
+            )
+        );
 
-	protected function getActionCall()
-	{
-		return array($this, $this->action);
-	}
+        \CMain::finalActions();
+        exit;
+    }
 
-	protected function hasErrors()
-	{
-		return count($this->errors) > 0;
-	}
+    protected function getActionCall()
+    {
+        return array($this, $this->action);
+    }
 
-	protected function check()
-	{
-		if(!$this->checkPermissions())
-		{
-			$this->errors[] = Loc::getMessage('MAIN_PERMISSION_DENIED');
-		}
-		if(!in_array($this->action, $this->getActions()))
-		{
-			$this->errors[] = 'Action "' . $this->action . '" not found.';
-		}
-		elseif(!check_bitrix_sessid() || !$this->request->isPost())
-		{
-			$this->errors[] = 'Security error.';
-		}
-		elseif(!is_callable($this->getActionCall()))
-		{
-			$this->errors[] = 'Action method "' . $this->action . '" not found.';
-		}
+    protected function hasErrors()
+    {
+        return count($this->errors) > 0;
+    }
 
-		return !$this->hasErrors();
-	}
+    protected function check()
+    {
+        if (!$this->checkPermissions()) {
+            $this->errors[] = Loc::getMessage('MAIN_PERMISSION_DENIED');
+        }
+        if (!in_array($this->action, $this->getActions())) {
+            $this->errors[] = 'Action "' . $this->action . '" not found.';
+        } elseif (!check_bitrix_sessid() || !$this->request->isPost()) {
+            $this->errors[] = 'Security error.';
+        } elseif (!is_callable($this->getActionCall())) {
+            $this->errors[] = 'Action method "' . $this->action . '" not found.';
+        }
 
-	/**
-	 * Exec.
-	 *
-	 * @return void
-	 */
-	public function exec()
-	{
-		$this->request = Context::getCurrent()->getRequest();
-		$this->action = $this->request->get('action');
+        return !$this->hasErrors();
+    }
 
-		$this->prepareRequestData();
+    /**
+     * Exec.
+     *
+     * @return void
+     */
+    public function exec()
+    {
+        $this->request = Context::getCurrent()->getRequest();
+        $this->action = $this->request->get('action');
 
-		if($this->check())
-		{
-			call_user_func_array($this->getActionCall(), array($this->requestData));
-		}
-		$this->giveResponse();
-	}
+        $this->prepareRequestData();
+
+        if ($this->check()) {
+            call_user_func_array($this->getActionCall(), array($this->requestData));
+        }
+        $this->giveResponse();
+    }
 }

@@ -9,10 +9,12 @@ namespace Bitrix\Sale\TradingPlatform;
  */
 abstract class TabHandler
 {
-	public $name = "";
-	public $description = "";
+    public $name = "";
+    public $description = "";
 
-	abstract public function action($arArgs);
-	abstract public function check($arArgs);
-	abstract public function showTabSection($divName, $arArgs, $bVarsFromForm);
+    abstract public function action($arArgs);
+
+    abstract public function check($arArgs);
+
+    abstract public function showTabSection($divName, $arArgs, $bVarsFromForm);
 } 

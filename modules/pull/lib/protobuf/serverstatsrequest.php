@@ -30,7 +30,7 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
      */
     public function extensions()
     {
-        if ( $this->extensions !== null) {
+        if ($this->extensions !== null) {
             return $this->extensions;
         }
 
@@ -59,7 +59,7 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values  = array_merge([
+        $values = array_merge([
         ], $values);
 
         return $message;
@@ -71,7 +71,7 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
     public static function descriptor()
     {
         return \google\protobuf\DescriptorProto::fromArray([
-            'name'      => 'ServerStatsRequest',
+            'name' => 'ServerStatsRequest',
         ]);
     }
 
@@ -80,9 +80,9 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
      */
     public function toStream(\Protobuf\Configuration $configuration = null)
     {
-        $config  = $configuration ?: \Protobuf\Configuration::getInstance();
+        $config = $configuration ?: \Protobuf\Configuration::getInstance();
         $context = $config->createWriteContext();
-        $stream  = $context->getStream();
+        $stream = $context->getStream();
 
         $this->writeTo($context);
         $stream->seek(0);
@@ -95,8 +95,8 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
      */
     public function writeTo(\Protobuf\WriteContext $context)
     {
-        $stream      = $context->getStream();
-        $writer      = $context->getWriter();
+        $stream = $context->getStream();
+        $writer = $context->getWriter();
         $sizeContext = $context->getComputeSizeContext();
 
         if ($this->extensions !== null) {
@@ -125,16 +125,16 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
                 break;
             }
 
-            $key  = $reader->readVarint($stream);
+            $key = $reader->readVarint($stream);
             $wire = \Protobuf\WireFormat::getTagWireType($key);
-            $tag  = \Protobuf\WireFormat::getTagFieldNumber($key);
+            $tag = \Protobuf\WireFormat::getTagFieldNumber($key);
 
             if ($stream->eof()) {
                 break;
             }
 
             $extensions = $context->getExtensionRegistry();
-            $extension  = $extensions ? $extensions->findByNumber(__CLASS__, $tag) : null;
+            $extension = $extensions ? $extensions->findByNumber(__CLASS__, $tag) : null;
 
             if ($extension !== null) {
                 $this->extensions()->add($extension, $extension->readFrom($context, $wire));
@@ -146,7 +146,7 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
                 $this->unknownFieldSet = new \Protobuf\UnknownFieldSet();
             }
 
-            $data    = $reader->readUnknown($stream, $wire);
+            $data = $reader->readUnknown($stream, $wire);
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
@@ -160,7 +160,7 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
     public function serializedSize(\Protobuf\ComputeSizeContext $context)
     {
         $calculator = $context->getSizeCalculator();
-        $size       = 0;
+        $size = 0;
 
         if ($this->extensions !== null) {
             $size += $this->extensions->serializedSize($context);
@@ -181,7 +181,7 @@ class ServerStatsRequest extends \Protobuf\AbstractMessage
      */
     public function merge(\Protobuf\Message $message)
     {
-        if ( ! $message instanceof \Bitrix\Pull\Protobuf\ServerStatsRequest) {
+        if (!$message instanceof \Bitrix\Pull\Protobuf\ServerStatsRequest) {
             throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
         }
     }

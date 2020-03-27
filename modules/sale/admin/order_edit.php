@@ -1,11 +1,12 @@
 <?
+
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Helpers\Admin\Blocks;
 use Bitrix\Sale;
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/prolog.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_before.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/prolog.php");
 
 Bitrix\Main\Loader::includeModule('sale');
 $moduleId = "sale";
@@ -23,110 +24,102 @@ $registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 $orderClass = $registry->getOrderClassName();
 
 if ($saleModulePermissions == "D")
-	$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+    $APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 
 /** @var \Bitrix\Sale\Order $order */
-if(!isset($_REQUEST["ID"]) || intval($_REQUEST["ID"]) <= 0)
-	LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID);
+if (!isset($_REQUEST["ID"]) || intval($_REQUEST["ID"]) <= 0)
+    LocalRedirect("/bitrix/admin/sale_order.php?lang=" . LANGUAGE_ID);
 
 $ID = intval($_REQUEST["ID"]);
 $boolLocked = $orderClass::isLocked($ID);
 
-if($boolLocked)
-	LocalRedirect("sale_order_view.php?ID=".$ID."&lang=".LANGUAGE_ID);
+if ($boolLocked)
+    LocalRedirect("sale_order_view.php?ID=" . $ID . "&lang=" . LANGUAGE_ID);
 
 //Unlocking if we leave this page
-if(isset($_REQUEST['unlock']) && 'Y' == $_REQUEST['unlock'])
-{
-	$lockStatusRes = $orderClass::getLockedStatus($ID);
+if (isset($_REQUEST['unlock']) && 'Y' == $_REQUEST['unlock']) {
+    $lockStatusRes = $orderClass::getLockedStatus($ID);
 
-	if($lockStatusRes->isSuccess())
-		$lockStatusData = $lockStatusRes->getData();
+    if ($lockStatusRes->isSuccess())
+        $lockStatusData = $lockStatusRes->getData();
 
-	if(isset($lockStatusData['LOCK_STATUS'])
-			&&
-			(	$lockStatusData['LOCK_STATUS'] != $orderClass::SALE_ORDER_LOCK_STATUS_RED
-					|| !isset($_REQUEST['target'])
-			)
-	)
-	{
-		$res = $orderClass::unlock($ID);
+    if (isset($lockStatusData['LOCK_STATUS'])
+        &&
+        ($lockStatusData['LOCK_STATUS'] != $orderClass::SALE_ORDER_LOCK_STATUS_RED
+            || !isset($_REQUEST['target'])
+        )
+    ) {
+        $res = $orderClass::unlock($ID);
 
-		if($res->isSuccess())
-		{
-			/** @var Sale\DiscountCouponsManager $discountCouponsClass */
-			$discountCouponsClass = $registry->getDiscountCouponClassName();
-			$discountCouponsClass::clearByOrder($ID);
-		}
-	}
+        if ($res->isSuccess()) {
+            /** @var Sale\DiscountCouponsManager $discountCouponsClass */
+            $discountCouponsClass = $registry->getDiscountCouponClassName();
+            $discountCouponsClass::clearByOrder($ID);
+        }
+    }
 
-	if(isset($_REQUEST['target']) && 'list' == $_REQUEST['target'])
-		LocalRedirect("sale_order.php?lang=".LANGUAGE_ID);
-	else
-		LocalRedirect("sale_order_edit.php?ID=".$ID."&lang=".LANGUAGE_ID);
+    if (isset($_REQUEST['target']) && 'list' == $_REQUEST['target'])
+        LocalRedirect("sale_order.php?lang=" . LANGUAGE_ID);
+    else
+        LocalRedirect("sale_order_edit.php?ID=" . $ID . "&lang=" . LANGUAGE_ID);
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/helpers/admin/orderedit.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/helpers/admin/orderedit.php");
 
 //load order
 
 $boolLocked = $orderClass::isLocked($ID);
 
-if ($boolLocked)
-{
-	$result->addError(
-		new \Bitrix\Main\Entity\EntityError(
-			OrderEdit::getLockingMessage($ID)
-		)
-	);
+if ($boolLocked) {
+    $result->addError(
+        new \Bitrix\Main\Entity\EntityError(
+            OrderEdit::getLockingMessage($ID)
+        )
+    );
 }
 
 $order = $orderClass::load($_REQUEST["ID"]);
-if(!$order)
-	LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID);
+if (!$order)
+    LocalRedirect("/bitrix/admin/sale_order.php?lang=" . LANGUAGE_ID);
 
 $orderStatusClass = $registry->getOrderStatusClassName();
 $allowedStatusesUpdate = $orderStatusClass::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
-if(!in_array($order->getField("STATUS_ID"), $allowedStatusesUpdate))
-	LocalRedirect("/bitrix/admin/sale_order_view.php?ID=".$ID."&lang=".LANGUAGE_ID);
+if (!in_array($order->getField("STATUS_ID"), $allowedStatusesUpdate))
+    LocalRedirect("/bitrix/admin/sale_order_view.php?ID=" . $ID . "&lang=" . LANGUAGE_ID);
 
 $isUserResponsible = false;
 $isAllowCompany = false;
 
-if ($saleModulePermissions == 'P')
-{
-	$userCompanyList = array();
-	$groups = $USER->GetUserGroupArray();
+if ($saleModulePermissions == 'P') {
+    $userCompanyList = array();
+    $groups = $USER->GetUserGroupArray();
 
-	$userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($USER->GetID());
+    $userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($USER->GetID());
 
-	if ($order->getField('RESPONSIBLE_ID') == $USER->GetID())
-	{
-		$isUserResponsible = true;
-	}
+    if ($order->getField('RESPONSIBLE_ID') == $USER->GetID()) {
+        $isUserResponsible = true;
+    }
 
-	if (in_array($order->getField('COMPANY_ID'), $userCompanyList))
-	{
-		$isAllowCompany = true;
-	}
+    if (in_array($order->getField('COMPANY_ID'), $userCompanyList)) {
+        $isAllowCompany = true;
+    }
 
-	if (!$isUserResponsible && !$isAllowCompany)
-	{
-		LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID);
-	}
+    if (!$isUserResponsible && !$isAllowCompany) {
+        LocalRedirect("/bitrix/admin/sale_order.php?lang=" . LANGUAGE_ID);
+    }
 }
 
 $userId = isset($_POST["USER_ID"]) ? intval($_POST["USER_ID"]) : $order->getUserId();
 
 OrderEdit::initCouponsData(
-	$userId,
-	$ID,
-	isset($_POST["OLD_USER_ID"]) ? intval($_POST["USER_ID"]) : null
+    $userId,
+    $ID,
+    isset($_POST["OLD_USER_ID"]) ? intval($_POST["USER_ID"]) : null
 );
 
-if(!$boolLocked)
-	$orderClass::lock($ID);
+if (!$boolLocked)
+    $orderClass::lock($ID);
 
 $customTabber = new CAdminTabEngine("OnAdminSaleOrderEdit", array("ID" => $ID));
 $customDraggableBlocks = new CAdminDraggableBlockEngine('OnAdminSaleOrderEditDraggable', array('ORDER' => $order));
@@ -137,324 +130,284 @@ $isNeedFieldsRestore = $_SERVER["REQUEST_METHOD"] == "POST" && !$isSavingOperati
 
 //save order params
 if (($isSavingOperation || $isNeedFieldsRestore || $isRefreshDataAndSaveOperation)
-	&& ($saleModulePermissions >= "U" || ($saleModulePermissions == "P" && ($isAllowCompany === true || $isUserResponsible === true)))
-	&& check_bitrix_sessid()
-	&& $result->isSuccess()
-)
-{
-	if(($isSavingOperation || $isRefreshDataAndSaveOperation))
-	{
-		if($isSavingOperation)
-			OrderEdit::$isTrustProductFormData = true;
+    && ($saleModulePermissions >= "U" || ($saleModulePermissions == "P" && ($isAllowCompany === true || $isUserResponsible === true)))
+    && check_bitrix_sessid()
+    && $result->isSuccess()
+) {
+    if (($isSavingOperation || $isRefreshDataAndSaveOperation)) {
+        if ($isSavingOperation)
+            OrderEdit::$isTrustProductFormData = true;
 
-		if($isRefreshDataAndSaveOperation)
-			OrderEdit::$isRefreshData = true;
+        if ($isRefreshDataAndSaveOperation)
+            OrderEdit::$isRefreshData = true;
 
-		$res = OrderEdit::editOrderByFormData($_POST, $order, $USER->GetID(), true, $_FILES, $result);
+        $res = OrderEdit::editOrderByFormData($_POST, $order, $USER->GetID(), true, $_FILES, $result);
 
-		if($res)
-			$order = $res;
+        if ($res)
+            $order = $res;
 
-		if($res)
-		{
-			if (!$customTabber->Check())
-			{
-				if ($ex = $APPLICATION->GetException())
-					$errorMessage .= $ex->GetString();
-				else
-					$errorMessage .= "Custom tabber check unknown error!";
+        if ($res) {
+            if (!$customTabber->Check()) {
+                if ($ex = $APPLICATION->GetException())
+                    $errorMessage .= $ex->GetString();
+                else
+                    $errorMessage .= "Custom tabber check unknown error!";
 
-				$result->addError(new \Bitrix\Main\Entity\EntityError($errorMessage));
-			}
+                $result->addError(new \Bitrix\Main\Entity\EntityError($errorMessage));
+            }
 
-			if (!$customDraggableBlocks->check())
-			{
-				if ($ex = $APPLICATION->GetException())
-					$errorMessage .= $ex->GetString();
-				else
-					$errorMessage .= "Custom draggable block check unknown error!";
+            if (!$customDraggableBlocks->check()) {
+                if ($ex = $APPLICATION->GetException())
+                    $errorMessage .= $ex->GetString();
+                else
+                    $errorMessage .= "Custom draggable block check unknown error!";
 
-				$result->addError(new \Bitrix\Main\Entity\EntityError($errorMessage));
-			}
+                $result->addError(new \Bitrix\Main\Entity\EntityError($errorMessage));
+            }
 
-			$res = OrderEdit::saveCoupons($order->getUserId(), $_POST);
+            $res = OrderEdit::saveCoupons($order->getUserId(), $_POST);
 
-			if(!$res)
-				$result->addError(new \Bitrix\Main\Entity\EntityError("Can't save coupons!"));
+            if (!$res)
+                $result->addError(new \Bitrix\Main\Entity\EntityError("Can't save coupons!"));
 
-			$discount = $order->getDiscount();
+            $discount = $order->getDiscount();
 
-			if ($isRefreshDataAndSaveOperation)
-			{
-				/** @var Sale\DiscountCouponsManager $discountCouponsClass */
-				$discountCouponsClass = $registry->getDiscountCouponClassName();
+            if ($isRefreshDataAndSaveOperation) {
+                /** @var Sale\DiscountCouponsManager $discountCouponsClass */
+                $discountCouponsClass = $registry->getDiscountCouponClassName();
 
-				$discountCouponsClass::clearApply(true);
-				$discountCouponsClass::useSavedCouponsForApply(true);
-				$discount->setOrderRefresh(true);
-				$discount->setApplyResult(array());
-				/** @var \Bitrix\Sale\Basket $basket */
-				if (!($basket = $order->getBasket()))
-					throw new \Bitrix\Main\ObjectNotFoundException('Entity "Basket" not found');
+                $discountCouponsClass::clearApply(true);
+                $discountCouponsClass::useSavedCouponsForApply(true);
+                $discount->setOrderRefresh(true);
+                $discount->setApplyResult(array());
+                /** @var \Bitrix\Sale\Basket $basket */
+                if (!($basket = $order->getBasket()))
+                    throw new \Bitrix\Main\ObjectNotFoundException('Entity "Basket" not found');
 
-				$res = $basket->refreshData(array('PRICE', 'COUPONS'));
+                $res = $basket->refreshData(array('PRICE', 'COUPONS'));
 
-				if(!$res->isSuccess())
-					$result->addErrors($res->getErrors());
+                if (!$res->isSuccess())
+                    $result->addErrors($res->getErrors());
 
-			}
+            }
 
-			$res = $discount->calculate();
-			if(!$res->isSuccess())
-				$result->addErrors($res->getErrors());
-			else
-			{
-				$discountData = $res->getData();
-				if (!empty($discountData) && is_array($discountData))
-				{
-					$t = $order->applyDiscount($discountData);
-					if (!$t->isSuccess())
-					{
-						$result->addErrors($t->getErrors());
-					}
-					unset($t);
-				}
-				unset($discountData);
-			}
+            $res = $discount->calculate();
+            if (!$res->isSuccess())
+                $result->addErrors($res->getErrors());
+            else {
+                $discountData = $res->getData();
+                if (!empty($discountData) && is_array($discountData)) {
+                    $t = $order->applyDiscount($discountData);
+                    if (!$t->isSuccess()) {
+                        $result->addErrors($t->getErrors());
+                    }
+                    unset($t);
+                }
+                unset($discountData);
+            }
 
-			if ($isRefreshDataAndSaveOperation && !$order->isCanceled() && !$order->isPaid())
-			{
-				/** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
-				if (($paymentCollection = $order->getPaymentCollection()) && count($paymentCollection) == 1)
-				{
-					/** @var \Bitrix\Sale\Payment $payment */
-					if (($payment = $paymentCollection->rewind()) && !$payment->isPaid())
-					{
-						$payment->setFieldNoDemand('SUM', $order->getPrice());
-					}
-				}
-			}
+            if ($isRefreshDataAndSaveOperation && !$order->isCanceled() && !$order->isPaid()) {
+                /** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
+                if (($paymentCollection = $order->getPaymentCollection()) && count($paymentCollection) == 1) {
+                    /** @var \Bitrix\Sale\Payment $payment */
+                    if (($payment = $paymentCollection->rewind()) && !$payment->isPaid()) {
+                        $payment->setFieldNoDemand('SUM', $order->getPrice());
+                    }
+                }
+            }
 
-			if ($result->isSuccess())
-			{
-				$res = $order->verify();
-				if ($res->isSuccess())
-				{
-					$res = $order->save();
-					if (!$res->isSuccess())
-					{
-						$result->addErrors($res->getErrors());
-					}
-				}
-				else
-				{
-					$result->addErrors($res->getErrors());
-				}
+            if ($result->isSuccess()) {
+                $res = $order->verify();
+                if ($res->isSuccess()) {
+                    $res = $order->save();
+                    if (!$res->isSuccess()) {
+                        $result->addErrors($res->getErrors());
+                    }
+                } else {
+                    $result->addErrors($res->getErrors());
+                }
 
-				if ($result->isSuccess())
-				{
-					\Bitrix\Sale\Provider::resetTrustData($order->getSiteId());
-					if(isset($_POST["BUYER_PROFILE_ID"]))
-					{
-						$profResult = OrderEdit::saveProfileData(intval($_POST["BUYER_PROFILE_ID"]), $order, $_POST);
+                if ($result->isSuccess()) {
+                    \Bitrix\Sale\Provider::resetTrustData($order->getSiteId());
+                    if (isset($_POST["BUYER_PROFILE_ID"])) {
+                        $profResult = OrderEdit::saveProfileData(intval($_POST["BUYER_PROFILE_ID"]), $order, $_POST);
 
-						if(!$profResult->isSuccess())
-							$result->addErrors($profResult->getErrors());
-					}
+                        if (!$profResult->isSuccess())
+                            $result->addErrors($profResult->getErrors());
+                    }
 
-					if (!$customTabber->Action())
-					{
-						if ($ex = $APPLICATION->GetException())
-							$errorMessage .= $ex->GetString();
-						else
-							$errorMessage .= "Custom tabber action unknown error!";
+                    if (!$customTabber->Action()) {
+                        if ($ex = $APPLICATION->GetException())
+                            $errorMessage .= $ex->GetString();
+                        else
+                            $errorMessage .= "Custom tabber action unknown error!";
 
-						$result->addError(new \Bitrix\Main\Error($errorMessage));
-					}
+                        $result->addError(new \Bitrix\Main\Error($errorMessage));
+                    }
 
-					if (!$customDraggableBlocks->action())
-					{
-						if ($ex = $APPLICATION->GetException())
-							$errorMessage .= $ex->GetString();
-						else
-							$errorMessage .= "Custom draggable block action unknown error!";
+                    if (!$customDraggableBlocks->action()) {
+                        if ($ex = $APPLICATION->GetException())
+                            $errorMessage .= $ex->GetString();
+                        else
+                            $errorMessage .= "Custom draggable block action unknown error!";
 
-						$result->addError(new \Bitrix\Main\Error($errorMessage));
-					}
+                        $result->addError(new \Bitrix\Main\Error($errorMessage));
+                    }
 
-					if(!$result->isSuccess())
-						$_SESSION['SALE_ORDER_EDIT_ERROR'] = implode('<br>\n',$result->getErrorMessages());
+                    if (!$result->isSuccess())
+                        $_SESSION['SALE_ORDER_EDIT_ERROR'] = implode('<br>\n', $result->getErrorMessages());
 
-					if(isset($_POST["save"]))
-					{
-						if ($orderClass::isLocked($ID))
-							$orderClass::unlock($ID);
+                    if (isset($_POST["save"])) {
+                        if ($orderClass::isLocked($ID))
+                            $orderClass::unlock($ID);
 
-						LocalRedirect("/bitrix/admin/sale_order_edit.php?lang=".LANGUAGE_ID."&unlock=Y&target=list&ID=".$ID);
-					}
-					else
-						LocalRedirect("/bitrix/admin/sale_order_edit.php?lang=".LANGUAGE_ID."&ID=".$order->getId());
-				}
-			}
-		}
-		else
-		{
-			$result->addError(new \Bitrix\Main\Error(Loc::getMessage('SOE_ORDER_UPDATE_ERROR')));
-		}
-	}
+                        LocalRedirect("/bitrix/admin/sale_order_edit.php?lang=" . LANGUAGE_ID . "&unlock=Y&target=list&ID=" . $ID);
+                    } else
+                        LocalRedirect("/bitrix/admin/sale_order_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $order->getId());
+                }
+            }
+        } else {
+            $result->addError(new \Bitrix\Main\Error(Loc::getMessage('SOE_ORDER_UPDATE_ERROR')));
+        }
+    }
 }
 
 CUtil::InitJSCore();
 
 $APPLICATION->SetTitle(
-	Loc::getMessage(
-		"NEWO_TITLE_EDIT",
-		array(
-			"#ID#" => $order->getId(),
-			"#NUM#" => strlen($order->getField('ACCOUNT_NUMBER')) > 0 ? $order->getField('ACCOUNT_NUMBER') : $order->getId(),
-			"#DATE#" => $order->getDateInsert()->toString()
-		)
-	)
+    Loc::getMessage(
+        "NEWO_TITLE_EDIT",
+        array(
+            "#ID#" => $order->getId(),
+            "#NUM#" => strlen($order->getField('ACCOUNT_NUMBER')) > 0 ? $order->getField('ACCOUNT_NUMBER') : $order->getId(),
+            "#DATE#" => $order->getDateInsert()->toString()
+        )
+    )
 );
 \Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/admin/order_edit.js");
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_admin_after.php");
 
 /* context menu */
 $aMenu = array();
 
 $aMenu[] = array(
-	"ICON" => "btn_list",
-	"TEXT" => Loc::getMessage("SOE_TO_LIST"),
-	"TITLE"=> Loc::getMessage("SOE_TO_LIST_TITLE"),
-	"LINK" => "/bitrix/admin/sale_order_edit.php?lang=".LANGUAGE_ID."&unlock=Y&target=list&ID=".$ID
+    "ICON" => "btn_list",
+    "TEXT" => Loc::getMessage("SOE_TO_LIST"),
+    "TITLE" => Loc::getMessage("SOE_TO_LIST_TITLE"),
+    "LINK" => "/bitrix/admin/sale_order_edit.php?lang=" . LANGUAGE_ID . "&unlock=Y&target=list&ID=" . $ID
 );
 
-if ($boolLocked && $saleModulePermissions >= 'W')
-{
-	$aMenu[] = array(
-			"TEXT" => GetMessage("SOE_TO_UNLOCK"),
-			"LINK" => "/bitrix/admin/sale_order_edit.php?ID=".$ID."&unlock=Y&lang=".LANGUAGE_ID,
-	);
+if ($boolLocked && $saleModulePermissions >= 'W') {
+    $aMenu[] = array(
+        "TEXT" => GetMessage("SOE_TO_UNLOCK"),
+        "LINK" => "/bitrix/admin/sale_order_edit.php?ID=" . $ID . "&unlock=Y&lang=" . LANGUAGE_ID,
+    );
 }
 
 $aMenu[] = array(
-	"TEXT" => Loc::getMessage("SOE_ORDER_VIEW"),
-	"TITLE"=> Loc::getMessage("SOE_ORDER_VIEW_TITLE"),
-	"LINK" => "/bitrix/admin/sale_order_view.php?ID=".$ID."&lang=".LANGUAGE_ID);
+    "TEXT" => Loc::getMessage("SOE_ORDER_VIEW"),
+    "TITLE" => Loc::getMessage("SOE_ORDER_VIEW_TITLE"),
+    "LINK" => "/bitrix/admin/sale_order_view.php?ID=" . $ID . "&lang=" . LANGUAGE_ID);
 
 $arSysLangs = array();
-$db_lang = CLangAdmin::GetList(($b="sort"), ($o="asc"), array("ACTIVE" => "Y"));
+$db_lang = CLangAdmin::GetList(($b = "sort"), ($o = "asc"), array("ACTIVE" => "Y"));
 while ($arLang = $db_lang->Fetch())
-	$arSysLangs[] = $arLang["LID"];
+    $arSysLangs[] = $arLang["LID"];
 
 $arReports = array();
 $dirs = array(
-	$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin/reports/",
-	$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/reports/"
+    $_SERVER["DOCUMENT_ROOT"] . "/bitrix/admin/reports/",
+    $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/reports/"
 
 );
-foreach ($dirs as $dir)
-{
-	if (file_exists($dir))
-	{
-		if ($handle = opendir($dir))
-		{
-			while (($file = readdir($handle)) !== false)
-			{
-				$file_contents = '';
-				if ($file == "." || $file == ".." || $file == ".access.php" || isset($arReports[$file]))
-					continue;
-				if (is_file($dir.$file) && ToUpper(substr($file, -4)) == ".PHP")
-				{
-					$rep_title = $file;
-					if ($dir == $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/reports/")
-					{
-						if (is_file($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/ru/reports/".$file))
-							$file_contents = file_get_contents($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/ru/reports/".$file);
-					}
+foreach ($dirs as $dir) {
+    if (file_exists($dir)) {
+        if ($handle = opendir($dir)) {
+            while (($file = readdir($handle)) !== false) {
+                $file_contents = '';
+                if ($file == "." || $file == ".." || $file == ".access.php" || isset($arReports[$file]))
+                    continue;
+                if (is_file($dir . $file) && ToUpper(substr($file, -4)) == ".PHP") {
+                    $rep_title = $file;
+                    if ($dir == $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/reports/") {
+                        if (is_file($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/ru/reports/" . $file))
+                            $file_contents = file_get_contents($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/ru/reports/" . $file);
+                    }
 
-					if (empty($file_contents))
-						$file_contents = file_get_contents($dir.$file);
+                    if (empty($file_contents))
+                        $file_contents = file_get_contents($dir . $file);
 
-					$rep_langs = "";
-					$arMatches = array();
-					if (preg_match("#<title([\s]+langs[\s]*=[\s]*\"([^\"]*)\"|)[\s]*>([^<]*)</title[\s]*>#i", $file_contents, $arMatches))
-					{
-						$arMatches[3] = Trim($arMatches[3]);
-						if (strlen($arMatches[3]) > 0) $rep_title = $arMatches[3];
-						$arMatches[2] = Trim($arMatches[2]);
-						if (strlen($arMatches[2]) > 0) $rep_langs = $arMatches[2];
-					}
-					if (strlen($rep_langs) > 0)
-					{
-						$bContinue = true;
-						foreach ($arSysLangs as $sysLang)
-						{
-							if (strpos($rep_langs, $sysLang) !== false)
-							{
-								$bContinue = false;
-								break;
-							}
-						}
+                    $rep_langs = "";
+                    $arMatches = array();
+                    if (preg_match("#<title([\s]+langs[\s]*=[\s]*\"([^\"]*)\"|)[\s]*>([^<]*)</title[\s]*>#i", $file_contents, $arMatches)) {
+                        $arMatches[3] = Trim($arMatches[3]);
+                        if (strlen($arMatches[3]) > 0) $rep_title = $arMatches[3];
+                        $arMatches[2] = Trim($arMatches[2]);
+                        if (strlen($arMatches[2]) > 0) $rep_langs = $arMatches[2];
+                    }
+                    if (strlen($rep_langs) > 0) {
+                        $bContinue = true;
+                        foreach ($arSysLangs as $sysLang) {
+                            if (strpos($rep_langs, $sysLang) !== false) {
+                                $bContinue = false;
+                                break;
+                            }
+                        }
 
-						if ($bContinue)
-							continue;
-					}
+                        if ($bContinue)
+                            continue;
+                    }
 
-					$arReports[$file] = array(
-						"TEXT" => $rep_title,
-						"ONCLICK" => "window.open('/bitrix/admin/sale_order_print_new.php?&ORDER_ID=".$ID."&doc=".substr($file, 0, strlen($file) - 4)."&".bitrix_sessid_get()."', '_blank');"
-					);
-				}
-			}
-		}
-		closedir($handle);
-	}
+                    $arReports[$file] = array(
+                        "TEXT" => $rep_title,
+                        "ONCLICK" => "window.open('/bitrix/admin/sale_order_print_new.php?&ORDER_ID=" . $ID . "&doc=" . substr($file, 0, strlen($file) - 4) . "&" . bitrix_sessid_get() . "', '_blank');"
+                    );
+                }
+            }
+        }
+        closedir($handle);
+    }
 }
 
 $aMenu[] = array(
-	"TEXT" => Loc::getMessage("NEWO_TO_PRINT"),
-	"TITLE"=> Loc::getMessage("NEWO_TO_PRINT_TITLE"),
-	"LINK" => "/bitrix/admin/sale_order_print.php?ID=".$ID."&lang=".LANGUAGE_ID,
-	"MENU" => $arReports
+    "TEXT" => Loc::getMessage("NEWO_TO_PRINT"),
+    "TITLE" => Loc::getMessage("NEWO_TO_PRINT_TITLE"),
+    "LINK" => "/bitrix/admin/sale_order_print.php?ID=" . $ID . "&lang=" . LANGUAGE_ID,
+    "MENU" => $arReports
 );
 
 $actionMenu = array();
 
 $disabledRefresh = false;
-if ($order && $order->getId() > 0)
-{
-	$shipmentCollection = $order->getShipmentCollection();
+if ($order && $order->getId() > 0) {
+    $shipmentCollection = $order->getShipmentCollection();
 
-	if ($shipmentCollection->isShipped())
-	{
-		$disabledRefresh = true;
-	}
+    if ($shipmentCollection->isShipped()) {
+        $disabledRefresh = true;
+    }
 }
 
-if (!$disabledRefresh)
-{
-	$actionMenu[] = array(
-		"TEXT" => Loc::getMessage("SOE_ORDER_REFRESH"),
-		"TITLE"=> Loc::getMessage("SOE_ORDER_REFRESH_TITLE"),
-		"ONCLICK" => "if(confirm('".GetMessageJS("SOE_ORDER_REFRESH_CONFIRM")."')) BX.Sale.Admin.OrderEditPage.onRefreshOrderDataAndSave();"
-	);
+if (!$disabledRefresh) {
+    $actionMenu[] = array(
+        "TEXT" => Loc::getMessage("SOE_ORDER_REFRESH"),
+        "TITLE" => Loc::getMessage("SOE_ORDER_REFRESH_TITLE"),
+        "ONCLICK" => "if(confirm('" . GetMessageJS("SOE_ORDER_REFRESH_CONFIRM") . "')) BX.Sale.Admin.OrderEditPage.onRefreshOrderDataAndSave();"
+    );
 }
 
 $actionMenu[] = array(
-	"TEXT" => Loc::getMessage("NEWO_ORDER_DELETE"),
-	"TITLE"=> Loc::getMessage("NEWO_ORDER_DELETE_TITLE"),
-	"ONCLICK" => "if(confirm('".GetMessageJS("NEWO_CONFIRM_DEL_MESSAGE")."')) window.location='sale_order.php?ID=".$ID."&action=delete&lang=".LANGUAGE_ID."&".bitrix_sessid_get()."'"
+    "TEXT" => Loc::getMessage("NEWO_ORDER_DELETE"),
+    "TITLE" => Loc::getMessage("NEWO_ORDER_DELETE_TITLE"),
+    "ONCLICK" => "if(confirm('" . GetMessageJS("NEWO_CONFIRM_DEL_MESSAGE") . "')) window.location='sale_order.php?ID=" . $ID . "&action=delete&lang=" . LANGUAGE_ID . "&" . bitrix_sessid_get() . "'"
 );
 
-if(!empty($actionMenu))
-{
-	$aMenu[] = array(
-		"TEXT" => Loc::getMessage("SOE_TO_ACTION"),
-		"TITLE"=> Loc::getMessage("SOE_TO_ACTION_TITLE"),
-		"MENU" => $actionMenu
-	);
+if (!empty($actionMenu)) {
+    $aMenu[] = array(
+        "TEXT" => Loc::getMessage("SOE_TO_ACTION"),
+        "TITLE" => Loc::getMessage("SOE_TO_ACTION_TITLE"),
+        "MENU" => $actionMenu
+    );
 }
 
 $context = new CAdminContextMenu($aMenu);
@@ -462,45 +415,43 @@ $context->Show();
 
 //prepare blocks order
 $defaultBlocksOrder = array(
-	"statusorder",
-	"buyer",
-	"delivery",
-	"payment",
-	"additional",
-	"basket"
+    "statusorder",
+    "buyer",
+    "delivery",
+    "payment",
+    "additional",
+    "basket"
 );
 
 // errors
 $message = "";
 
-if(!empty($_SESSION['SALE_ORDER_EDIT_ERROR']))
-{
-	$message = $_SESSION['SALE_ORDER_EDIT_ERROR']."<br>\n";
-	unset($_SESSION['SALE_ORDER_EDIT_ERROR']);
+if (!empty($_SESSION['SALE_ORDER_EDIT_ERROR'])) {
+    $message = $_SESSION['SALE_ORDER_EDIT_ERROR'] . "<br>\n";
+    unset($_SESSION['SALE_ORDER_EDIT_ERROR']);
 }
 
-if(!$result->isSuccess() && !$isNeedFieldsRestore)
-	foreach($result->getErrors() as $error)
-		$message .= $error->getMessage()."<br>\n";
+if (!$result->isSuccess() && !$isNeedFieldsRestore)
+    foreach ($result->getErrors() as $error)
+        $message .= $error->getMessage() . "<br>\n";
 
-if(!empty($message))
-{
-	$admMessage = new CAdminMessage(array(
-		"TYPE" => "ERROR",
-		"MESSAGE" => $message,
-		"HTML" => true
-	));
+if (!empty($message)) {
+    $admMessage = new CAdminMessage(array(
+        "TYPE" => "ERROR",
+        "MESSAGE" => $message,
+        "HTML" => true
+    ));
 
-	echo $admMessage->Show();
+    echo $admMessage->Show();
 }
 
 $formId = "sale_order_edit";
 $basketPrefix = "sale_order_basket";
 
 $orderBasket = new Blocks\OrderBasket(
-	$order,
-	"BX.Sale.Admin.OrderBasketObj",
-	$basketPrefix
+    $order,
+    "BX.Sale.Admin.OrderBasketObj",
+    $basketPrefix
 );
 ///
 
@@ -518,203 +469,199 @@ echo $orderBasket->getScripts($defTails);
 echo $customDraggableBlocks->getScripts();
 
 // navigation socket
-?><div id="sale-order-edit-block-fast-nav-socket"></div><?
+?>
+    <div id="sale-order-edit-block-fast-nav-socket"></div><?
 
 // yellow block with brief
 echo Blocks\OrderInfo::getView($order, $orderBasket);
 
 // Problem block
-?><div id="sale-adm-order-problem-block"><?
-	if($order->getField("MARKED") == "Y")
-	{
-		echo Blocks\OrderMarker::getView($order->getId());
-	}
-	?></div><?
+?>
+    <div id="sale-adm-order-problem-block"><?
+        if ($order->getField("MARKED") == "Y") {
+            echo Blocks\OrderMarker::getView($order->getId());
+        }
+        ?></div><?
 
 $aTabs = array(
-	array("DIV" => "tab_order", "TAB" => Loc::getMessage("SALE_TAB_ORDER"), "SHOW_WRAP" => "N", "IS_DRAGGABLE" => "Y"),
-	array("DIV" => "tab_analysis", "TAB" => Loc::getMessage("SALE_TAB_ANALYSIS"), "TITLE" => Loc::getMessage("SALE_TAB_ANALYSIS"))
+    array("DIV" => "tab_order", "TAB" => Loc::getMessage("SALE_TAB_ORDER"), "SHOW_WRAP" => "N", "IS_DRAGGABLE" => "Y"),
+    array("DIV" => "tab_analysis", "TAB" => Loc::getMessage("SALE_TAB_ANALYSIS"), "TITLE" => Loc::getMessage("SALE_TAB_ANALYSIS"))
 );
 
-?><form method="POST" action="<?=$APPLICATION->GetCurPage()."?lang=".LANGUAGE_ID."&ID=".$ID?>" name="sale_order_edit_form" id="sale_order_edit_form" enctype="multipart/form-data"><?
-
-$tabControl = new CAdminTabControlDrag($formId, $aTabs, $moduleId, false, true);
-$tabControl->AddTabs($customTabber);
-$tabControl->Begin();
-
-//TAB order --
-$tabControl->BeginNextTab();
-	$customFastNavItems = array();
-	$customBlocksOrder = array();
-	$fastNavItems = array();
-
-	foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
-	{
-		$defaultBlocksOrder[] = $blockId;
-		$customFastNavItems[$blockId] = $blockParams['TITLE'];
-		$customBlocksOrder[] = $blockId;
-	}
-
-	$blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
-	$customNewBlockIds = array_diff($customBlocksOrder, $blocksOrder);
-	$blocksOrder = array_merge($blocksOrder, $customNewBlockIds);
-
-	foreach($blocksOrder as $item)
-	{
-		if(isset($customFastNavItems[$item]))
-			$fastNavItems[$item] = $customFastNavItems[$item];
-		else
-			$fastNavItems[$item] = Loc::getMessage("SALE_BLOCK_TITLE_".toUpper($item));
-	}
-
 ?>
-<tr><td>
-	<input type="hidden" id="ID" name="ID" value="<?=$ID?>">
-	<input type="hidden" id="SITE_ID" name="SITE_ID" value="<?=htmlspecialcharsbx($order->getSiteId())?>">
-	<input type="hidden" id="OLD_USER_ID" name="OLD_USER_ID" value="<?=$order->getUserId()?>">
-	<input type="hidden" name="BASKET_PREFIX" value="<?=$basketPrefix?>">
-	<?=bitrix_sessid_post()?>
-	<div style="position: relative; vertical-align: top">
-		<?$tabControl->DraggableBlocksStart();?>
-		<?
-		foreach ($blocksOrder as $blockCode)
-		{
-			$tabControl->DraggableBlockBegin($fastNavItems[$blockCode], $blockCode);
-			echo '<a id="'.$blockCode.'" class="adm-sale-fastnav-anchor"></a>';
+    <form method="POST" action="<?= $APPLICATION->GetCurPage() . "?lang=" . LANGUAGE_ID . "&ID=" . $ID ?>"
+          name="sale_order_edit_form" id="sale_order_edit_form" enctype="multipart/form-data"><?
 
-			switch ($blockCode)
-			{
-				case "statusorder":
-					echo Blocks\OrderStatus::getEdit($order, $USER, false, false);
-					break;
-				case "buyer":
-					echo Blocks\OrderBuyer::getEdit($order);
-					break;
-				case "delivery":
+        $tabControl = new CAdminTabControlDrag($formId, $aTabs, $moduleId, false, true);
+        $tabControl->AddTabs($customTabber);
+        $tabControl->Begin();
 
-					if($defTails)
-					{
-						\Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/admin/order_shipment_basket.js");
-						\Bitrix\Main\UI\Extension::load('sale.admin_order');
-						echo '<div id="sale-adm-order-shipments-content"><img src="/bitrix/images/sale/admin-loader.gif"/></div>';
-					}
-					else
-					{
-						$shipments = $order->getShipmentCollection();
-						$index = 0;
+        //TAB order --
+        $tabControl->BeginNextTab();
+        $customFastNavItems = array();
+        $customBlocksOrder = array();
+        $fastNavItems = array();
 
-						/** @var \Bitrix\Sale\Shipment  $shipment*/
-						foreach ($shipments as $shipment)
-						{
-							if(!$shipment->isSystem())
-							{
-								echo Blocks\OrderShipment::getView(
-									$shipment,
-									$index++,
-									'edit'
-								);
-							}
-						}
-					}
+        foreach ($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams) {
+            $defaultBlocksOrder[] = $blockId;
+            $customFastNavItems[$blockId] = $blockParams['TITLE'];
+            $customBlocksOrder[] = $blockId;
+        }
 
-					break;
-				case "payment":
+        $blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
+        $customNewBlockIds = array_diff($customBlocksOrder, $blocksOrder);
+        $blocksOrder = array_merge($blocksOrder, $customNewBlockIds);
 
-					$payments = $order->getPaymentCollection();
-					$index = 0;
+        foreach ($blocksOrder as $item) {
+            if (isset($customFastNavItems[$item]))
+                $fastNavItems[$item] = $customFastNavItems[$item];
+            else
+                $fastNavItems[$item] = Loc::getMessage("SALE_BLOCK_TITLE_" . toUpper($item));
+        }
 
-					foreach ($payments as $payment)
-						echo Blocks\OrderPayment::getView($payment, ++$index, 'edit');
+        ?>
+        <tr>
+            <td>
+                <input type="hidden" id="ID" name="ID" value="<?= $ID ?>">
+                <input type="hidden" id="SITE_ID" name="SITE_ID" value="<?= htmlspecialcharsbx($order->getSiteId()) ?>">
+                <input type="hidden" id="OLD_USER_ID" name="OLD_USER_ID" value="<?= $order->getUserId() ?>">
+                <input type="hidden" name="BASKET_PREFIX" value="<?= $basketPrefix ?>">
+                <?= bitrix_sessid_post() ?>
+                <div style="position: relative; vertical-align: top">
+                    <? $tabControl->DraggableBlocksStart(); ?>
+                    <?
+                    foreach ($blocksOrder as $blockCode) {
+                        $tabControl->DraggableBlockBegin($fastNavItems[$blockCode], $blockCode);
+                        echo '<a id="' . $blockCode . '" class="adm-sale-fastnav-anchor"></a>';
 
-					break;
-				case "additional":
-					echo Blocks\OrderAdditional::getEdit($order, $formId."_form", 'ORDER');
-					break;
-				case "basket":
-					echo $orderBasket->getEdit($defTails);
-					echo '<div style="display: none;">'.$orderBasket->settingsDialog->getHtml().'</div>';
-					break;
-				default:
-					echo $customDraggableBlocks->getBlockContent($blockCode, $tabControl->selectedTab);
-					break;
-			}
-			$tabControl->DraggableBlockEnd();
-		}
-		?>
-	</div>
-</td></tr>
+                        switch ($blockCode) {
+                            case "statusorder":
+                                echo Blocks\OrderStatus::getEdit($order, $USER, false, false);
+                                break;
+                            case "buyer":
+                                echo Blocks\OrderBuyer::getEdit($order);
+                                break;
+                            case "delivery":
 
-<?
-$tabControl->EndTab();
-//--TAB order
+                                if ($defTails) {
+                                    \Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/admin/order_shipment_basket.js");
+                                    \Bitrix\Main\UI\Extension::load('sale.admin_order');
+                                    echo '<div id="sale-adm-order-shipments-content"><img src="/bitrix/images/sale/admin-loader.gif"/></div>';
+                                } else {
+                                    $shipments = $order->getShipmentCollection();
+                                    $index = 0;
 
-//TAB analysis --
-$tabControl->BeginNextTab();
-?>
-<tr>
-	<td>
-		<?if($defTails):?>
-			<div style="position:relative; vertical-align:top" id="sale-adm-order-analysis-content">
-				<img src="/bitrix/images/sale/admin-loader.gif"/>
-			</div>
-		<?else:?>
-			<?=Blocks\OrderAnalysis::getView($order, $orderBasket);?>
-		<?endif;?>
-	</td>
-</tr>
-<?
-$tabControl->EndTab();
-//-- TAB analysis
+                                    /** @var \Bitrix\Sale\Shipment $shipment */
+                                    foreach ($shipments as $shipment) {
+                                        if (!$shipment->isSystem()) {
+                                            echo Blocks\OrderShipment::getView(
+                                                $shipment,
+                                                $index++,
+                                                'edit'
+                                            );
+                                        }
+                                    }
+                                }
 
-$tabControl->Buttons(
-	array(
-		"disabled" => true, //while tails are not loaded.
-		"back_url" => "/bitrix/admin/sale_order_edit.php?lang=".LANGUAGE_ID."&unlock=Y&target=list&ID=".$ID
-	)
-);
+                                break;
+                            case "payment":
 
-$tabControl->End();
-?>
+                                $payments = $order->getPaymentCollection();
+                                $index = 0;
 
-</form>
-<div style="display: none;">
-	<?=$orderBasket->getSettingsDialogContent();?>
-</div>
+                                foreach ($payments as $payment)
+                                    echo Blocks\OrderPayment::getView($payment, ++$index, 'edit');
 
-<div style="display: none;"><?=OrderEdit::getFastNavigationHtml($fastNavItems, $formId, 'tab_order');?></div>
+                                break;
+                            case "additional":
+                                echo Blocks\OrderAdditional::getEdit($order, $formId . "_form", 'ORDER');
+                                break;
+                            case "basket":
+                                echo $orderBasket->getEdit($defTails);
+                                echo '<div style="display: none;">' . $orderBasket->settingsDialog->getHtml() . '</div>';
+                                break;
+                            default:
+                                echo $customDraggableBlocks->getBlockContent($blockCode, $tabControl->selectedTab);
+                                break;
+                        }
+                        $tabControl->DraggableBlockEnd();
+                    }
+                    ?>
+                </div>
+            </td>
+        </tr>
 
-<?if(!$result->isSuccess() || $isNeedFieldsRestore):?>
-	<script type="text/javascript">
-		BX.ready( function(){
-			BX.Sale.Admin.OrderEditPage.restoreFormData(
-				<?=CUtil::PhpToJSObject(OrderEdit::restoreFieldsNames(
-						array_diff_key($_POST, array("USER_ID" => true))
-					));
-				?>
-			);
-			BX.Sale.Admin.OrderEditPage.enableFormButtons('sale_order_edit_form');
-		});
-	</script>
-<?else:?>
-	<script type="text/javascript">
-		BX.ready( function(){
-			BX.Sale.Admin.OrderAjaxer.sendRequest(
-				BX.Sale.Admin.OrderEditPage.ajaxRequests.getOrderTails("<?=$order->getId()?>", "edit", "<?=$basketPrefix?>"),
-				true
-			);
+        <?
+        $tabControl->EndTab();
+        //--TAB order
 
-			BX.addCustomEvent('onAfterSaleOrderTailsLoaded', function(){
-				BX.Sale.Admin.OrderEditPage.enableFormButtons('sale_order_edit_form');
-			});
+        //TAB analysis --
+        $tabControl->BeginNextTab();
+        ?>
+        <tr>
+            <td>
+                <? if ($defTails): ?>
+                    <div style="position:relative; vertical-align:top" id="sale-adm-order-analysis-content">
+                        <img src="/bitrix/images/sale/admin-loader.gif"/>
+                    </div>
+                <? else: ?>
+                    <?= Blocks\OrderAnalysis::getView($order, $orderBasket); ?>
+                <? endif; ?>
+            </td>
+        </tr>
+        <?
+        $tabControl->EndTab();
+        //-- TAB analysis
 
-			BX.Sale.Admin.OrderEditPage.setFixHashCorrection();
+        $tabControl->Buttons(
+            array(
+                "disabled" => true, //while tails are not loaded.
+                "back_url" => "/bitrix/admin/sale_order_edit.php?lang=" . LANGUAGE_ID . "&unlock=Y&target=list&ID=" . $ID
+            )
+        );
 
-			//place navigation data to navigation socket
-			BX('sale-order-edit-block-fast-nav-socket').appendChild(
-				BX('sale-order-edit-block-fast-nav')
-			);
-		});
-	</script>
+        $tabControl->End();
+        ?>
+
+    </form>
+    <div style="display: none;">
+        <?= $orderBasket->getSettingsDialogContent(); ?>
+    </div>
+
+    <div style="display: none;"><?= OrderEdit::getFastNavigationHtml($fastNavItems, $formId, 'tab_order'); ?></div>
+
+<? if (!$result->isSuccess() || $isNeedFieldsRestore): ?>
+    <script type="text/javascript">
+        BX.ready(function () {
+            BX.Sale.Admin.OrderEditPage.restoreFormData(
+                <?=CUtil::PhpToJSObject(OrderEdit::restoreFieldsNames(
+                    array_diff_key($_POST, array("USER_ID" => true))
+                ));
+                ?>
+            );
+            BX.Sale.Admin.OrderEditPage.enableFormButtons('sale_order_edit_form');
+        });
+    </script>
+<? else: ?>
+    <script type="text/javascript">
+        BX.ready(function () {
+            BX.Sale.Admin.OrderAjaxer.sendRequest(
+                BX.Sale.Admin.OrderEditPage.ajaxRequests.getOrderTails("<?=$order->getId()?>", "edit", "<?=$basketPrefix?>"),
+                true
+            );
+
+            BX.addCustomEvent('onAfterSaleOrderTailsLoaded', function () {
+                BX.Sale.Admin.OrderEditPage.enableFormButtons('sale_order_edit_form');
+            });
+
+            BX.Sale.Admin.OrderEditPage.setFixHashCorrection();
+
+            //place navigation data to navigation socket
+            BX('sale-order-edit-block-fast-nav-socket').appendChild(
+                BX('sale-order-edit-block-fast-nav')
+            );
+        });
+    </script>
 <?endif;
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_admin.php");

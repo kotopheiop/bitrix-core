@@ -3,7 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
-	die();
+    die();
 
 Loc::loadMessages(__FILE__);
 
@@ -17,6 +17,6 @@ $request = $context->getRequest();
 
 $action = $request->get('action');
 
-$text = Loc::getMessage('SALE_RESULT_MESSAGE_'.ToUpper($action));
+$text = Loc::getMessage('SALE_RESULT_MESSAGE_' . ToUpper($action));
 
-echo "<div align='center'><h1>".$text."</h1></div>";
+echo "<div align='center'><h1>" . $text . "</h1></div>";

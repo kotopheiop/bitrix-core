@@ -33,18 +33,18 @@ class ExtensionFieldMap extends SplObjectStorage implements Collection
 
     /**
      * @param \Protobuf\Extension\ExtensionField $extension
-     * @param mixed                              $value
+     * @param mixed $value
      */
     public function add(ExtensionField $extension, $value)
     {
-        if ( ! $value instanceof Message) {
+        if (!$value instanceof Message) {
             $this->put($extension, $value);
 
             return;
         }
 
         $className = get_class($value);
-        $existing  = isset($this[$extension])
+        $existing = isset($this[$extension])
             ? $this[$extension]
             : null;
 
@@ -57,7 +57,7 @@ class ExtensionFieldMap extends SplObjectStorage implements Collection
 
     /**
      * @param \Protobuf\Extension\ExtensionField $extension
-     * @param mixed                              $value
+     * @param mixed $value
      */
     public function put(ExtensionField $extension, $value)
     {
@@ -95,8 +95,8 @@ class ExtensionFieldMap extends SplObjectStorage implements Collection
 
         for ($this->rewind(); $this->valid(); $this->next()) {
             $extension = $this->current();
-            $value     = $this->getInfo();
-            $size     += $extension->serializedSize($context, $value);
+            $value = $this->getInfo();
+            $size += $extension->serializedSize($context, $value);
         }
 
         return $size;
@@ -109,7 +109,7 @@ class ExtensionFieldMap extends SplObjectStorage implements Collection
     {
         for ($this->rewind(); $this->valid(); $this->next()) {
             $extension = $this->current();
-            $value     = $this->getInfo();
+            $value = $this->getInfo();
 
             $extension->writeTo($context, $value);
         }

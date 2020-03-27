@@ -1,8 +1,10 @@
 <?php
+
 namespace Bitrix\Sale\Internals;
 
 use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+    Bitrix\Main\Localization\Loc;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -16,36 +18,35 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Sale
  **/
-
 class PersonTypeSiteTable extends Main\Entity\DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_sale_person_type_site';
-	}
+    /**
+     * Returns DB table name for entity.
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_sale_person_type_site';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			'PERSON_TYPE_ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-			),
-			'SITE_ID' => array(
-				'data_type' => 'string',
-				'primary' => true
-			),
-		);
-	}
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            'PERSON_TYPE_ID' => array(
+                'data_type' => 'integer',
+                'primary' => true,
+            ),
+            'SITE_ID' => array(
+                'data_type' => 'string',
+                'primary' => true
+            ),
+        );
+    }
 
 }

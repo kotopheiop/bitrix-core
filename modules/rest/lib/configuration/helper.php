@@ -11,176 +11,157 @@ use Bitrix\Security\Filter\Auditor;
 
 class Helper
 {
-	const TYPE_SECTION_TOTAL = 'total';
+    const TYPE_SECTION_TOTAL = 'total';
 
-	public $prefixAppContext = 'app';
-	protected $optionRatio = '~import_configuration_app_ratio_data';
-	protected $optionUsesConfigurationApp = 'uses_configuration_app';
-	protected $appConfigurationFolderBackup = 'appConfiguration';
-	/** @var Helper|null  */
-	private static $instance = null;
-	private $sanitizer = null;
-	private function __construct()
-	{
+    public $prefixAppContext = 'app';
+    protected $optionRatio = '~import_configuration_app_ratio_data';
+    protected $optionUsesConfigurationApp = 'uses_configuration_app';
+    protected $appConfigurationFolderBackup = 'appConfiguration';
+    /** @var Helper|null */
+    private static $instance = null;
+    private $sanitizer = null;
 
-	}
+    private function __construct()
+    {
 
-	/**
-	 * @return Helper
-	 */
-	public static function getInstance()
-	{
-		if (self::$instance === null)
-		{
-			self::$instance = new Helper();
-		}
+    }
 
-		return self::$instance;
-	}
+    /**
+     * @return Helper
+     */
+    public static function getInstance()
+    {
+        if (self::$instance === null) {
+            self::$instance = new Helper();
+        }
 
-	/**
-	 * Sanitize bad value.
-	 * @param string $value Bad value.
-	 * @param bool &$bad Return true, if value is bad.
-	 * @param string $splitter Splitter for bad content.
-	 * @return string Good value.
-	 */
-	public function sanitize($value, &$bad = false, $splitter = ' ')
-	{
-		if (!is_bool($bad))
-		{
-			$bad = false;
-		}
+        return self::$instance;
+    }
 
-		if ($this->sanitizer === null)
-		{
-			$this->sanitizer = false;
-			if (Loader::includeModule('security'))
-			{
-				$this->sanitizer = new Auditor\Xss(
-					$splitter
-				);
-			}
-		}
+    /**
+     * Sanitize bad value.
+     * @param string $value Bad value.
+     * @param bool &$bad Return true, if value is bad.
+     * @param string $splitter Splitter for bad content.
+     * @return string Good value.
+     */
+    public function sanitize($value, &$bad = false, $splitter = ' ')
+    {
+        if (!is_bool($bad)) {
+            $bad = false;
+        }
 
-		if ($this->sanitizer)
-		{
-			// bad value exists
-			if (is_array($value))
-			{
-				foreach ($value as &$val)
-				{
-					$val = $this->sanitize($val, $bad, $splitter);
-				}
-				unset($val);
-			}
-			elseif ($this->sanitizer->process($value))
-			{
-				$bad = true;
-				$value = $this->sanitizer->getFilteredValue();
-			}
-		}
+        if ($this->sanitizer === null) {
+            $this->sanitizer = false;
+            if (Loader::includeModule('security')) {
+                $this->sanitizer = new Auditor\Xss(
+                    $splitter
+                );
+            }
+        }
 
-		return $value;
-	}
+        if ($this->sanitizer) {
+            // bad value exists
+            if (is_array($value)) {
+                foreach ($value as &$val) {
+                    $val = $this->sanitize($val, $bad, $splitter);
+                }
+                unset($val);
+            } elseif ($this->sanitizer->process($value)) {
+                $bad = true;
+                $value = $this->sanitizer->getFilteredValue();
+            }
+        }
 
-	public function getStorageBackupParam()
-	{
-		return [
-			'NAME' => $this->appConfigurationFolderBackup,
-			'MODULE_ID' => 'rest',
-			'ENTITY_TYPE' => ProxyDiskType::className(),
-			'ENTITY_ID' => 1,
-		];
-	}
+        return $value;
+    }
 
-	public function getStorageBackup()
-	{
-		$storage = false;
-		if(Loader::includeModule('disk'))
-		{
-			$storage = \Bitrix\Disk\Driver::getInstance()->addStorageIfNotExist(
-				$this->getStorageBackupParam()
-			);
-		}
-		return $storage;
-	}
+    public function getStorageBackupParam()
+    {
+        return [
+            'NAME' => $this->appConfigurationFolderBackup,
+            'MODULE_ID' => 'rest',
+            'ENTITY_TYPE' => ProxyDiskType::className(),
+            'ENTITY_ID' => 1,
+        ];
+    }
 
-	//uses configuration app
-	public function getUsesConfigurationApp()
-	{
-		return Option::get('rest', $this->optionUsesConfigurationApp, '');
-	}
+    public function getStorageBackup()
+    {
+        $storage = false;
+        if (Loader::includeModule('disk')) {
+            $storage = \Bitrix\Disk\Driver::getInstance()->addStorageIfNotExist(
+                $this->getStorageBackupParam()
+            );
+        }
+        return $storage;
+    }
 
-	public function setUsesConfigurationApp($code)
-	{
-		$result = true;
-		try
-		{
-			Option::set('rest', $this->optionUsesConfigurationApp, $code);
-		}
-		catch (\Exception $e)
-		{
-			$result = false;
-		}
+    //uses configuration app
+    public function getUsesConfigurationApp()
+    {
+        return Option::get('rest', $this->optionUsesConfigurationApp, '');
+    }
 
-		return $result;
-	}
+    public function setUsesConfigurationApp($code)
+    {
+        $result = true;
+        try {
+            Option::set('rest', $this->optionUsesConfigurationApp, $code);
+        } catch (\Exception $e) {
+            $result = false;
+        }
 
-	public function deleteUsesConfigurationApp()
-	{
-		Option::delete('rest', array('name' => $this->optionUsesConfigurationApp));
-		return true;
-	}
+        return $result;
+    }
 
-	//ratio data import
-	public function getRatio()
-	{
-		$data = Option::get('rest', $this->optionRatio);
-		if ($data)
-		{
-			$data = Json::decode($data);
-		}
-		else
-		{
-			$data = [];
-		}
-		return $data;
-	}
+    public function deleteUsesConfigurationApp()
+    {
+        Option::delete('rest', array('name' => $this->optionUsesConfigurationApp));
+        return true;
+    }
 
-	public function addRatio($type, $ratioData = [])
-	{
-		$result = true;
-		if (is_array($ratioData))
-		{
-			$data = $this->getRatio();
-			if (!$data[$type])
-			{
-				$data[$type] = [];
-			}
-			foreach ($ratioData as $old => $new)
-			{
-				$data[$type][$old] = $new;
-			}
-			Option::set('rest', $this->optionRatio, Json::encode($data));
-		}
-		return $result;
-	}
+    //ratio data import
+    public function getRatio()
+    {
+        $data = Option::get('rest', $this->optionRatio);
+        if ($data) {
+            $data = Json::decode($data);
+        } else {
+            $data = [];
+        }
+        return $data;
+    }
 
-	public function clearRatio($type)
-	{
-		$data = $this->getRatio();
-		if (array_key_exists($type, $data))
-		{
-			unset($data[$type]);
-			Option::set('rest', $this->optionRatio, Json::encode($data));
-		}
-		return true;
-	}
+    public function addRatio($type, $ratioData = [])
+    {
+        $result = true;
+        if (is_array($ratioData)) {
+            $data = $this->getRatio();
+            if (!$data[$type]) {
+                $data[$type] = [];
+            }
+            foreach ($ratioData as $old => $new) {
+                $data[$type][$old] = $new;
+            }
+            Option::set('rest', $this->optionRatio, Json::encode($data));
+        }
+        return $result;
+    }
 
-	public function deleteRatio()
-	{
-		Option::delete('rest', array('name' => $this->optionRatio));
-		return true;
-	}
+    public function clearRatio($type)
+    {
+        $data = $this->getRatio();
+        if (array_key_exists($type, $data)) {
+            unset($data[$type]);
+            Option::set('rest', $this->optionRatio, Json::encode($data));
+        }
+        return true;
+    }
+
+    public function deleteRatio()
+    {
+        Option::delete('rest', array('name' => $this->optionRatio));
+        return true;
+    }
 }

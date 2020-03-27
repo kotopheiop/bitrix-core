@@ -16,33 +16,33 @@ use Bitrix\Main\Cli\OrmAnnotateCommand;
 
 trait PropertyRelation
 {
-	/** @var Property */
-	protected $iblockElementProperty;
+    /** @var Property */
+    protected $iblockElementProperty;
 
-	/**
-	 * @return Property
-	 */
-	public function getIblockElementProperty()
-	{
-		return $this->iblockElementProperty;
-	}
+    /**
+     * @return Property
+     */
+    public function getIblockElementProperty()
+    {
+        return $this->iblockElementProperty;
+    }
 
-	/**
-	 * @param $property
-	 *
-	 * @return $this
-	 */
-	public function configureIblockElementProperty($property)
-	{
-		$this->iblockElementProperty = $property;
+    /**
+     * @param $property
+     *
+     * @return $this
+     */
+    public function configureIblockElementProperty($property)
+    {
+        $this->iblockElementProperty = $property;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getSetterTypeHint()
-	{
-		return parent::getSetterTypeHint()
-			.'|\\'.PropertyValue::class
-			.'|'.$this->getRefEntity()->getField('VALUE')->getSetterTypeHint();
-	}
+    public function getSetterTypeHint()
+    {
+        return parent::getSetterTypeHint()
+            . '|\\' . PropertyValue::class
+            . '|' . $this->getRefEntity()->getField('VALUE')->getSetterTypeHint();
+    }
 }

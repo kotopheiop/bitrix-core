@@ -5,64 +5,59 @@
  * @subpackage socialnetwork
  * @copyright 2001-2017 Bitrix
  */
+
 namespace Bitrix\Socialnetwork\Item;
 
 use Bitrix\Socialnetwork\LogCommentTable;
 
 class LogComment
 {
-	private $fields;
+    private $fields;
 
-	public static function getById($logCommentId = 0)
-	{
-		static $cachedFields = array();
+    public static function getById($logCommentId = 0)
+    {
+        static $cachedFields = array();
 
-		$logCommentItem = false;
-		$logCommentId = intval($logCommentId);
+        $logCommentItem = false;
+        $logCommentId = intval($logCommentId);
 
-		if ($logCommentId > 0)
-		{
-			$logCommentItem = new LogComment;
-			$logCommentFields = array();
+        if ($logCommentId > 0) {
+            $logCommentItem = new LogComment;
+            $logCommentFields = array();
 
-			if (isset($cachedFields[$logCommentId]))
-			{
-				$logCommentFields = $cachedFields[$logCommentId];
-			}
-			else
-			{
-				$select = array('*');
+            if (isset($cachedFields[$logCommentId])) {
+                $logCommentFields = $cachedFields[$logCommentId];
+            } else {
+                $select = array('*');
 
-				$res = LogCommentTable::getList(array(
-					'filter' => array('=ID' => $logCommentId),
-					'select' => $select
-				));
-				if ($fields = $res->fetch())
-				{
-					$logCommentFields = $fields;
+                $res = LogCommentTable::getList(array(
+                    'filter' => array('=ID' => $logCommentId),
+                    'select' => $select
+                ));
+                if ($fields = $res->fetch()) {
+                    $logCommentFields = $fields;
 
-					if ($logCommentFields['LOG_DATE'] instanceof \Bitrix\Main\Type\DateTime)
-					{
-						$logCommentFields['LOG_DATE'] = $logCommentFields['LOG_DATE']->toString();
-					}
-				}
+                    if ($logCommentFields['LOG_DATE'] instanceof \Bitrix\Main\Type\DateTime) {
+                        $logCommentFields['LOG_DATE'] = $logCommentFields['LOG_DATE']->toString();
+                    }
+                }
 
-				$cachedFields[$logCommentId] = $logCommentFields;
-			}
+                $cachedFields[$logCommentId] = $logCommentFields;
+            }
 
-			$logCommentItem->setFields($logCommentFields);
-		}
+            $logCommentItem->setFields($logCommentFields);
+        }
 
-		return $logCommentItem;
-	}
+        return $logCommentItem;
+    }
 
-	public function setFields($fields = array())
-	{
-		$this->fields = $fields;
-	}
+    public function setFields($fields = array())
+    {
+        $this->fields = $fields;
+    }
 
-	public function getFields()
-	{
-		return $this->fields;
-	}
+    public function getFields()
+    {
+        return $this->fields;
+    }
 }

@@ -5,6 +5,7 @@
  * @subpackage sender
  * @copyright 2001-2017 Bitrix
  */
+
 namespace Bitrix\Sender\Internals\QueryController;
 
 use Bitrix\Main\ArgumentException;
@@ -18,114 +19,110 @@ Loc::loadMessages(__FILE__);
  */
 class Base
 {
-	/** @var callable[] $checkers Checkers. */
-	protected $checkers = array();
+    /** @var callable[] $checkers Checkers. */
+    protected $checkers = array();
 
-	/** @var callable[] $responseModifiers Response modifiers. */
-	protected $responseModifiers = array();
+    /** @var callable[] $responseModifiers Response modifiers. */
+    protected $responseModifiers = array();
 
-	/**
-	 * Add checker.
-	 *
-	 * @param callable $checker Checker.
-	 * @return $this
-	 * @throws ArgumentException
-	 */
-	public function addChecker($checker)
-	{
-		if (!is_callable($checker))
-		{
-			throw new ArgumentException("Argument `checker` should be callabe.");
-		}
+    /**
+     * Add checker.
+     *
+     * @param callable $checker Checker.
+     * @return $this
+     * @throws ArgumentException
+     */
+    public function addChecker($checker)
+    {
+        if (!is_callable($checker)) {
+            throw new ArgumentException("Argument `checker` should be callabe.");
+        }
 
-		$this->checkers[] = $checker;
-		return $this;
-	}
-	/**
-	 * Set checkers.
-	 *
-	 * @param callable[] $checkers Checkers.
-	 * @return $this
-	 */
-	public function setCheckers(array $checkers)
-	{
-		foreach ($checkers as $checker)
-		{
-			$this->addChecker($checker);
-		}
+        $this->checkers[] = $checker;
+        return $this;
+    }
 
-		return $this;
-	}
+    /**
+     * Set checkers.
+     *
+     * @param callable[] $checkers Checkers.
+     * @return $this
+     */
+    public function setCheckers(array $checkers)
+    {
+        foreach ($checkers as $checker) {
+            $this->addChecker($checker);
+        }
 
-	/**
-	 * Add response modifier.
-	 *
-	 * @param callable $modifier Modifier.
-	 * @return $this
-	 * @throws ArgumentException
-	 */
-	public function addResponseModifier($modifier)
-	{
-		if (!is_callable($modifier))
-		{
-			throw new ArgumentException("Argument `modifier` should be callabe.");
-		}
+        return $this;
+    }
 
-		$this->responseModifiers[] = $modifier;
-		return $this;
-	}
+    /**
+     * Add response modifier.
+     *
+     * @param callable $modifier Modifier.
+     * @return $this
+     * @throws ArgumentException
+     */
+    public function addResponseModifier($modifier)
+    {
+        if (!is_callable($modifier)) {
+            throw new ArgumentException("Argument `modifier` should be callabe.");
+        }
 
-	/**
-	 * Set response modifiers.
-	 *
-	 * @param callable[] $modifiers Modifiers.
-	 * @return $this
-	 */
-	public function setResponseModifiers(array $modifiers)
-	{
-		foreach ($modifiers as $modifier)
-		{
-			$this->addResponseModifier($modifier);
-		}
+        $this->responseModifiers[] = $modifier;
+        return $this;
+    }
 
-		return $this;
-	}
+    /**
+     * Set response modifiers.
+     *
+     * @param callable[] $modifiers Modifiers.
+     * @return $this
+     */
+    public function setResponseModifiers(array $modifiers)
+    {
+        foreach ($modifiers as $modifier) {
+            $this->addResponseModifier($modifier);
+        }
 
-	/**
-	 * Get checkers.
-	 *
-	 * @return array
-	 */
-	public function getCheckers()
-	{
-		return $this->checkers;
-	}
+        return $this;
+    }
 
-	/**
-	 * Get response modifiers.
-	 *
-	 * @return array
-	 */
-	public function getResponseModifiers()
-	{
-		return $this->responseModifiers;
-	}
+    /**
+     * Get checkers.
+     *
+     * @return array
+     */
+    public function getCheckers()
+    {
+        return $this->checkers;
+    }
 
-	/**
-	 * Call.
-	 *
-	 * @param callable $callee Callee.
-	 * @param array $parameters Parameters.
-	 * @return mixed
-	 * @throws ArgumentException
-	 */
-	public static function call($callee, array $parameters = array())
-	{
-		if (!is_callable($callee))
-		{
-			throw new ArgumentException("Argument `callee` should be callabe.");
-		}
+    /**
+     * Get response modifiers.
+     *
+     * @return array
+     */
+    public function getResponseModifiers()
+    {
+        return $this->responseModifiers;
+    }
 
-		return call_user_func_array($callee, $parameters);
-	}
+    /**
+     * Call.
+     *
+     * @param callable $callee Callee.
+     * @param array $parameters Parameters.
+     * @return mixed
+     * @throws ArgumentException
+     */
+    public static function call($callee, array $parameters = array())
+    {
+        if (!is_callable($callee)) {
+            throw new ArgumentException("Argument `callee` should be callabe.");
+        }
+
+        return call_user_func_array($callee, $parameters);
+    }
 }

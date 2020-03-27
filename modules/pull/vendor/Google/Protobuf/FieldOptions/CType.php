@@ -87,10 +87,14 @@ class CType extends \Protobuf\Enum
     public static function valueOf($value)
     {
         switch ($value) {
-            case 0: return self::STRING();
-            case 1: return self::CORD();
-            case 2: return self::STRING_PIECE();
-            default: return null;
+            case 0:
+                return self::STRING();
+            case 1:
+                return self::CORD();
+            case 2:
+                return self::STRING_PIECE();
+            default:
+                return null;
         }
     }
 

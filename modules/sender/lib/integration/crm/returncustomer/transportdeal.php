@@ -18,5 +18,5 @@ Loc::loadMessages(__FILE__);
  */
 class TransportDeal extends TransportBase
 {
-	const CODE = self::CODE_RC_DEAL;
+    const CODE = self::CODE_RC_DEAL;
 }

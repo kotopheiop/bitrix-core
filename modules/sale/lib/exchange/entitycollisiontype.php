@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Exchange;
 
 
@@ -7,10 +8,10 @@ use Bitrix\Sale\Exchange;
 
 class EntityCollisionType
 {
-	const GROUP_E_ERROR = 1;
-	const GROUP_E_WARNING = 2;
+    const GROUP_E_ERROR = 1;
+    const GROUP_E_WARNING = 2;
 
-	const Undefined = 0;
+    const Undefined = 0;
     const OrderIsPayed = 1;
     const OrderIsShipped = 2;
     const OrderFinalStatus = 3;
@@ -31,11 +32,11 @@ class EntityCollisionType
     const OrderPayedByStatusError = 18;
     const OrderBasketItemTypeError = 19;
     const PaymentCashBoxCheckNotFound = 20;
-	const OrderSynchronizeBasketItemsModifyError = 21;
-	const BeforeUpdatePaymentDeletedError = 22;
-	const BeforeUpdateShipmentDeletedError = 23;
-	const OrderShippedByStatusError = 24;
-	const OrderBasketItemsCurrencyModify = 25;
+    const OrderSynchronizeBasketItemsModifyError = 21;
+    const BeforeUpdatePaymentDeletedError = 22;
+    const BeforeUpdateShipmentDeletedError = 23;
+    const OrderShippedByStatusError = 24;
+    const OrderBasketItemsCurrencyModify = 25;
 
     const First = 1;
     const Last = 25;
@@ -69,33 +70,30 @@ class EntityCollisionType
     private static $ALL_DESCRIPTIONS = array();
     private static $ALL_ERROR_GROUPS = array();
 
-	/**
-	 * @param $typeId
-	 * @return bool
-	 */
-	public static function isDefined($typeId)
+    /**
+     * @param $typeId
+     * @return bool
+     */
+    public static function isDefined($typeId)
     {
-        if(!is_int($typeId))
-        {
+        if (!is_int($typeId)) {
             $typeId = (int)$typeId;
         }
         return $typeId >= self::First && $typeId <= self::Last;
     }
 
-	/**
-	 * @param string $name
-	 * @return int
-	 */
-	public static function resolveID($name)
+    /**
+     * @param string $name
+     * @return int
+     */
+    public static function resolveID($name)
     {
         $name = strtoupper(trim(strval($name)));
-        if($name == '')
-        {
+        if ($name == '') {
             return self::Undefined;
         }
 
-        switch($name)
-        {
+        switch ($name) {
             case self::OrderIsPayedName:
                 return self::OrderIsPayed;
             case self::OrderIsShippedName:
@@ -133,44 +131,41 @@ class EntityCollisionType
             case self::OrderPayedByStatusErrorName:
                 return self::OrderPayedByStatusError;
             case self::OrderBasketItemTypeErrorName:
-				return self::OrderBasketItemTypeError;
-			case self::PaymentCashBoxCheckNotFoundName:
-				return self::PaymentCashBoxCheckNotFound;
-			case self::OrderSynchronizeBasketItemsModifyErrorName:
-				return self::OrderSynchronizeBasketItemsModifyError;
-			case self::BeforeUpdatePaymentDeletedErrorName:
-				return self::BeforeUpdatePaymentDeletedError;
-			case self::BeforeUpdateShipmentDeletedErrorName:
-				return self::BeforeUpdateShipmentDeletedError;
-			case self::OrderShippedByStatusErrorName:
-				return self::OrderShippedByStatusError;
-			case self::OrderBasketItemsCurrencyModifyName:
-				return self::OrderBasketItemsCurrencyModify;
+                return self::OrderBasketItemTypeError;
+            case self::PaymentCashBoxCheckNotFoundName:
+                return self::PaymentCashBoxCheckNotFound;
+            case self::OrderSynchronizeBasketItemsModifyErrorName:
+                return self::OrderSynchronizeBasketItemsModifyError;
+            case self::BeforeUpdatePaymentDeletedErrorName:
+                return self::BeforeUpdatePaymentDeletedError;
+            case self::BeforeUpdateShipmentDeletedErrorName:
+                return self::BeforeUpdateShipmentDeletedError;
+            case self::OrderShippedByStatusErrorName:
+                return self::OrderShippedByStatusError;
+            case self::OrderBasketItemsCurrencyModifyName:
+                return self::OrderBasketItemsCurrencyModify;
 
             default:
                 return self::Undefined;
         }
     }
 
-	/**
-	 * @param int $typeId
-	 * @return string
-	 */
-	public static function resolveName($typeId)
+    /**
+     * @param int $typeId
+     * @return string
+     */
+    public static function resolveName($typeId)
     {
-        if(!is_numeric($typeId))
-        {
+        if (!is_numeric($typeId)) {
             return '';
         }
 
         $typeId = intval($typeId);
-        if($typeId <= 0)
-        {
+        if ($typeId <= 0) {
             return '';
         }
 
-        switch($typeId)
-        {
+        switch ($typeId) {
             case self::OrderIsPayed:
                 return self::OrderIsPayedName;
             case self::OrderIsShipped:
@@ -207,20 +202,20 @@ class EntityCollisionType
                 return self::OrderSynchronizeBasketItemsModifyName;
             case self::OrderPayedByStatusError:
                 return self::OrderPayedByStatusErrorName;
-			case self::OrderBasketItemTypeError:
-				return self::OrderBasketItemTypeErrorName;
-			case self::PaymentCashBoxCheckNotFound:
-				return self::PaymentCashBoxCheckNotFoundName;
-			case self::OrderSynchronizeBasketItemsModifyError:
-				return self::OrderSynchronizeBasketItemsModifyErrorName;
-			case self::BeforeUpdatePaymentDeletedError:
-				return self::BeforeUpdatePaymentDeletedErrorName;
-			case self::BeforeUpdateShipmentDeletedError:
-				return self::BeforeUpdateShipmentDeletedErrorName;
-			case self::OrderShippedByStatusError:
-				return self::OrderShippedByStatusErrorName;
-			case self::OrderBasketItemsCurrencyModify:
-				return self::OrderBasketItemsCurrencyModifyName;
+            case self::OrderBasketItemTypeError:
+                return self::OrderBasketItemTypeErrorName;
+            case self::PaymentCashBoxCheckNotFound:
+                return self::PaymentCashBoxCheckNotFoundName;
+            case self::OrderSynchronizeBasketItemsModifyError:
+                return self::OrderSynchronizeBasketItemsModifyErrorName;
+            case self::BeforeUpdatePaymentDeletedError:
+                return self::BeforeUpdatePaymentDeletedErrorName;
+            case self::BeforeUpdateShipmentDeletedError:
+                return self::BeforeUpdateShipmentDeletedErrorName;
+            case self::OrderShippedByStatusError:
+                return self::OrderShippedByStatusErrorName;
+            case self::OrderBasketItemsCurrencyModify:
+                return self::OrderBasketItemsCurrencyModifyName;
 
             case self::Undefined:
             default:
@@ -228,13 +223,12 @@ class EntityCollisionType
         }
     }
 
-	/**
-	 * @return array
-	 */
-	public static function getAllDescriptions()
+    /**
+     * @return array
+     */
+    public static function getAllDescriptions()
     {
-        if(!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
-        {
+        if (!self::$ALL_DESCRIPTIONS[LANGUAGE_ID]) {
             IncludeModuleLangFile(__FILE__);
             self::$ALL_DESCRIPTIONS[LANGUAGE_ID] = array(
                 self::OrderIsPayed => GetMessage('SALE_COLLISION_TYPE_ORDER_IS_PAYED'),
@@ -267,32 +261,29 @@ class EntityCollisionType
         return self::$ALL_DESCRIPTIONS[LANGUAGE_ID];
     }
 
-	/**
-	 * @param int $typeId
-	 * @return string
-	 */
-	public static function getDescription($typeId)
+    /**
+     * @param int $typeId
+     * @return string
+     */
+    public static function getDescription($typeId)
     {
         $typeId = intval($typeId);
         $all = self::getAllDescriptions();
         return isset($all[$typeId]) ? $all[$typeId] : '';
     }
 
-	/**
-	 * @param array $types
-	 * @return array
-	 */
-	public static function getDescriptions($types)
+    /**
+     * @param array $types
+     * @return array
+     */
+    public static function getDescriptions($types)
     {
         $result = array();
-        if(is_array($types))
-        {
-            foreach($types as $typeId)
-            {
+        if (is_array($types)) {
+            foreach ($types as $typeId) {
                 $typeId = intval($typeId);
                 $descr = self::getDescription($typeId);
-                if($descr !== '')
-                {
+                if ($descr !== '') {
                     $result[$typeId] = $descr;
                 }
             }
@@ -300,52 +291,51 @@ class EntityCollisionType
         return $result;
     }
 
-	/**
-	 * @return array
-	 */
-	protected static function getAllErrorGroups()
-	{
-		if(!self::$ALL_ERROR_GROUPS)
-		{
-			self::$ALL_ERROR_GROUPS = array(
-			self::OrderIsPayed => self::GROUP_E_ERROR,
-			self::OrderIsShipped => self::GROUP_E_ERROR,
-			self::OrderFinalStatus => self::GROUP_E_ERROR,
-			self::ShipmentIsShipped => self::GROUP_E_ERROR,
-			self::ShipmentBasketItemNotFound => self::GROUP_E_WARNING,
-			self::ShipmentBasketItemQuantityError => self::GROUP_E_WARNING,
-			self::ShipmentBasketItemsModify => self::GROUP_E_WARNING,
-			self::OrderShipmentItemsModify => self::GROUP_E_WARNING,
-			self::ShipmentBasketItemsModifyError => self::GROUP_E_WARNING,
-			self::OrderShipmentItemsModifyError => self::GROUP_E_WARNING,
-			self::PaymentIsPayed => self::GROUP_E_ERROR,
-			self::OrderShipmentDeleted => self::GROUP_E_WARNING,
-			self::OrderShipmentDeletedError => self::GROUP_E_WARNING,
-			self::OrderPaymentDeleted => self::GROUP_E_WARNING,
-			self::OrderPaymentDeletedError => self::GROUP_E_WARNING,
-			self::OrderBasketItemTaxValueError => self::GROUP_E_WARNING,
-			self::OrderSynchronizeBasketItemsModify => self::GROUP_E_WARNING,
-			self::OrderPayedByStatusError => self::GROUP_E_WARNING,
-			self::OrderBasketItemTypeError => self::GROUP_E_WARNING,
-			self::PaymentCashBoxCheckNotFound => self::GROUP_E_WARNING,
-			self::OrderSynchronizeBasketItemsModifyError => self::GROUP_E_ERROR,
-			self::BeforeUpdatePaymentDeletedError => self::GROUP_E_ERROR,
-			self::BeforeUpdateShipmentDeletedError => self::GROUP_E_ERROR,
-			self::OrderShippedByStatusError => self::GROUP_E_WARNING,
-			self::OrderBasketItemsCurrencyModify => self::GROUP_E_WARNING,
-			);
-		}
-		return self::$ALL_ERROR_GROUPS;
-	}
+    /**
+     * @return array
+     */
+    protected static function getAllErrorGroups()
+    {
+        if (!self::$ALL_ERROR_GROUPS) {
+            self::$ALL_ERROR_GROUPS = array(
+                self::OrderIsPayed => self::GROUP_E_ERROR,
+                self::OrderIsShipped => self::GROUP_E_ERROR,
+                self::OrderFinalStatus => self::GROUP_E_ERROR,
+                self::ShipmentIsShipped => self::GROUP_E_ERROR,
+                self::ShipmentBasketItemNotFound => self::GROUP_E_WARNING,
+                self::ShipmentBasketItemQuantityError => self::GROUP_E_WARNING,
+                self::ShipmentBasketItemsModify => self::GROUP_E_WARNING,
+                self::OrderShipmentItemsModify => self::GROUP_E_WARNING,
+                self::ShipmentBasketItemsModifyError => self::GROUP_E_WARNING,
+                self::OrderShipmentItemsModifyError => self::GROUP_E_WARNING,
+                self::PaymentIsPayed => self::GROUP_E_ERROR,
+                self::OrderShipmentDeleted => self::GROUP_E_WARNING,
+                self::OrderShipmentDeletedError => self::GROUP_E_WARNING,
+                self::OrderPaymentDeleted => self::GROUP_E_WARNING,
+                self::OrderPaymentDeletedError => self::GROUP_E_WARNING,
+                self::OrderBasketItemTaxValueError => self::GROUP_E_WARNING,
+                self::OrderSynchronizeBasketItemsModify => self::GROUP_E_WARNING,
+                self::OrderPayedByStatusError => self::GROUP_E_WARNING,
+                self::OrderBasketItemTypeError => self::GROUP_E_WARNING,
+                self::PaymentCashBoxCheckNotFound => self::GROUP_E_WARNING,
+                self::OrderSynchronizeBasketItemsModifyError => self::GROUP_E_ERROR,
+                self::BeforeUpdatePaymentDeletedError => self::GROUP_E_ERROR,
+                self::BeforeUpdateShipmentDeletedError => self::GROUP_E_ERROR,
+                self::OrderShippedByStatusError => self::GROUP_E_WARNING,
+                self::OrderBasketItemsCurrencyModify => self::GROUP_E_WARNING,
+            );
+        }
+        return self::$ALL_ERROR_GROUPS;
+    }
 
-	/**
-	 * @param $typeId
-	 * @return mixed|int
-	 */
-	public static function getErrorGroup($typeId)
-	{
-		$typeId = intval($typeId);
-		$all = self::getAllErrorGroups();
-		return isset($all[$typeId]) ? $all[$typeId] : null;
-	}
+    /**
+     * @param $typeId
+     * @return mixed|int
+     */
+    public static function getErrorGroup($typeId)
+    {
+        $typeId = intval($typeId);
+        $all = self::getAllErrorGroups();
+        return isset($all[$typeId]) ? $all[$typeId] : null;
+    }
 }

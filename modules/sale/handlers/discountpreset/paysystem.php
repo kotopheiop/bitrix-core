@@ -23,79 +23,77 @@ Loc::loadMessages(__FILE__);
 
 class PaySystem extends BasePreset
 {
-	public function getTitle()
-	{
-		return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEM_NAME');
-	}
+    public function getTitle()
+    {
+        return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEM_NAME');
+    }
 
-	public function getDescription()
-	{
-		return '';
-	}
+    public function getDescription()
+    {
+        return '';
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getCategory()
-	{
-		return Manager::CATEGORY_PAYMENT;
-	}
+    /**
+     * @return int
+     */
+    public function getCategory()
+    {
+        return Manager::CATEGORY_PAYMENT;
+    }
 
-	public function getFirstStepName()
-	{
-		return 'InputName';
-	}
+    public function getFirstStepName()
+    {
+        return 'InputName';
+    }
 
-	public function processShowInputName(State $state)
-	{
-		return $this->processShowInputNameInternal($state);
-	}
+    public function processShowInputName(State $state)
+    {
+        return $this->processShowInputNameInternal($state);
+    }
 
-	public function processSaveInputName(State $state)
-	{
-		return $this->processSaveInputNameInternal($state, 'InputAmount');
-	}
+    public function processSaveInputName(State $state)
+    {
+        return $this->processSaveInputNameInternal($state, 'InputAmount');
+    }
 
-	protected function getPaymentSystems()
-	{
-		$dbRes = Internals\PaySystemActionTable::getList(array(
-			'select' => array(
-				'ID',
-				'NAME',
-				'SORT',
-				'DESCRIPTION',
-				'ACTIVE',
-				'ACTION_FILE',
-				'LOGOTIP',
-			)
-		));
+    protected function getPaymentSystems()
+    {
+        $dbRes = Internals\PaySystemActionTable::getList(array(
+            'select' => array(
+                'ID',
+                'NAME',
+                'SORT',
+                'DESCRIPTION',
+                'ACTIVE',
+                'ACTION_FILE',
+                'LOGOTIP',
+            )
+        ));
 
-		$result = array();
-		while($paySystem = $dbRes->fetch())
-		{
-			$logoFileArray = \CFile::GetFileArray($paySystem['LOGOTIP']);
-			$paySystem['LOGOTIP'] = \CFile::ShowImage($logoFileArray, 100, 100, "border=0", "", false);
+        $result = array();
+        while ($paySystem = $dbRes->fetch()) {
+            $logoFileArray = \CFile::GetFileArray($paySystem['LOGOTIP']);
+            $paySystem['LOGOTIP'] = \CFile::ShowImage($logoFileArray, 100, 100, "border=0", "", false);
 
-			$result[$paySystem['ID']] = $paySystem;
-		}
+            $result[$paySystem['ID']] = $paySystem;
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	public function processShowInputAmount(State $state)
-	{
-		$lid = $state->get('discount_lid');
-		$currency = \CSaleLang::getLangCurrency($lid);
-		$paymentSystems = $this->getPaymentSystems();
+    public function processShowInputAmount(State $state)
+    {
+        $lid = $state->get('discount_lid');
+        $currency = \CSaleLang::getLangCurrency($lid);
+        $paymentSystems = $this->getPaymentSystems();
 
-		$forSelectData = array();
-		foreach($paymentSystems as $id => $paymentSystem)
-		{
-			$forSelectData[$id] = $paymentSystem['NAME'];
-		}
-		Main\Type\Collection::sortByColumn($forSelectData, 'NAME', '', null, true);
+        $forSelectData = array();
+        foreach ($paymentSystems as $id => $paymentSystem) {
+            $forSelectData[$id] = $paymentSystem['NAME'];
+        }
+        Main\Type\Collection::sortByColumn($forSelectData, 'NAME', '', null, true);
 
-		return '
+        return '
 			<table width="100%" border="0" cellspacing="7" cellpadding="0">
 				<tbody>
 				<tr>
@@ -113,93 +111,90 @@ class PaySystem extends BasePreset
 				</tbody>
 			</table>
 		';
-	}
+    }
 
-	public function processSaveInputAmount(State $state)
-	{
-		if(!trim($state->get('discount_value')))
-		{
-			$this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE'));
-		}
+    public function processSaveInputAmount(State $state)
+    {
+        if (!trim($state->get('discount_value'))) {
+            $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_VALUE'));
+        }
 
-		if(!$state->get('discount_payment'))
-		{
-			$this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_PAYMENT'));
-		}
+        if (!$state->get('discount_payment')) {
+            $this->errorCollection[] = new Error(Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_ERROR_EMPTY_PAYMENT'));
+        }
 
-		if(!$this->errorCollection->isEmpty())
-		{
-			return array($state, 'InputAmount');
-		}
+        if (!$this->errorCollection->isEmpty()) {
+            return array($state, 'InputAmount');
+        }
 
-		return array($state, 'CommonSettings');
-	}
+        return array($state, 'CommonSettings');
+    }
 
-	public function processShowCommonSettings(State $state)
-	{
-		return $this->processShowCommonSettingsInternal($state);
-	}
+    public function processShowCommonSettings(State $state)
+    {
+        return $this->processShowCommonSettingsInternal($state);
+    }
 
-	public function processSaveCommonSettings(State $state)
-	{
-		return $this->processSaveCommonSettingsInternal($state);
-	}
+    public function processSaveCommonSettings(State $state)
+    {
+        return $this->processSaveCommonSettingsInternal($state);
+    }
 
-	public function generateState(array $discountFields)
-	{
-		$discountFields = $this->normalizeDiscountFields($discountFields);
+    public function generateState(array $discountFields)
+    {
+        $discountFields = $this->normalizeDiscountFields($discountFields);
 
-		$stateFields = array(
-			'discount_lid' => $discountFields['LID'],
-			'discount_name' => $discountFields['NAME'],
-			'discount_groups' => $this->getUserGroupsByDiscount($discountFields['ID']),
-			'discount_value' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.Value'),
-			'discount_type' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.Unit'),
-			'discount_payment' => ArrayHelper::getByPath($discountFields, 'CONDITIONS.CHILDREN.0.DATA.value.0'),
-		);
+        $stateFields = array(
+            'discount_lid' => $discountFields['LID'],
+            'discount_name' => $discountFields['NAME'],
+            'discount_groups' => $this->getUserGroupsByDiscount($discountFields['ID']),
+            'discount_value' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.Value'),
+            'discount_type' => ArrayHelper::getByPath($discountFields, 'ACTIONS.CHILDREN.0.DATA.Unit'),
+            'discount_payment' => ArrayHelper::getByPath($discountFields, 'CONDITIONS.CHILDREN.0.DATA.value.0'),
+        );
 
-		return parent::generateState($discountFields)->append($stateFields);
-	}
+        return parent::generateState($discountFields)->append($stateFields);
+    }
 
-	public function generateDiscount(State $state)
-	{
-		return array_merge(parent::generateDiscount($state), array(
-			'CONDITIONS' => array(
-				'CLASS_ID' => 'CondGroup',
-				'DATA' => array(
-					'All' => 'AND',
-					'True' => 'True',
-				),
-				'CHILDREN' => array(
-					array(
-						'CLASS_ID' => 'CondSalePaySystem',
-						'DATA' => array(
-							'logic' => 'Equal',
-							'value' => array($state->get('discount_payment')),
-						),
-					),
-				),
-			),
-			'ACTIONS' => array(
-				'CLASS_ID' => 'CondGroup',
-				'DATA' => array(
-					'All' => 'AND',
-				),
-				'CHILDREN' => array(
-					array(
-						'CLASS_ID' => 'ActSaleBsktGrp',
-						'DATA' => array(
-							'Type' => $this->getTypeOfDiscount(),
-							'Value' => $state->get('discount_value'),
-							'Unit' => $state->get('discount_type', 'CurAll'),
-							'Max' => 0,
-							'All' => 'AND',
-							'True' => 'True',
-						),
-						'CHILDREN' => array(),
-					),
-				),
-			),
-		));
-	}
+    public function generateDiscount(State $state)
+    {
+        return array_merge(parent::generateDiscount($state), array(
+            'CONDITIONS' => array(
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => array(
+                    'All' => 'AND',
+                    'True' => 'True',
+                ),
+                'CHILDREN' => array(
+                    array(
+                        'CLASS_ID' => 'CondSalePaySystem',
+                        'DATA' => array(
+                            'logic' => 'Equal',
+                            'value' => array($state->get('discount_payment')),
+                        ),
+                    ),
+                ),
+            ),
+            'ACTIONS' => array(
+                'CLASS_ID' => 'CondGroup',
+                'DATA' => array(
+                    'All' => 'AND',
+                ),
+                'CHILDREN' => array(
+                    array(
+                        'CLASS_ID' => 'ActSaleBsktGrp',
+                        'DATA' => array(
+                            'Type' => $this->getTypeOfDiscount(),
+                            'Value' => $state->get('discount_value'),
+                            'Unit' => $state->get('discount_type', 'CurAll'),
+                            'Max' => 0,
+                            'All' => 'AND',
+                            'True' => 'True',
+                        ),
+                        'CHILDREN' => array(),
+                    ),
+                ),
+            ),
+        ));
+    }
 }

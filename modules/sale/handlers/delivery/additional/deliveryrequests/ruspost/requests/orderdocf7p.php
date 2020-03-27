@@ -1,4 +1,5 @@
 <?
+
 namespace Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Requests;
 
 /**
@@ -9,6 +10,6 @@ namespace Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Requests;
  */
 class OrderDocF7P extends BaseFile
 {
-	protected $path = "/1.0/forms/{id}/f7pdf";
-	protected $type = \Bitrix\Main\Web\HttpClient::HTTP_GET;
+    protected $path = "/1.0/forms/{id}/f7pdf";
+    protected $type = \Bitrix\Main\Web\HttpClient::HTTP_GET;
 }

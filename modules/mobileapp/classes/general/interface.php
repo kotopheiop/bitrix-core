@@ -1,551 +1,530 @@
 <?
+
 class CAdminMobileMenu
 {
-	const DEFAULT_ITEM_SORT = 100;
-	private static $arItems = array();
+    const DEFAULT_ITEM_SORT = 100;
+    private static $arItems = array();
 
-	public static function addItem($arItem)
-	{
-		if (!isset($arItem["sort"]))
-			$arItem["sort"] = self::DEFAULT_ITEM_SORT;
+    public static function addItem($arItem)
+    {
+        if (!isset($arItem["sort"]))
+            $arItem["sort"] = self::DEFAULT_ITEM_SORT;
 
-		self::$arItems[] = $arItem;
+        self::$arItems[] = $arItem;
 
-		return count(self::$arItems);
-	}
+        return count(self::$arItems);
+    }
 
-	public function buildMenu($arParams)
-	{
-		if (!empty(self::$arItems))
-			return self::$arItems;
+    public function buildMenu($arParams)
+    {
+        if (!empty(self::$arItems))
+            return self::$arItems;
 
-		if (isset($arParams["MENU_FILE"]))
-		{
-			$arMobileMenuItems = array();
+        if (isset($arParams["MENU_FILE"])) {
+            $arMobileMenuItems = array();
 
-			require($_SERVER["DOCUMENT_ROOT"] . $arParams["MENU_FILE"]);
+            require($_SERVER["DOCUMENT_ROOT"] . $arParams["MENU_FILE"]);
 
-			if (!empty($arMobileMenuItems))
-				foreach ($arMobileMenuItems as $arItem)
-					self::addItem($arItem);
-		}
+            if (!empty($arMobileMenuItems))
+                foreach ($arMobileMenuItems as $arItem)
+                    self::addItem($arItem);
+        }
 
-		if (isset($arParams["EVENT_NAME"]))
-		{
-			foreach (GetModuleEvents("mobileapp", $arParams["EVENT_NAME"], true) as $arHandler)
-				ExecuteModuleEventEx($arHandler);
-		}
+        if (isset($arParams["EVENT_NAME"])) {
+            foreach (GetModuleEvents("mobileapp", $arParams["EVENT_NAME"], true) as $arHandler)
+                ExecuteModuleEventEx($arHandler);
+        }
 
-		CAdminMobilePush::OnAdminMobileGetPushSettings();
+        CAdminMobilePush::OnAdminMobileGetPushSettings();
 
-		sortByColumn(self::$arItems, "sort");
+        sortByColumn(self::$arItems, "sort");
 
-		return self::$arItems;
-	}
+        return self::$arItems;
+    }
 
-	public function getDefaultUrl($arParams)
-	{
-		if (!self::buildMenu($arParams))
-			return false;
+    public function getDefaultUrl($arParams)
+    {
+        if (!self::buildMenu($arParams))
+            return false;
 
-		$firstUrl = '';
+        $firstUrl = '';
 
-		foreach (self::$arItems as $arSection)
-		{
-			if (!isset($arSection["items"]) || !is_array($arSection["items"]))
-				continue;
+        foreach (self::$arItems as $arSection) {
+            if (!isset($arSection["items"]) || !is_array($arSection["items"]))
+                continue;
 
-			foreach ($arSection["items"] as $arItem)
-			{
-				if (isset($arItem["default"]) && $arItem["default"] == true && isset($arItem["data-url"]))
-					return $arItem["data-url"];
+            foreach ($arSection["items"] as $arItem) {
+                if (isset($arItem["default"]) && $arItem["default"] == true && isset($arItem["data-url"]))
+                    return $arItem["data-url"];
 
-				if (isset($arItem["data-url"]) && empty($firstUrl))
-					$firstUrl = $arItem["data-url"];
-			}
-		}
+                if (isset($arItem["data-url"]) && empty($firstUrl))
+                    $firstUrl = $arItem["data-url"];
+            }
+        }
 
-		if ($firstUrl == '' && isset($arParams["MOBILE_APP_INDEX_PAGE"]))
-			$firstUrl = $arParams["MOBILE_APP_INDEX_PAGE"];
+        if ($firstUrl == '' && isset($arParams["MOBILE_APP_INDEX_PAGE"]))
+            $firstUrl = $arParams["MOBILE_APP_INDEX_PAGE"];
 
-		return $firstUrl;
-	}
+        return $firstUrl;
+    }
 }
 
 class CAdminMobileDetailTmpl
 {
-	private static function getTitleHtml($title)
-	{
-		return '<div class="order_title">' . $title . '</div>';
-	}
+    private static function getTitleHtml($title)
+    {
+        return '<div class="order_title">' . $title . '</div>';
+    }
 
-	private static function getUpperButtonsHtml($arButtons)
-	{
-		$retHtml = '<div class="order_nav"><ul>';
+    private static function getUpperButtonsHtml($arButtons)
+    {
+        $retHtml = '<div class="order_nav"><ul>';
 
-		foreach ($arButtons as $arButton)
-		{
-			$buttonHtml = '<li';
+        foreach ($arButtons as $arButton) {
+            $buttonHtml = '<li';
 
-			if (isset($arButton["CURRENT"]) && $arButton["CURRENT"])
-				$buttonHtml .= ' class="current"';
+            if (isset($arButton["CURRENT"]) && $arButton["CURRENT"])
+                $buttonHtml .= ' class="current"';
 
-			$buttonHtml .= '><a href=';
+            $buttonHtml .= '><a href=';
 
-			if (isset($arButton["HREF"]))
-				$buttonHtml .= '"' . $arButton["HREF"] . '"';
-			else
-				$buttonHtml .= '"javascript:void(0);"';
+            if (isset($arButton["HREF"]))
+                $buttonHtml .= '"' . $arButton["HREF"] . '"';
+            else
+                $buttonHtml .= '"javascript:void(0);"';
 
-			if (isset($arButton["ONCLICK"]))
-				$buttonHtml .= ' onclick="' . $arButton["ONCLICK"] . '"';
+            if (isset($arButton["ONCLICK"]))
+                $buttonHtml .= ' onclick="' . $arButton["ONCLICK"] . '"';
 
-			$buttonHtml .= '>' . $arButton["TITLE"] . '</a></li>';
+            $buttonHtml .= '>' . $arButton["TITLE"] . '</a></li>';
 
-			$retHtml .= $buttonHtml;
-		}
+            $retHtml .= $buttonHtml;
+        }
 
-		$retHtml .= '</ul><div class="clb"></div></div>';
+        $retHtml .= '</ul><div class="clb"></div></div>';
 
-		return $retHtml;
-	}
+        return $retHtml;
+    }
 
-	private static function getSectionHtml($arSection)
-	{
-		$retHtml = '<div class="order_infoblock';
+    private static function getSectionHtml($arSection)
+    {
+        $retHtml = '<div class="order_infoblock';
 
-		if (!isset($arSection["OPEN"]) || !$arSection["OPEN"])
-			$retHtml .= ' close';
+        if (!isset($arSection["OPEN"]) || !$arSection["OPEN"])
+            $retHtml .= ' close';
 
-		if (isset($arSection["TOTAL"]) && $arSection["TOTAL"])
-			$retHtml .= ' total';
+        if (isset($arSection["TOTAL"]) && $arSection["TOTAL"])
+            $retHtml .= ' total';
 
-		$retHtml .= '">
+        $retHtml .= '">
 			<div class="order_infoblock_title" onclick="BX.toggleClass(this.parentNode,\'close\');">' .
-			$arSection["TITLE"] . '<span></span></div>';
+            $arSection["TITLE"] . '<span></span></div>';
 
-		if ($arSection["TYPE"] == "container")
-		{
-			$retHtml .= $arSection["HTML"];
-		}
-		else
-		{
-			$retHtml .= '
+        if ($arSection["TYPE"] == "container") {
+            $retHtml .= $arSection["HTML"];
+        } else {
+            $retHtml .= '
 			<div class="order_infoblock_content">
 				<table class="order_infoblock_content_table">';
 
-			if(is_array($arSection["ROWS"]))
-			{
-				foreach ($arSection["ROWS"] as $row)
-				{
-					$retHtml .= '<tr';
+            if (is_array($arSection["ROWS"])) {
+                foreach ($arSection["ROWS"] as $row) {
+                    $retHtml .= '<tr';
 
-					if (isset($row["HIGLIGHTED"]) && $row["HIGLIGHTED"] == true)
-						$retHtml .= ' class="order_detail_container_itogi_table_td_green"';
+                    if (isset($row["HIGLIGHTED"]) && $row["HIGLIGHTED"] == true)
+                        $retHtml .= ' class="order_detail_container_itogi_table_td_green"';
 
-					$retHtml .= '>
+                    $retHtml .= '>
 							<td class="order_infoblock_content_table_tdtitle">' . $row["TITLE"] . '</td>
 							<td class="order_infoblock_content_table_tdvalue';
 
-					$retHtml .= '">' . $row["VALUE"] . '</td></tr>';
-				}
-			}
+                    $retHtml .= '">' . $row["VALUE"] . '</td></tr>';
+                }
+            }
 
-			$retHtml .= '</table>';
+            $retHtml .= '</table>';
 
-			if (isset($arSection["BOTTOM"]) && isset($arSection["BOTTOM"]["VALUE"]))
-			{
-				$retHtml .= '<div class=';
-				if (isset($arSection["BOTTOM"]["STYLE"]))
-				{
-					if ($arSection["BOTTOM"]["STYLE"] == 'green')
-						$retHtml .= '"order_infoblock_order_green">';
-					else
-						$retHtml .= '"order_infoblock_order_canceled">';
-				}
+            if (isset($arSection["BOTTOM"]) && isset($arSection["BOTTOM"]["VALUE"])) {
+                $retHtml .= '<div class=';
+                if (isset($arSection["BOTTOM"]["STYLE"])) {
+                    if ($arSection["BOTTOM"]["STYLE"] == 'green')
+                        $retHtml .= '"order_infoblock_order_green">';
+                    else
+                        $retHtml .= '"order_infoblock_order_canceled">';
+                }
 
-				$retHtml .= $arSection["BOTTOM"]["VALUE"] . '</div>';
-			}
+                $retHtml .= $arSection["BOTTOM"]["VALUE"] . '</div>';
+            }
 
-			$retHtml .= '</div>';
-		}
+            $retHtml .= '</div>';
+        }
 
-		$retHtml .= '</div>';
+        $retHtml .= '</div>';
 
-		return $retHtml;
-	}
+        return $retHtml;
+    }
 
-	public static function getHtml($arAdminDetail)
-	{
-		$retHtml = '';
+    public static function getHtml($arAdminDetail)
+    {
+        $retHtml = '';
 
-		if (isset($arAdminDetail["TITLE"]))
-			$retHtml .= self::getTitleHtml($arAdminDetail["TITLE"]);
+        if (isset($arAdminDetail["TITLE"]))
+            $retHtml .= self::getTitleHtml($arAdminDetail["TITLE"]);
 
-		if (isset($arAdminDetail["UPPER_BUTTONS"]))
-			$retHtml .= self::getUpperButtonsHtml($arAdminDetail["UPPER_BUTTONS"]);
+        if (isset($arAdminDetail["UPPER_BUTTONS"]))
+            $retHtml .= self::getUpperButtonsHtml($arAdminDetail["UPPER_BUTTONS"]);
 
-		if (isset($arAdminDetail["SECTIONS"]) && is_array($arAdminDetail["SECTIONS"]))
-			foreach ($arAdminDetail["SECTIONS"] as $arSection)
-				$retHtml .= self::getSectionHtml($arSection);
+        if (isset($arAdminDetail["SECTIONS"]) && is_array($arAdminDetail["SECTIONS"]))
+            foreach ($arAdminDetail["SECTIONS"] as $arSection)
+                $retHtml .= self::getSectionHtml($arSection);
 
-		return $retHtml;
-	}
+        return $retHtml;
+    }
 }
 
 class CAdminMobileDetail
 {
-	private $arDetail;
+    private $arDetail;
 
-	public function setTitle($strTitle)
-	{
+    public function setTitle($strTitle)
+    {
 
-		$this->arDetail["TITLE"] = $strTitle;
-	}
+        $this->arDetail["TITLE"] = $strTitle;
+    }
 
-	public function addUpperButton($arButton)
-	{
-		$this->arDetail["UPPER_BUTTONS"][] = $arButton;
-	}
+    public function addUpperButton($arButton)
+    {
+        $this->arDetail["UPPER_BUTTONS"][] = $arButton;
+    }
 
-	public function addSection($arSection)
-	{
-		$this->arDetail["SECTIONS"][] = $arSection;
-	}
+    public function addSection($arSection)
+    {
+        $this->arDetail["SECTIONS"][] = $arSection;
+    }
 
-	public function getHtml()
-	{
-		return CAdminMobileDetailTmpl::getHtml($this->arDetail);
-	}
+    public function getHtml()
+    {
+        return CAdminMobileDetailTmpl::getHtml($this->arDetail);
+    }
 
-	public function getItem()
-	{
-		return $this->arDetail;
-	}
+    public function getItem()
+    {
+        return $this->arDetail;
+    }
 }
 
 class CAdminMobileInterface
 {
-	public function getCheckBoxesHtml($arCB, $strTitle = '', $arChecked = array(), $arParams = array())
-	{
-		if (!is_array($arCB) || empty($arCB))
-			return false;
+    public function getCheckBoxesHtml($arCB, $strTitle = '', $arChecked = array(), $arParams = array())
+    {
+        if (!is_array($arCB) || empty($arCB))
+            return false;
 
-		$arCBParams["ITEMS"] = $arCB;
+        $arCBParams["ITEMS"] = $arCB;
 
-		if (strlen($strTitle) > 0)
-			$arCBParams["TITLE"] = $strTitle;
+        if (strlen($strTitle) > 0)
+            $arCBParams["TITLE"] = $strTitle;
 
-		if (!empty($arChecked))
-			$arCBParams["CHECKED"] = $arChecked;
+        if (!empty($arChecked))
+            $arCBParams["CHECKED"] = $arChecked;
 
-		if (is_array($arParams))
-			foreach ($arParams as $key => $param)
-				$arCBParams[$key] = $param;
+        if (is_array($arParams))
+            foreach ($arParams as $key => $param)
+                $arCBParams[$key] = $param;
 
-		ob_start();
-		$GLOBALS["APPLICATION"]->IncludeComponent(
-			'bitrix:mobileapp.interface.checkboxes',
-			'.default',
-			$arCBParams,
-			false
-		);
+        ob_start();
+        $GLOBALS["APPLICATION"]->IncludeComponent(
+            'bitrix:mobileapp.interface.checkboxes',
+            '.default',
+            $arCBParams,
+            false
+        );
 
-		$resultHtml = ob_get_contents();
-		ob_end_clean();
+        $resultHtml = ob_get_contents();
+        ob_end_clean();
 
-		return $resultHtml;
-	}
+        return $resultHtml;
+    }
 }
 
 class CMobileLazyLoad
 {
-	public static function getBase64Stub()
-	{
-		return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2N88f7jfwAJWAPJBTw90AAAAABJRU5ErkJggg==";
-	}
+    public static function getBase64Stub()
+    {
+        return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIW2N88f7jfwAJWAPJBTw90AAAAABJRU5ErkJggg==";
+    }
 }
 
 class CAdminMobileEdit
 {
-	private static function getCustomAttribs($arField)
-	{
-		$strResult = '';
+    private static function getCustomAttribs($arField)
+    {
+        $strResult = '';
 
-		if(isset($arField["CUSTOM_ATTRS"]) && is_array($arField["CUSTOM_ATTRS"]))
-		{
-			$strResult .= ' ';
-			foreach ($arField["CUSTOM_ATTRS"] as $attrName => $attrVal)
-				$strResult .= ' '.$attrName.'="'.$attrVal.'"';
-		}
+        if (isset($arField["CUSTOM_ATTRS"]) && is_array($arField["CUSTOM_ATTRS"])) {
+            $strResult .= ' ';
+            foreach ($arField["CUSTOM_ATTRS"] as $attrName => $attrVal)
+                $strResult .= ' ' . $attrName . '="' . $attrVal . '"';
+        }
 
-		return $strResult;
-	}
+        return $strResult;
+    }
 
-	private static function getCommonAttribs($arField)
-	{
-		$strResult = '';
-		$arCommonAttrs = array("ID", "NAME", "HIDDEN");
+    private static function getCommonAttribs($arField)
+    {
+        $strResult = '';
+        $arCommonAttrs = array("ID", "NAME", "HIDDEN");
 
-		if(is_array($arField))
-		{
-			$strResult .= ' ';
-			foreach ($arCommonAttrs as $attrName)
-			{
-				if(isset($arField[$attrName]))
-				{
-					$strResult .= ' '.strtolower($attrName).'="'.$arField[$attrName].'"';
-				}
-			}
-		}
+        if (is_array($arField)) {
+            $strResult .= ' ';
+            foreach ($arCommonAttrs as $attrName) {
+                if (isset($arField[$attrName])) {
+                    $strResult .= ' ' . strtolower($attrName) . '="' . $arField[$attrName] . '"';
+                }
+            }
+        }
 
-		return $strResult;
-	}
+        return $strResult;
+    }
 
-	public static function getFieldHtml($arField)
-	{
-		global $APPLICATION;
-		$resultHtml = '';
-		$someAttribs = self::getCommonAttribs($arField);
-		$someAttribs .= self::getCustomAttribs($arField);
+    public static function getFieldHtml($arField)
+    {
+        global $APPLICATION;
+        $resultHtml = '';
+        $someAttribs = self::getCommonAttribs($arField);
+        $someAttribs .= self::getCustomAttribs($arField);
 
 
+        switch ($arField["TYPE"]) {
+            case 'BLOCK':
+                $resultHtml =
+                    '<div class="mapp_edit_infoblock"' .
+                    $someAttribs .
+                    '>' .
+                    '<div class="mapp_edit_infoblock_title">' . $arField["TITLE"] . '</div>';
 
-		switch ($arField["TYPE"])
-		{
-			case 'BLOCK':
-				$resultHtml =
-					'<div class="mapp_edit_infoblock"'.
-					$someAttribs.
-					'>'.
-						'<div class="mapp_edit_infoblock_title">'.$arField["TITLE"].'</div>';
+                if (is_array($arField["DATA"]))
+                    foreach ($arField["DATA"] as $fieldData)
+                        $resultHtml .= self::getFieldHtml($fieldData);
 
-				if(is_array($arField["DATA"]))
-					foreach ($arField["DATA"] as $fieldData)
-						$resultHtml .= self::getFieldHtml($fieldData);
+                $resultHtml .= '</div>';
 
-				$resultHtml .= '</div>';
+                break;
 
-				break;
-
-			case 'TEXT_RO':
-				$resultHtml =
-					'<ul>
+            case 'TEXT_RO':
+                $resultHtml =
+                    '<ul>
 						<li>
-							<div class="mapp_edit_li_container"'.
-							$someAttribs.
-							'>
-								<label>'.$arField["VALUE"].'</label>
+							<div class="mapp_edit_li_container"' .
+                    $someAttribs .
+                    '>
+								<label>' . $arField["VALUE"] . '</label>
 							</div>
 						</li>
 					</ul>';
 
-				break;
+                break;
 
-			case 'HIDDEN':
-				$resultHtml = '<input type="hidden" value="'.$arField["VALUE"].'"'.$someAttribs.'>';
-				break;
+            case 'HIDDEN':
+                $resultHtml = '<input type="hidden" value="' . $arField["VALUE"] . '"' . $someAttribs . '>';
+                break;
 
-			case 'CHECKBOXES':
-				$arFieldParams = array(
-					"NOWRAP" => "Y",
-					"NAME" => $arField["NAME"],
-					"ITEMS" => $arField["VALUES"]
-					);
+            case 'CHECKBOXES':
+                $arFieldParams = array(
+                    "NOWRAP" => "Y",
+                    "NAME" => $arField["NAME"],
+                    "ITEMS" => $arField["VALUES"]
+                );
 
-				if(isset($arField["CHECKED"]) && is_array($arField["CHECKED"]))
-					$arFieldParams["CHECKED"] = $arField["CHECKED"];
+                if (isset($arField["CHECKED"]) && is_array($arField["CHECKED"]))
+                    $arFieldParams["CHECKED"] = $arField["CHECKED"];
 
-				ob_start();
-				$APPLICATION->IncludeComponent(
-					'bitrix:mobileapp.interface.checkboxes',
-					'.default',
-					$arFieldParams,
-					false);
+                ob_start();
+                $APPLICATION->IncludeComponent(
+                    'bitrix:mobileapp.interface.checkboxes',
+                    '.default',
+                    $arFieldParams,
+                    false);
 
-				$resultHtml = ob_get_contents();
-				ob_end_clean();
+                $resultHtml = ob_get_contents();
+                ob_end_clean();
 
-				break;
+                break;
 
-			case 'CHECKBOX':
+            case 'CHECKBOX':
 
-				$arItemParams = array(
-					"NAME" => $arField["NAME"],
-					"TITLE" => $arField["TITLE"]
-				);
+                $arItemParams = array(
+                    "NAME" => $arField["NAME"],
+                    "TITLE" => $arField["TITLE"]
+                );
 
-				if(isset($arField["VALUE"]) && $arField["VALUE"] == true)
-					$arItemParams["VALUE"] = $arField["VALUE"];
+                if (isset($arField["VALUE"]) && $arField["VALUE"] == true)
+                    $arItemParams["VALUE"] = $arField["VALUE"];
 
-				if(isset($arField["CHECKED"]) && $arField["CHECKED"] == true)
-					$arItemParams["CHECKED"] = $arField["CHECKED"];
+                if (isset($arField["CHECKED"]) && $arField["CHECKED"] == true)
+                    $arItemParams["CHECKED"] = $arField["CHECKED"];
 
-				if(isset($arField["TITLE"]) && $arField["TITLE"] == true)
-					$arItemParams["TITLE"] = $arField["TITLE"];
+                if (isset($arField["TITLE"]) && $arField["TITLE"] == true)
+                    $arItemParams["TITLE"] = $arField["TITLE"];
 
-				$arFieldParams = array(
-					"NOWRAP" => "Y",
-					"ITEMS" => array($arItemParams)
-					);
+                $arFieldParams = array(
+                    "NOWRAP" => "Y",
+                    "ITEMS" => array($arItemParams)
+                );
 
-				ob_start();
-				$APPLICATION->IncludeComponent(
-					'bitrix:mobileapp.interface.checkboxes',
-					'.default',
-					$arFieldParams,
-					false);
+                ob_start();
+                $APPLICATION->IncludeComponent(
+                    'bitrix:mobileapp.interface.checkboxes',
+                    '.default',
+                    $arFieldParams,
+                    false);
 
-				$resultHtml = ob_get_contents();
-				ob_end_clean();
+                $resultHtml = ob_get_contents();
+                ob_end_clean();
 
-				break;
+                break;
 
-			case 'RADIO':
+            case 'RADIO':
 
-				$arFieldsParams = array(
-					"ITEMS" => $arField["VALUES"],
-					"TITLE" => $arField["TITLE"],
-					"RADIO_NAME" => $arField["NAME"],
-					"NOWRAP" => "Y"
-					);
+                $arFieldsParams = array(
+                    "ITEMS" => $arField["VALUES"],
+                    "TITLE" => $arField["TITLE"],
+                    "RADIO_NAME" => $arField["NAME"],
+                    "NOWRAP" => "Y"
+                );
 
-				if(isset($arField["SELECTED"]))
-					$arFieldsParams["SELECTED"] = $arField["SELECTED"];
+                if (isset($arField["SELECTED"]))
+                    $arFieldsParams["SELECTED"] = $arField["SELECTED"];
 
-				ob_start();
+                ob_start();
 
-				$APPLICATION->IncludeComponent(
-					'bitrix:mobileapp.interface.radiobuttons',
-					'.default',
-					$arFieldsParams,
-					false);
+                $APPLICATION->IncludeComponent(
+                    'bitrix:mobileapp.interface.radiobuttons',
+                    '.default',
+                    $arFieldsParams,
+                    false);
 
-				$resultHtml = ob_get_contents();
-				ob_end_clean();
+                $resultHtml = ob_get_contents();
+                ob_end_clean();
 
-				break;
+                break;
 
-			case 'TEXT':
-				if(!isset($arField["VALUES"]))
-					$values = array($arField["VALUE"]);
-				else
-					$values = $arField["VALUES"];
+            case 'TEXT':
+                if (!isset($arField["VALUES"]))
+                    $values = array($arField["VALUE"]);
+                else
+                    $values = $arField["VALUES"];
 
-					$resultHtml = '<ul>';
+                $resultHtml = '<ul>';
 
-					foreach ($values as $value)
-					{
-						$resultHtml .= '
+                foreach ($values as $value) {
+                    $resultHtml .= '
 							<li>
 								<div class="mapp_edit_input_container">
-									<input '.$someAttribs.' type="text"';
+									<input ' . $someAttribs . ' type="text"';
 
-						if(strlen($value) <= 0 && isset($arField["TITLE"]))
-						{
-							$resultHtml .= ' onblur="if (this.value==\'\'){this.value=\''.$arField["TITLE"].'\'; BX.addClass(this, \'mapp_edit_input_empty\');}"'.
-								' value="'.$arField["TITLE"].'"'.
-								' onfocus="if (this.value==\''.$arField["TITLE"].'\') {this.value=\'\';  BX.removeClass(this, \'mapp_edit_input_empty\');}"'.
-								' class = "mapp_edit_input_empty"';
-						}
-						elseif(strlen($value) > 0)
-						{
-							$resultHtml .= ' value="'.$value.'"';
-						}
+                    if (strlen($value) <= 0 && isset($arField["TITLE"])) {
+                        $resultHtml .= ' onblur="if (this.value==\'\'){this.value=\'' . $arField["TITLE"] . '\'; BX.addClass(this, \'mapp_edit_input_empty\');}"' .
+                            ' value="' . $arField["TITLE"] . '"' .
+                            ' onfocus="if (this.value==\'' . $arField["TITLE"] . '\') {this.value=\'\';  BX.removeClass(this, \'mapp_edit_input_empty\');}"' .
+                            ' class = "mapp_edit_input_empty"';
+                    } elseif (strlen($value) > 0) {
+                        $resultHtml .= ' value="' . $value . '"';
+                    }
 
-						$resultHtml .='>
+                    $resultHtml .= '>
 								</div>
 							</li>';
-					}
+                }
 
-				$resultHtml .= '</ul>';
-				break;
+                $resultHtml .= '</ul>';
+                break;
 
-			case 'BUTTON':
-				$resultHtml = '<input type="button" class="mapp_edit_button"'.$someAttribs;
+            case 'BUTTON':
+                $resultHtml = '<input type="button" class="mapp_edit_button"' . $someAttribs;
 
-				if(isset($arField["VALUE"]))
-					$resultHtml .= ' value="'.$arField["VALUE"].'"';
+                if (isset($arField["VALUE"]))
+                    $resultHtml .= ' value="' . $arField["VALUE"] . '"';
 
-				$resultHtml .= '>';
-				break;
+                $resultHtml .= '>';
+                break;
 
-			case 'TEXTAREA':
-				$resultHtml = '';
+            case 'TEXTAREA':
+                $resultHtml = '';
 
-				if(!isset($arField["TITLE"]))
-					$arField["TITLE"] = "";
+                if (!isset($arField["TITLE"]))
+                    $arField["TITLE"] = "";
 
-				$resultHtml .= '<div class="mapp_edit_textarea_title">'.
-									$arField["TITLE"].
-								'</div>';
+                $resultHtml .= '<div class="mapp_edit_textarea_title">' .
+                    $arField["TITLE"] .
+                    '</div>';
 
-				$resultHtml .= '
+                $resultHtml .= '
 				<div class="mapp_edit_textarea_container">
-					<textarea'.
-						' class="mapp_edit_textarea"'.$someAttribs;
+					<textarea' .
+                    ' class="mapp_edit_textarea"' . $someAttribs;
 
-						$resultHtml .= '>'.$arField["VALUE"].
-					'</textarea>
+                $resultHtml .= '>' . $arField["VALUE"] .
+                    '</textarea>
 				</div>';
 
-				if(!isset($arField["HINT"]))
-					$arField["HINT"] = "";
+                if (!isset($arField["HINT"]))
+                    $arField["HINT"] = "";
 
-				$resultHtml .= '<span class="mapp_edit_textarea_hint">'.
-									$arField["HINT"].
-								'</span>';
+                $resultHtml .= '<span class="mapp_edit_textarea_hint">' .
+                    $arField["HINT"] .
+                    '</span>';
 
-				break;
+                break;
 
-			case '2_RADIO_BUTTONS':
+            case '2_RADIO_BUTTONS':
 
-				if(isset($arField["ID"]))
-					$id = $arField["ID"];
-				else
-					$id = "2rb_".rand();
+                if (isset($arField["ID"]))
+                    $id = $arField["ID"];
+                else
+                    $id = "2rb_" . rand();
 
-				$value = isset($arField['VALUE']) && $arField['VALUE'] == 'Y' ? 'Y' : 'N';
+                $value = isset($arField['VALUE']) && $arField['VALUE'] == 'Y' ? 'Y' : 'N';
 
-				$resultHtml .= '
+                $resultHtml .= '
 						<div class="mapp_edit_li_container mapp_edit_tac">
-							<div class="mapp_edit_title_tac">'.$arField["TITLE"].'</div>
+							<div class="mapp_edit_title_tac">' . $arField["TITLE"] . '</div>
 							<div class="mapp_edit_button_yn">
-								<a'.
-									' id="'.$id.'_b1'.'"'.
-									' href="javascript:void(0);"'.
-									($value == 'Y' ? ' class="current"' : '').
-									self::getCustomAttribs($arField["BUTT_Y"]).
-								'>'.
-									$arField["BUTT_Y"]["TITLE"].
-								'</a>
-								<a'.
-									' id="'.$id.'_b2'.'"'.
-									' href="javascript:void(0);"'
-									.($value != 'Y' ? ' class="current"' : '').
-								'>'
-									.$arField["BUTT_N"]["TITLE"].
-									self::getCustomAttribs($arField["BUTT_N"]).
-								'</a>
-								<input'.
-									' type="hidden"'.
-									' name="'.$arField["NAME"].'"'.
-									' id="'.$id.'"'.
-									' value ="'.$value.'"'.
-									self::getCustomAttribs($arField).
-								'>
+								<a' .
+                    ' id="' . $id . '_b1' . '"' .
+                    ' href="javascript:void(0);"' .
+                    ($value == 'Y' ? ' class="current"' : '') .
+                    self::getCustomAttribs($arField["BUTT_Y"]) .
+                    '>' .
+                    $arField["BUTT_Y"]["TITLE"] .
+                    '</a>
+								<a' .
+                    ' id="' . $id . '_b2' . '"' .
+                    ' href="javascript:void(0);"'
+                    . ($value != 'Y' ? ' class="current"' : '') .
+                    '>'
+                    . $arField["BUTT_N"]["TITLE"] .
+                    self::getCustomAttribs($arField["BUTT_N"]) .
+                    '</a>
+								<input' .
+                    ' type="hidden"' .
+                    ' name="' . $arField["NAME"] . '"' .
+                    ' id="' . $id . '"' .
+                    ' value ="' . $value . '"' .
+                    self::getCustomAttribs($arField) .
+                    '>
 								<div class="mapp_edit_clb"></div>
 							</div>
 						</div>
 					<script type="text/javascript">
-						new FastButton(BX("'.$id.'_b1'.'"), function(){ toggle'.$id.'(); '.$arField["BUTT_Y"]["ONCLICK"].'}, false);
-						new FastButton(BX("'.$id.'_b2'.'"), function(){ toggle'.$id.'(); '.$arField["BUTT_N"]["ONCLICK"].'}, false);
-						function toggle'.$id.'()
+						new FastButton(BX("' . $id . '_b1' . '"), function(){ toggle' . $id . '(); ' . $arField["BUTT_Y"]["ONCLICK"] . '}, false);
+						new FastButton(BX("' . $id . '_b2' . '"), function(){ toggle' . $id . '(); ' . $arField["BUTT_N"]["ONCLICK"] . '}, false);
+						function toggle' . $id . '()
 						{
-							BX.toggleClass(BX("'.$id.'_b1'.'"),"current");
-							BX.toggleClass(BX("'.$id.'_b2'.'"),"current");
+							BX.toggleClass(BX("' . $id . '_b1' . '"),"current");
+							BX.toggleClass(BX("' . $id . '_b2' . '"),"current");
 
-							var input = BX("'.$id.'");
+							var input = BX("' . $id . '");
 
 							if(input && input.value)
 							{
@@ -558,15 +537,16 @@ class CAdminMobileEdit
 					</script>
 					';
 
-				break;
+                break;
 
-			case 'CUSTOM':
-						$resultHtml = $arField["HTML_DATA"];
-				break;
+            case 'CUSTOM':
+                $resultHtml = $arField["HTML_DATA"];
+                break;
 
-		}
+        }
 
-		return $resultHtml;
-	}
+        return $resultHtml;
+    }
 }
+
 ?>

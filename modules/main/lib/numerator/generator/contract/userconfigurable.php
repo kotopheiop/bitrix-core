@@ -1,5 +1,7 @@
 <?php
+
 namespace Bitrix\Main\Numerator\Generator\Contract;
+
 use Bitrix\Main\Result;
 
 /**
@@ -10,21 +12,24 @@ use Bitrix\Main\Result;
  */
 interface UserConfigurable
 {
-	/**
-	 * @param array $config
-	 */
-	public function setConfig($config);
-	/**
-	 * @return array of configuration fields and their values
-	 */
-	public function getConfig();
-	/**
-	 * @param array $config
-	 * @return Result
-	 */
-	public function validateConfig($config);
-	/**
-	 * @return array of configuration fields that can be edited by user
-	 */
-	public static function getSettingsFields();
+    /**
+     * @param array $config
+     */
+    public function setConfig($config);
+
+    /**
+     * @return array of configuration fields and their values
+     */
+    public function getConfig();
+
+    /**
+     * @param array $config
+     * @return Result
+     */
+    public function validateConfig($config);
+
+    /**
+     * @return array of configuration fields that can be edited by user
+     */
+    public static function getSettingsFields();
 }

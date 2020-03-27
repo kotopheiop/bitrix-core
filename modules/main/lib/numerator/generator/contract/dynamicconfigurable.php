@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Main\Numerator\Generator\Contract;
 /**
  * Interface DynamicConfigurable -
@@ -9,8 +10,8 @@ namespace Bitrix\Main\Numerator\Generator\Contract;
  */
 interface DynamicConfigurable
 {
-	/**
-	 * @param array $config
-	 */
-	public function setDynamicConfig($config);
+    /**
+     * @param array $config
+     */
+    public function setDynamicConfig($config);
 }

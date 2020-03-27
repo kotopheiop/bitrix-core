@@ -9,5 +9,5 @@ namespace Bitrix\Main\Web\WebPacker\Resource;
  */
 class LayoutAsset extends Asset
 {
-	protected $type = self::LAYOUT;
+    protected $type = self::LAYOUT;
 }

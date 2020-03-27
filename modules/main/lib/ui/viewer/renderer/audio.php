@@ -6,32 +6,32 @@ use Bitrix\Main\Loader;
 
 class Audio extends Renderer
 {
-	const JS_TYPE_AUDIO = 'audio';
+    const JS_TYPE_AUDIO = 'audio';
 
-	public static function getJsType()
-	{
-		return self::JS_TYPE_AUDIO;
-	}
+    public static function getJsType()
+    {
+        return self::JS_TYPE_AUDIO;
+    }
 
-	public static function getAllowedContentTypes()
-	{
-		return [
-			'audio/mp3',
-			'audio/mpeg'
-		];
-	}
+    public static function getAllowedContentTypes()
+    {
+        return [
+            'audio/mp3',
+            'audio/mpeg'
+        ];
+    }
 
-	public function render()
-	{
-		Loader::includeModule('fileman');
+    public function render()
+    {
+        Loader::includeModule('fileman');
 
-		return \CJSCore::getHTML(['player']);
-	}
+        return \CJSCore::getHTML(['player']);
+    }
 
-	public function getData()
-	{
-		return [
-			'src' => $this->sourceUri,
-		];
-	}
+    public function getData()
+    {
+        return [
+            'src' => $this->sourceUri,
+        ];
+    }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Bizproc\Automation\Trigger;
 
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
@@ -7,135 +8,125 @@ use Bitrix\Main;
 
 class BaseTrigger
 {
-	protected $target;
+    protected $target;
 
-	/**
-	 * @return string the fully qualified name of this class.
-	 */
-	public static function className()
-	{
-		return get_called_class();
-	}
+    /**
+     * @return string the fully qualified name of this class.
+     */
+    public static function className()
+    {
+        return get_called_class();
+    }
 
-	public static function isEnabled()
-	{
-		return true;
-	}
+    public static function isEnabled()
+    {
+        return true;
+    }
 
-	/**
-	 * @param BaseTarget $target
-	 * @return $this
-	 */
-	public function setTarget(BaseTarget $target)
-	{
-		$this->target = $target;
-		return $this;
-	}
+    /**
+     * @param BaseTarget $target
+     * @return $this
+     */
+    public function setTarget(BaseTarget $target)
+    {
+        $this->target = $target;
+        return $this;
+    }
 
-	/**
-	 * @return BaseTarget
-	 * @throws Main\InvalidOperationException
-	 */
-	public function getTarget()
-	{
-		if ($this->target === null)
-		{
-			throw new Main\InvalidOperationException('Target must be set by setTarget method.');
-		}
-		return $this->target;
-	}
+    /**
+     * @return BaseTarget
+     * @throws Main\InvalidOperationException
+     */
+    public function getTarget()
+    {
+        if ($this->target === null) {
+            throw new Main\InvalidOperationException('Target must be set by setTarget method.');
+        }
+        return $this->target;
+    }
 
-	/**
-	 * @return string Gets the alphanumeric trigger code.
-	 */
-	public static function getCode()
-	{
-		return 'BASE';
-	}
+    /**
+     * @return string Gets the alphanumeric trigger code.
+     */
+    public static function getCode()
+    {
+        return 'BASE';
+    }
 
-	/**
-	 * @return string Gets the trigger name.
-	 */
-	public static function getName()
-	{
-		return 'Base trigger';
-	}
+    /**
+     * @return string Gets the trigger name.
+     */
+    public static function getName()
+    {
+        return 'Base trigger';
+    }
 
-	protected function getPotentialTriggers()
-	{
-		$triggers = [];
+    protected function getPotentialTriggers()
+    {
+        $triggers = [];
 
-		$currentStatus = $this->getTarget()->getDocumentStatus();
-		$allStatuses = array_keys($this->getTarget()->getDocumentStatusList());
+        $currentStatus = $this->getTarget()->getDocumentStatus();
+        $allStatuses = array_keys($this->getTarget()->getDocumentStatusList());
 
-		$needleKey = array_search($currentStatus, $allStatuses);
+        $needleKey = array_search($currentStatus, $allStatuses);
 
-		if ($needleKey === false)
-		{
-			return $triggers;
-		}
+        if ($needleKey === false) {
+            return $triggers;
+        }
 
-		$forwardStatuses = array_slice($allStatuses, $needleKey + 1);
+        $forwardStatuses = array_slice($allStatuses, $needleKey + 1);
 
-		$code = static::getCode();
-		$rows = [];
-		$targetTriggers = $this->getTarget()->getTriggers($allStatuses);
+        $code = static::getCode();
+        $rows = [];
+        $targetTriggers = $this->getTarget()->getTriggers($allStatuses);
 
-		foreach ($targetTriggers as $row)
-		{
-			if ($row['CODE'] !== $code)
-			{
-				continue;
-			}
+        foreach ($targetTriggers as $row) {
+            if ($row['CODE'] !== $code) {
+                continue;
+            }
 
-			if (!in_array($row['DOCUMENT_STATUS'], $forwardStatuses))
-			{
-				if (
-					!isset($row['APPLY_RULES']['ALLOW_BACKWARDS'])
-					||
-					$row['APPLY_RULES']['ALLOW_BACKWARDS'] !== 'Y'
-				)
-				{
-					continue;
-				}
-			}
+            if (!in_array($row['DOCUMENT_STATUS'], $forwardStatuses)) {
+                if (
+                    !isset($row['APPLY_RULES']['ALLOW_BACKWARDS'])
+                    ||
+                    $row['APPLY_RULES']['ALLOW_BACKWARDS'] !== 'Y'
+                ) {
+                    continue;
+                }
+            }
 
-			$rows[$row['DOCUMENT_STATUS']][] = $row;
-		}
+            $rows[$row['DOCUMENT_STATUS']][] = $row;
+        }
 
-		if ($rows)
-		{
-			foreach ($allStatuses as $needleStatus)
-			{
-				if (isset($rows[$needleStatus]))
-				{
-					$triggers = array_merge($triggers, $rows[$needleStatus]);
-				}
-			}
-		}
+        if ($rows) {
+            foreach ($allStatuses as $needleStatus) {
+                if (isset($rows[$needleStatus])) {
+                    $triggers = array_merge($triggers, $rows[$needleStatus]);
+                }
+            }
+        }
 
-		return $triggers;
-	}
+        return $triggers;
+    }
 
-	public function checkApplyRules(array $trigger)
-	{
-		$conditionRules = is_array($trigger['APPLY_RULES']) && isset($trigger['APPLY_RULES']['Condition'])
-			? $trigger['APPLY_RULES']['Condition'] : null;
+    public function checkApplyRules(array $trigger)
+    {
+        $conditionRules = is_array($trigger['APPLY_RULES']) && isset($trigger['APPLY_RULES']['Condition'])
+            ? $trigger['APPLY_RULES']['Condition'] : null;
 
-		if ($conditionRules)
-		{
-			$conditionGroup = new ConditionGroup($conditionRules);
-			return $conditionGroup->evaluate($this->getTarget());
-		}
+        if ($conditionRules) {
+            $conditionGroup = new ConditionGroup($conditionRules);
+            return $conditionGroup->evaluate($this->getTarget());
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	public static function toArray()
-	{
-		return [
-			'NAME' => static::getName(),
-			'CODE' => static::getCode()
-		];
-	}
+    public static function toArray()
+    {
+        return [
+            'NAME' => static::getName(),
+            'CODE' => static::getCode()
+        ];
+    }
 }

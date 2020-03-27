@@ -18,5 +18,5 @@ Loc::loadMessages(__FILE__);
  */
 class TransportLookalikeVk extends TransportBase
 {
-	const CODE = self::CODE_ADS_LOOKALIKE_VK;
+    const CODE = self::CODE_ADS_LOOKALIKE_VK;
 }

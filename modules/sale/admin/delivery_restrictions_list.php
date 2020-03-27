@@ -1,178 +1,170 @@
 <?
-namespace Bitrix\Sale\Delivery\AdminPage\DeliveryRestrictions
-{
-	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/delivery/inputs.php");
 
-	if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
-		die();
+namespace Bitrix\Sale\Delivery\AdminPage\DeliveryRestrictions {
+    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
 
-	global $APPLICATION;
+    if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+        die();
 
-	$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-	if ($saleModulePermissions < "W")
-		$APPLICATION->AuthForm(Loc::getMessage("SALE_ESDL_ACCESS_DENIED"));
+    global $APPLICATION;
 
-	/**
-	 * @var CDatabase $DB
-	 * @var CMain  $APPLICATION
-	 */
+    $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
+    if ($saleModulePermissions < "W")
+        $APPLICATION->AuthForm(Loc::getMessage("SALE_ESDL_ACCESS_DENIED"));
 
-	use Bitrix\Main\Localization\Loc;
-	use Bitrix\Sale\Delivery\Restrictions;
-	use Bitrix\Sale\Delivery\Services;
-	use Bitrix\Sale\Internals\Input;
+    /**
+     * @var CDatabase $DB
+     * @var CMain $APPLICATION
+     */
 
-	Loc::loadMessages(__FILE__);
+    use Bitrix\Main\Localization\Loc;
+    use Bitrix\Sale\Delivery\Restrictions;
+    use Bitrix\Sale\Delivery\Services;
+    use Bitrix\Sale\Internals\Input;
 
-	$ID = intval($_GET['ID']);
-	$tableId = 'table_delivery_restrictions';
-	$oSort = new \CAdminSorting($tableId);
-	$lAdmin = new \CAdminList($tableId, $oSort);
- 	$restrictionClassNames = Restrictions\Manager::getClassesList();
+    Loc::loadMessages(__FILE__);
 
-	$res = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
-		'filter' => array(
-			'=SERVICE_ID' => $ID,
-			'=SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_SHIPMENT
-		),
-		'select' => array('ID', 'CLASS_NAME', 'SORT', 'PARAMS'),
-		'order' => array('SORT' => 'ASC', 'ID' => 'DESC')
-	));
+    $ID = intval($_GET['ID']);
+    $tableId = 'table_delivery_restrictions';
+    $oSort = new \CAdminSorting($tableId);
+    $lAdmin = new \CAdminList($tableId, $oSort);
+    $restrictionClassNames = Restrictions\Manager::getClassesList();
 
-	$data = $res->fetchAll();
-	$dbRes = new \CDBResult;
-	$dbRes->InitFromArray($data);
-	$dbRecords = new \CAdminResult($dbRes, $tableId);
-	$dbRecords->NavStart();
-	$lAdmin->NavText($dbRecords->GetNavPrint(Loc::getMessage('SALE_RDL_LIST')));
+    $res = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
+        'filter' => array(
+            '=SERVICE_ID' => $ID,
+            '=SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_SHIPMENT
+        ),
+        'select' => array('ID', 'CLASS_NAME', 'SORT', 'PARAMS'),
+        'order' => array('SORT' => 'ASC', 'ID' => 'DESC')
+    ));
 
-	$header = array(
-		array('id'=>'ID', 'content'=>Loc::getMessage('SALE_RDL_COL_ID'), "sort"=>"", 'default'=>true),
-		array('id'=>'SORT', 'content'=>Loc::getMessage('SALE_RDL_COL_SORT'), "sort"=>"", 'default'=>true),
-		array('id'=>'CLASS_NAME', 'content'=>Loc::getMessage('SALE_RDL_COL_CLASS_NAME'), "sort"=>"", 'default'=>true),
-		array('id'=>'PARAMS', 'content'=>Loc::getMessage('SALE_RDL_COL_PARAMS'), "sort"=>"", 'default'=>true),
-	);
+    $data = $res->fetchAll();
+    $dbRes = new \CDBResult;
+    $dbRes->InitFromArray($data);
+    $dbRecords = new \CAdminResult($dbRes, $tableId);
+    $dbRecords->NavStart();
+    $lAdmin->NavText($dbRecords->GetNavPrint(Loc::getMessage('SALE_RDL_LIST')));
 
-	$lAdmin->AddHeaders($header);
+    $header = array(
+        array('id' => 'ID', 'content' => Loc::getMessage('SALE_RDL_COL_ID'), "sort" => "", 'default' => true),
+        array('id' => 'SORT', 'content' => Loc::getMessage('SALE_RDL_COL_SORT'), "sort" => "", 'default' => true),
+        array('id' => 'CLASS_NAME', 'content' => Loc::getMessage('SALE_RDL_COL_CLASS_NAME'), "sort" => "", 'default' => true),
+        array('id' => 'PARAMS', 'content' => Loc::getMessage('SALE_RDL_COL_PARAMS'), "sort" => "", 'default' => true),
+    );
 
-	$restrictionClassNamesUsed = array();
+    $lAdmin->AddHeaders($header);
 
-	while ($record = $dbRecords->Fetch())
-	{
-		if(empty($record['CLASS_NAME']) || !class_exists($record['CLASS_NAME']))
-			continue;
+    $restrictionClassNamesUsed = array();
 
-		if(!is_subclass_of($record['CLASS_NAME'], 'Bitrix\Sale\Services\Base\Restriction'))
-			continue;
+    while ($record = $dbRecords->Fetch()) {
+        if (empty($record['CLASS_NAME']) || !class_exists($record['CLASS_NAME']))
+            continue;
 
-		if(strlen($record['CLASS_NAME']) > 0)
-		{
-			$restrictionClassNamesUsed[] = $record['CLASS_NAME'];
+        if (!is_subclass_of($record['CLASS_NAME'], 'Bitrix\Sale\Services\Base\Restriction'))
+            continue;
 
-			if(is_callable($record['CLASS_NAME'].'::getClassTitle'))
-				$className = $record['CLASS_NAME']::getClassTitle();
-			else
-				$className = $record['CLASS_NAME'];
-		}
-		else
-			$className = "";
+        if (strlen($record['CLASS_NAME']) > 0) {
+            $restrictionClassNamesUsed[] = $record['CLASS_NAME'];
 
-		if(!$record["PARAMS"])
-			$record["PARAMS"] = array();
+            if (is_callable($record['CLASS_NAME'] . '::getClassTitle'))
+                $className = $record['CLASS_NAME']::getClassTitle();
+            else
+                $className = $record['CLASS_NAME'];
+        } else
+            $className = "";
 
-		$editAction = "BX.Sale.Delivery.getRestrictionParamsHtml({".
-			"class: '".\CUtil::JSEscape($record["CLASS_NAME"]).
-			"',deliveryId: ".$ID.
-			",title: '".$className.
-			"',restrictionId: ".$record["ID"].
-			",params: ".htmlspecialcharsbx(\CUtil::PhpToJSObject($record["PARAMS"])).
-			",sort: ".$record["SORT"].
-			",lang: '".LANGUAGE_ID."'".
-		"});";
+        if (!$record["PARAMS"])
+            $record["PARAMS"] = array();
 
-		$row =& $lAdmin->AddRow($record['ID'], $record);
-		$row->AddField('ID', '<a href="javascript:void(0);" onclick="'.$editAction.'">'.$record['ID'].'</a>');
-		$row->AddField('SORT', $record['SORT']);
-		$row->AddField('CLASS_NAME', $className);
+        $editAction = "BX.Sale.Delivery.getRestrictionParamsHtml({" .
+            "class: '" . \CUtil::JSEscape($record["CLASS_NAME"]) .
+            "',deliveryId: " . $ID .
+            ",title: '" . $className .
+            "',restrictionId: " . $record["ID"] .
+            ",params: " . htmlspecialcharsbx(\CUtil::PhpToJSObject($record["PARAMS"])) .
+            ",sort: " . $record["SORT"] .
+            ",lang: '" . LANGUAGE_ID . "'" .
+            "});";
 
-		$paramsStructure = $record['CLASS_NAME']::getParamsStructure($ID);
-		$record["PARAMS"] = $record['CLASS_NAME']::prepareParamsValues($record["PARAMS"], $ID);
+        $row =& $lAdmin->AddRow($record['ID'], $record);
+        $row->AddField('ID', '<a href="javascript:void(0);" onclick="' . $editAction . '">' . $record['ID'] . '</a>');
+        $row->AddField('SORT', $record['SORT']);
+        $row->AddField('CLASS_NAME', $className);
 
-		$paramsField = "";
+        $paramsStructure = $record['CLASS_NAME']::getParamsStructure($ID);
+        $record["PARAMS"] = $record['CLASS_NAME']::prepareParamsValues($record["PARAMS"], $ID);
 
-		foreach($paramsStructure as $name => $params)
-		{
-			$paramsField .= (isset($params["LABEL"]) && strlen($params["LABEL"]) > 0 ? $params["LABEL"].": " : "").
-				Input\Manager::getViewHtml($params, (isset($record["PARAMS"][$name]) ? $record["PARAMS"][$name] : null)).
-				"<br>";
-		}
+        $paramsField = "";
 
-		$row->AddField('PARAMS', $paramsField);
+        foreach ($paramsStructure as $name => $params) {
+            $paramsField .= (isset($params["LABEL"]) && strlen($params["LABEL"]) > 0 ? $params["LABEL"] . ": " : "") .
+                Input\Manager::getViewHtml($params, (isset($record["PARAMS"][$name]) ? $record["PARAMS"][$name] : null)) .
+                "<br>";
+        }
 
-		if ($saleModulePermissions >= "W")
-		{
-			$arActions = Array();
-			$arActions[] = array(
-				"ICON" => "edit",
-				"TEXT" => Loc::getMessage("SALE_RDL_EDIT_DESCR"),
-				"ACTION" => $editAction,
-				"DEFAULT" => true
-			);
-			$arActions[] = array("SEPARATOR" => true);
-			$arActions[] = array(
-				"ICON" => "delete",
-				"TEXT" => Loc::getMessage("SALE_RDL_DELETE"),
-				"ACTION" => "javascript:if(confirm('".Loc::getMessage("SALE_RDL_CONFIRM_DEL_MESSAGE")."')) BX.Sale.Delivery.deleteRestriction(".$record["ID"].",".$ID.");"
-			);
+        $row->AddField('PARAMS', $paramsField);
 
-			$row->AddActions($arActions);
-		}
-	}
+        if ($saleModulePermissions >= "W") {
+            $arActions = Array();
+            $arActions[] = array(
+                "ICON" => "edit",
+                "TEXT" => Loc::getMessage("SALE_RDL_EDIT_DESCR"),
+                "ACTION" => $editAction,
+                "DEFAULT" => true
+            );
+            $arActions[] = array("SEPARATOR" => true);
+            $arActions[] = array(
+                "ICON" => "delete",
+                "TEXT" => Loc::getMessage("SALE_RDL_DELETE"),
+                "ACTION" => "javascript:if(confirm('" . Loc::getMessage("SALE_RDL_CONFIRM_DEL_MESSAGE") . "')) BX.Sale.Delivery.deleteRestriction(" . $record["ID"] . "," . $ID . ");"
+            );
 
-	if ($saleModulePermissions == "W")
-	{
-		$restrictionsMenu = array();
+            $row->AddActions($arActions);
+        }
+    }
 
-		foreach($restrictionClassNames as $class)
-		{
-			if(strlen($class) <= 0)
-				continue;
+    if ($saleModulePermissions == "W") {
+        $restrictionsMenu = array();
 
-			if(in_array($class, $restrictionClassNamesUsed))
-				continue;
+        foreach ($restrictionClassNames as $class) {
+            if (strlen($class) <= 0)
+                continue;
 
-			$classTitle = is_callable($class.'::getClassTitle') ? $class::getClassTitle() : $class;
+            if (in_array($class, $restrictionClassNamesUsed))
+                continue;
 
-			$restrictionsMenu[] = array(
-				"TEXT" => $classTitle,
-				"ACTION" => "BX.Sale.Delivery.getRestrictionParamsHtml({".
-					"class: '".\CUtil::JSEscape($class).
-					"',deliveryId: ".$ID.
-					",title: '".$classTitle.
-					"',lang: '".LANGUAGE_ID."'".
-				"});"
-			);
-		}
+            $classTitle = is_callable($class . '::getClassTitle') ? $class::getClassTitle() : $class;
 
-		$aContext = array();
+            $restrictionsMenu[] = array(
+                "TEXT" => $classTitle,
+                "ACTION" => "BX.Sale.Delivery.getRestrictionParamsHtml({" .
+                    "class: '" . \CUtil::JSEscape($class) .
+                    "',deliveryId: " . $ID .
+                    ",title: '" . $classTitle .
+                    "',lang: '" . LANGUAGE_ID . "'" .
+                    "});"
+            );
+        }
 
-		if(!empty($restrictionsMenu))
-		{
-			sortByColumn($restrictionsMenu, array("TEXT" => SORT_ASC));
+        $aContext = array();
 
-			$aContext[] = array(
-				"TEXT" => Loc::getMessage("SALE_RDL_BUT_ADD_NEW"),
-				"TITLE" => Loc::getMessage("SALE_RDL_BUT_ADD_NEW"),
-				"ICON" => "btn_new",
-				"MENU" => $restrictionsMenu
-			);
-		}
+        if (!empty($restrictionsMenu)) {
+            sortByColumn($restrictionsMenu, array("TEXT" => SORT_ASC));
 
-		$lAdmin->AddAdminContextMenu($aContext, false);
-	}
+            $aContext[] = array(
+                "TEXT" => Loc::getMessage("SALE_RDL_BUT_ADD_NEW"),
+                "TITLE" => Loc::getMessage("SALE_RDL_BUT_ADD_NEW"),
+                "ICON" => "btn_new",
+                "MENU" => $restrictionsMenu
+            );
+        }
 
-	if($_REQUEST['table_id'] == $tableId)
-		$lAdmin->CheckListMode();
+        $lAdmin->AddAdminContextMenu($aContext, false);
+    }
 
-	$lAdmin->DisplayList();
+    if ($_REQUEST['table_id'] == $tableId)
+        $lAdmin->CheckListMode();
+
+    $lAdmin->DisplayList();
 }

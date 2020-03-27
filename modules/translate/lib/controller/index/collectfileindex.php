@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Translate\Controller\Index;
 
 use Bitrix\Main;
@@ -9,131 +10,117 @@ use Bitrix\Translate\Index;
  * The lang files index harvester.
  */
 class CollectFileIndex
-	extends Translate\Controller\Action
-	implements Translate\Controller\ITimeLimit, Translate\Controller\IProcessParameters
+    extends Translate\Controller\Action
+    implements Translate\Controller\ITimeLimit, Translate\Controller\IProcessParameters
 {
-	use Translate\Controller\Stepper;
-	use Translate\Controller\ProcessParams;
+    use Translate\Controller\Stepper;
+    use Translate\Controller\ProcessParams;
 
-	/** @var string */
-	private $seekPathId;
+    /** @var string */
+    private $seekPathId;
 
-	/**
-	 * \Bitrix\Main\Engine\Action constructor.
-	 *
-	 * @param string $name Action name.
-	 * @param Main\Engine\Controller $controller Parent controller object.
-	 * @param array $config Additional configuration.
-	 */
-	public function __construct($name, Main\Engine\Controller $controller, $config = array())
-	{
-		$this->keepField('seekPathId');
+    /**
+     * \Bitrix\Main\Engine\Action constructor.
+     *
+     * @param string $name Action name.
+     * @param Main\Engine\Controller $controller Parent controller object.
+     * @param array $config Additional configuration.
+     */
+    public function __construct($name, Main\Engine\Controller $controller, $config = array())
+    {
+        $this->keepField('seekPathId');
 
-		parent::__construct($name, $controller, $config);
-	}
+        parent::__construct($name, $controller, $config);
+    }
 
-	/**
-	 * Runs controller action.
-	 *
-	 * @param string $path Lang folder path to index.
-	 *
-	 * @return array
-	 */
-	public function run($path = '')
-	{
-		if (empty($path))
-		{
-			$path = Translate\Config::getDefaultPath();
-		}
+    /**
+     * Runs controller action.
+     *
+     * @param string $path Lang folder path to index.
+     *
+     * @return array
+     */
+    public function run($path = '')
+    {
+        if (empty($path)) {
+            $path = Translate\Config::getDefaultPath();
+        }
 
-		if (preg_match("#(.+\/lang)(\/?\w*)#", $path, $matches))
-		{
-			$path = $matches[1];
-		}
+        if (preg_match("#(.+\/lang)(\/?\w*)#", $path, $matches)) {
+            $path = $matches[1];
+        }
 
-		$path = '/'. trim($path, '/.\\');
+        $path = '/' . trim($path, '/.\\');
 
-		// skip indexing if index exists
-		if (Main\Context::getCurrent()->getRequest()->get('checkIndexExists') === 'Y')
-		{
-			$indexPath = Translate\Index\PathIndex::loadByPath($path);
-			if ($indexPath instanceof Translate\Index\PathIndex)
-			{
-				if ($indexPath->getIndexed())
-				{
-					return array(
-						'STATUS' => Translate\Controller\STATUS_COMPLETED
-					);
-				}
-			}
-		}
+        // skip indexing if index exists
+        if (Main\Context::getCurrent()->getRequest()->get('checkIndexExists') === 'Y') {
+            $indexPath = Translate\Index\PathIndex::loadByPath($path);
+            if ($indexPath instanceof Translate\Index\PathIndex) {
+                if ($indexPath->getIndexed()) {
+                    return array(
+                        'STATUS' => Translate\Controller\STATUS_COMPLETED
+                    );
+                }
+            }
+        }
 
-		if ($this->isNewProcess)
-		{
-			$this->totalItems = (new Index\FileIndexCollection())->countItemsToProcess(new Translate\Filter(['path' => $path]));
+        if ($this->isNewProcess) {
+            $this->totalItems = (new Index\FileIndexCollection())->countItemsToProcess(new Translate\Filter(['path' => $path]));
 
-			$this->saveProgressParameters();
+            $this->saveProgressParameters();
 
-			$this->instanceTimer()->setTimeLimit(5);
-			$this->isNewProcess = false;
-		}
-		else
-		{
-			$progressParams = $this->getProgressParameters();
+            $this->instanceTimer()->setTimeLimit(5);
+            $this->isNewProcess = false;
+        } else {
+            $progressParams = $this->getProgressParameters();
 
-			if (isset($progressParams['totalItems']) && (int)$progressParams['totalItems'] > 0)
-			{
-				$this->totalItems = (int)$progressParams['totalItems'];
-				$this->processedItems = (int)$progressParams['processedItems'];
-			}
+            if (isset($progressParams['totalItems']) && (int)$progressParams['totalItems'] > 0) {
+                $this->totalItems = (int)$progressParams['totalItems'];
+                $this->processedItems = (int)$progressParams['processedItems'];
+            }
 
-			if (isset($progressParams['seekPathId']))
-			{
-				$this->seekPathId = $progressParams['seekPathId'];
-			}
-		}
+            if (isset($progressParams['seekPathId'])) {
+                $this->seekPathId = $progressParams['seekPathId'];
+            }
+        }
 
-		return $this->performStep('runIndexing', ['path' => $path]);
-	}
+        return $this->performStep('runIndexing', ['path' => $path]);
+    }
 
-	/**
-	 * Collects lang files.
-	 *
-	 * @param array $params Path to indexing.
-	 *
-	 * @return array
-	 */
-	private function runIndexing(array $params)
-	{
-		$path = rtrim($params['path'], '/');
+    /**
+     * Collects lang files.
+     *
+     * @param array $params Path to indexing.
+     *
+     * @return array
+     */
+    private function runIndexing(array $params)
+    {
+        $path = rtrim($params['path'], '/');
 
-		$seek = new Translate\Filter();
-		if (!empty($this->seekPathId))
-		{
-			$seek->pathId = $this->seekPathId;
-		}
+        $seek = new Translate\Filter();
+        if (!empty($this->seekPathId)) {
+            $seek->pathId = $this->seekPathId;
+        }
 
-		$filter = new Translate\Filter(['path' => $path]);
+        $filter = new Translate\Filter(['path' => $path]);
 
-		$indexer = new Index\FileIndexCollection();
+        $indexer = new Index\FileIndexCollection();
 
-		$processedItemCount = $indexer->collect($filter, $this->instanceTimer(), $seek);
+        $processedItemCount = $indexer->collect($filter, $this->instanceTimer(), $seek);
 
-		$this->processedItems += $processedItemCount;
+        $this->processedItems += $processedItemCount;
 
-		if ($this->processedItems >= $this->totalItems)
-		{
-			$this->declareAccomplishment();
-			$this->clearProgressParameters();
-		}
-		else
-		{
-			$this->seekPathId = $seek->nextPathId;
-		}
+        if ($this->processedItems >= $this->totalItems) {
+            $this->declareAccomplishment();
+            $this->clearProgressParameters();
+        } else {
+            $this->seekPathId = $seek->nextPathId;
+        }
 
-		return array(
-			'PROCESSED_ITEMS' => $this->processedItems,
-			'TOTAL_ITEMS' => $this->totalItems,
-		);
-	}
+        return array(
+            'PROCESSED_ITEMS' => $this->processedItems,
+            'TOTAL_ITEMS' => $this->totalItems,
+        );
+    }
 }

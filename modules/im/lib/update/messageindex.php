@@ -1,4 +1,5 @@
 <?
+
 namespace Bitrix\Im\Update;
 
 use Bitrix\Im\Model\MessageTable;
@@ -11,110 +12,96 @@ Loc::loadMessages(__FILE__);
 
 final class MessageIndex extends Stepper
 {
-	const OPTION_NAME = "im_index_message";
-	const STATUS_ENABLED = 'enabled';
-	const STATUS_DISABLED = 'disabled';
-	const STATUS_DEFAULT = 'default';
+    const OPTION_NAME = "im_index_message";
+    const STATUS_ENABLED = 'enabled';
+    const STATUS_DISABLED = 'disabled';
+    const STATUS_DEFAULT = 'default';
 
-	protected static $moduleId = "im";
+    protected static $moduleId = "im";
 
-	/**
-	 * @inheritdoc
-	 */
-	public function execute(array &$result)
-	{
-		global $DB;
+    /**
+     * @inheritdoc
+     */
+    public function execute(array &$result)
+    {
+        global $DB;
 
-		if (!Loader::includeModule(self::$moduleId))
-		{
-			return false;
-		}
+        if (!Loader::includeModule(self::$moduleId)) {
+            return false;
+        }
 
-		$indexStatus = Option::get(self::$moduleId, self::OPTION_NAME.'_status', self::STATUS_DEFAULT);
-		if ($indexStatus === self::STATUS_DEFAULT)
-		{
-			if (IsModuleInstalled('bitrix24'))
-			{
-				return false;
-			}
-		}
-		elseif ($indexStatus === self::STATUS_DISABLED)
-		{
-			return false;
-		}
-		
-		$return = false;
+        $indexStatus = Option::get(self::$moduleId, self::OPTION_NAME . '_status', self::STATUS_DEFAULT);
+        if ($indexStatus === self::STATUS_DEFAULT) {
+            if (IsModuleInstalled('bitrix24')) {
+                return false;
+            }
+        } elseif ($indexStatus === self::STATUS_DISABLED) {
+            return false;
+        }
 
-		$params = Option::get(self::$moduleId, self::OPTION_NAME, "");
-		$params = ($params !== "" ? @unserialize($params) : []);
-		$params = (is_array($params) ? $params : []);
-		if (empty($params))
-		{
-			$params = [
-				"lastId" => 0,
-				"number" => 0,
-				"count" => MessageTable::getCount(),
-			];
-		}
+        $return = false;
 
-		if ($params["count"] > 0)
-		{
-			$result["title"] = Loc::getMessage("IM_UPDATE_MESSAGE_INDEX");
-			$result["progress"] = 1;
-			$result["steps"] = "";
-			$result["count"] = $params["count"];
+        $params = Option::get(self::$moduleId, self::OPTION_NAME, "");
+        $params = ($params !== "" ? @unserialize($params) : []);
+        $params = (is_array($params) ? $params : []);
+        if (empty($params)) {
+            $params = [
+                "lastId" => 0,
+                "number" => 0,
+                "count" => MessageTable::getCount(),
+            ];
+        }
 
-			$cursor = MessageTable::getList(
-				[
-					'order' => ['ID' => 'ASC'],
-					'filter' => [
-						'>ID' => $params["lastId"],
-					],
-					'select' => ['ID'],
-					'offset' => 0,
-					'limit' => 5000
-				]
-			);
+        if ($params["count"] > 0) {
+            $result["title"] = Loc::getMessage("IM_UPDATE_MESSAGE_INDEX");
+            $result["progress"] = 1;
+            $result["steps"] = "";
+            $result["count"] = $params["count"];
 
-			$found = false;
-			while ($row = $cursor->fetch())
-			{
-				MessageTable::indexRecord($row['ID']);
+            $cursor = MessageTable::getList(
+                [
+                    'order' => ['ID' => 'ASC'],
+                    'filter' => [
+                        '>ID' => $params["lastId"],
+                    ],
+                    'select' => ['ID'],
+                    'offset' => 0,
+                    'limit' => 5000
+                ]
+            );
 
-				$params["lastId"] = $row['ID'];
-				$params["number"]++;
-				$found = true;
-			}
+            $found = false;
+            while ($row = $cursor->fetch()) {
+                MessageTable::indexRecord($row['ID']);
 
-			if ($found)
-			{
-				Option::set(self::$moduleId, self::OPTION_NAME, serialize($params));
-				$return = true;
-			}
+                $params["lastId"] = $row['ID'];
+                $params["number"]++;
+                $found = true;
+            }
 
-			$result["progress"] = (int)($params["number"] * 100 / $params["count"]);
-			$result["steps"] = $params["number"];
+            if ($found) {
+                Option::set(self::$moduleId, self::OPTION_NAME, serialize($params));
+                $return = true;
+            }
 
-			if ($found === false)
-			{
-				Option::delete(self::$moduleId, ["name" => self::OPTION_NAME]);
+            $result["progress"] = (int)($params["number"] * 100 / $params["count"]);
+            $result["steps"] = $params["number"];
 
-				if ($DB->IndexExists("b_im_message_index", array("SEARCH_CONTENT"), true))
-				{
-					\Bitrix\Im\Model\MessageIndexTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
-				}
-			}
-		}
-		elseif ($params["count"] == 0)
-		{
-			Option::delete(self::$moduleId, ["name" => self::OPTION_NAME]);
+            if ($found === false) {
+                Option::delete(self::$moduleId, ["name" => self::OPTION_NAME]);
 
-			if ($DB->IndexExists("b_im_message_index", array("SEARCH_CONTENT"), true))
-			{
-				\Bitrix\Im\Model\MessageIndexTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
-			}
-		}
+                if ($DB->IndexExists("b_im_message_index", array("SEARCH_CONTENT"), true)) {
+                    \Bitrix\Im\Model\MessageIndexTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
+                }
+            }
+        } elseif ($params["count"] == 0) {
+            Option::delete(self::$moduleId, ["name" => self::OPTION_NAME]);
 
-		return $return;
-	}
+            if ($DB->IndexExists("b_im_message_index", array("SEARCH_CONTENT"), true)) {
+                \Bitrix\Im\Model\MessageIndexTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
+            }
+        }
+
+        return $return;
+    }
 }

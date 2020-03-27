@@ -5,7 +5,9 @@
  * @subpackage vote
  * @copyright 2001-2016 Bitrix
  */
+
 namespace Bitrix\Vote;
+
 use \Bitrix\Main\Entity;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\BooleanField;
@@ -37,73 +39,74 @@ Loc::loadMessages(__FILE__);
  */
 class AnswerTable extends Entity\DataManager
 {
-	/**
-	 * Returns DB table name for entity
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_vote_answer';
-	}
+    /**
+     * Returns DB table name for entity
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_vote_answer';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return [
-			(new IntegerField('ID'))
-				->configurePrimary(true)
-				->configureAutocomplete(true),
-			(new BooleanField('ACTIVE'))
-				->configureValues('N', 'Y')
-				->configureDefaultValue('Y'),
-			(new DatetimeField('TIMESTAMP_X')),
-			(new IntegerField('QUESTION_ID')),
-			(new IntegerField('C_SORT')),
-			(new IntegerField('IMAGE_ID')),
-			(new Reference('IMAGE',
-				\Bitrix\Main\FileTable::class,
-				Join::on('this.IMAGE_ID', 'ref.ID')
-			)),
-			(new TextField('MESSAGE')),
-			(new EnumField('MESSAGE_TYPE', ['values' => ['text', 'html']]))
-				->configureDefaultValue('text'),
-			(new IntegerField('COUNTER')),
-			(new IntegerField('FIELD_TYPE')),
-			(new IntegerField('FIELD_WIDTH')),
-			(new IntegerField('FIELD_HEIGHT')),
-			(new StringField('FIELD_PARAM'))
-				->configureSize(255),
-			(new StringField('COLOR'))
-				->configureSize(6)
-		];
-	}
-	/**
-	 * @param array $id Answer IDs.
-	 * @param mixed $increment True - increment, false - decrement, integer - exact value.
-	 * @return void
-	 */
-	public static function setCounter(array $id, $increment = true)
-	{
-		$id = implode(", ", array_map('intval', $id));
-		if (empty($id))
-			return;
-		$connection = \Bitrix\Main\Application::getInstance()->getConnection();
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return [
+            (new IntegerField('ID'))
+                ->configurePrimary(true)
+                ->configureAutocomplete(true),
+            (new BooleanField('ACTIVE'))
+                ->configureValues('N', 'Y')
+                ->configureDefaultValue('Y'),
+            (new DatetimeField('TIMESTAMP_X')),
+            (new IntegerField('QUESTION_ID')),
+            (new IntegerField('C_SORT')),
+            (new IntegerField('IMAGE_ID')),
+            (new Reference('IMAGE',
+                \Bitrix\Main\FileTable::class,
+                Join::on('this.IMAGE_ID', 'ref.ID')
+            )),
+            (new TextField('MESSAGE')),
+            (new EnumField('MESSAGE_TYPE', ['values' => ['text', 'html']]))
+                ->configureDefaultValue('text'),
+            (new IntegerField('COUNTER')),
+            (new IntegerField('FIELD_TYPE')),
+            (new IntegerField('FIELD_WIDTH')),
+            (new IntegerField('FIELD_HEIGHT')),
+            (new StringField('FIELD_PARAM'))
+                ->configureSize(255),
+            (new StringField('COLOR'))
+                ->configureSize(6)
+        ];
+    }
 
-		$sql = intval($increment);
-		if ($increment === true)
-			$sql = "COUNTER+1";
-		else if ($increment === false)
-			$sql = "COUNTER-1";
-		$connection->queryExecute("UPDATE ".self::getTableName()." SET COUNTER=".$sql." WHERE ID IN (".$id.")");
-	}
+    /**
+     * @param array $id Answer IDs.
+     * @param mixed $increment True - increment, false - decrement, integer - exact value.
+     * @return void
+     */
+    public static function setCounter(array $id, $increment = true)
+    {
+        $id = implode(", ", array_map('intval', $id));
+        if (empty($id))
+            return;
+        $connection = \Bitrix\Main\Application::getInstance()->getConnection();
+
+        $sql = intval($increment);
+        if ($increment === true)
+            $sql = "COUNTER+1";
+        else if ($increment === false)
+            $sql = "COUNTER-1";
+        $connection->queryExecute("UPDATE " . self::getTableName() . " SET COUNTER=" . $sql . " WHERE ID IN (" . $id . ")");
+    }
 }
 
 class Answer
 {
-	public static $storage = array();
+    public static $storage = array();
 }

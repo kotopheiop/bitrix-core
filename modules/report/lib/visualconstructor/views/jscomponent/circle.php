@@ -10,27 +10,27 @@ use Bitrix\Report\VisualConstructor\Config\Common;
  */
 class Circle extends Base
 {
-	const VIEW_KEY = 'circle';
+    const VIEW_KEY = 'circle';
 
-	/**
-	 * Circle constructor.
-	 */
-	public function __construct()
-	{
-		$this->setLabel('Circle');
-		$this->setLogoUri('/bitrix/images/report/visualconstructor/view-circle.jpg');
-		$this->setCompatibleDataType(Common::SINGLE_REPORT_TYPE);
-		$this->setJsClassName('BX.Report.VisualConstructor.Widget.Content.Circle');
-	}
+    /**
+     * Circle constructor.
+     */
+    public function __construct()
+    {
+        $this->setLabel('Circle');
+        $this->setLogoUri('/bitrix/images/report/visualconstructor/view-circle.jpg');
+        $this->setCompatibleDataType(Common::SINGLE_REPORT_TYPE);
+        $this->setJsClassName('BX.Report.VisualConstructor.Widget.Content.Circle');
+    }
 
-	/**
-	 * Handle all data prepared for this view.
-	 *
-	 * @param array $dataFromReport Calculated data from report handler.
-	 * @return array
-	 */
-	public function handlerFinallyBeforePassToView($dataFromReport)
-	{
-		return $dataFromReport;
-	}
+    /**
+     * Handle all data prepared for this view.
+     *
+     * @param array $dataFromReport Calculated data from report handler.
+     * @return array
+     */
+    public function handlerFinallyBeforePassToView($dataFromReport)
+    {
+        return $dataFromReport;
+    }
 }

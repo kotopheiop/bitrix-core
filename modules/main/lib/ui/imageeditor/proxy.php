@@ -13,199 +13,190 @@ use Bitrix\Main\Web\HttpClient;
  */
 class Proxy
 {
-	/** @var Uri */
-	protected $uri;
+    /** @var Uri */
+    protected $uri;
 
-	/** @var array<string> */
-	protected $allowedHosts = [];
+    /** @var array<string> */
+    protected $allowedHosts = [];
 
-	/**
-	 * Proxy constructor.
-	 * @param string $url
-	 * @param array<string> $allowedHosts
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function __construct($url, $allowedHosts = [])
-	{
-		$response = static::getResponse();
+    /**
+     * Proxy constructor.
+     * @param string $url
+     * @param array<string> $allowedHosts
+     * @throws \Bitrix\Main\SystemException
+     */
+    public function __construct($url, $allowedHosts = [])
+    {
+        $response = static::getResponse();
 
-		if (!static::isAuthorized())
-		{
-			$response->setStatus(401)->flush();
-			die('Unauthorized');
-		}
+        if (!static::isAuthorized()) {
+            $response->setStatus(401)->flush();
+            die('Unauthorized');
+        }
 
-		if (is_array($allowedHosts))
-		{
-			$this->allowedHosts = array_filter($allowedHosts, function($item) {
-				return is_string($item) && !empty($item);
-			});
-		}
+        if (is_array($allowedHosts)) {
+            $this->allowedHosts = array_filter($allowedHosts, function ($item) {
+                return is_string($item) && !empty($item);
+            });
+        }
 
-		$this->uri = new Uri($url);
+        $this->uri = new Uri($url);
 
-		if (!$this->uri->getHost())
-		{
-			$this->uri->setHost(static::getCurrentHttpHost());
-		}
-	}
+        if (!$this->uri->getHost()) {
+            $this->uri->setHost(static::getCurrentHttpHost());
+        }
+    }
 
-	/**
-	 * @return \Bitrix\Main\HttpResponse
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected static function getResponse()
-	{
-		return Application::getInstance()->getContext()->getResponse();
-	}
+    /**
+     * @return \Bitrix\Main\HttpResponse
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected static function getResponse()
+    {
+        return Application::getInstance()->getContext()->getResponse();
+    }
 
-	/**
-	 * @return bool
-	 */
-	protected static function isAuthorized()
-	{
-		global $USER;
-		return ($USER->isAuthorized() && check_bitrix_sessid());
-	}
+    /**
+     * @return bool
+     */
+    protected static function isAuthorized()
+    {
+        global $USER;
+        return ($USER->isAuthorized() && check_bitrix_sessid());
+    }
 
-	/**
-	 * Gets current http host
-	 * @return null|string
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getCurrentHttpHost()
-	{
-		static $server = null;
+    /**
+     * Gets current http host
+     * @return null|string
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function getCurrentHttpHost()
+    {
+        static $server = null;
 
-		if ($server === null)
-		{
-			$server = Application::getInstance()->getContext()->getServer();
-		}
+        if ($server === null) {
+            $server = Application::getInstance()->getContext()->getServer();
+        }
 
-		return explode(':', $server->getHttpHost())[0];
-	}
+        return explode(':', $server->getHttpHost())[0];
+    }
 
-	/**
-	 * Gets allowed hosts
-	 * @return array<string>
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getAllowedHosts()
-	{
-		return array_merge(
-			[$this->getCurrentHttpHost()],
-			$this->allowedHosts,
-			$this->getUserAllowedHosts()
-		);
-	}
+    /**
+     * Gets allowed hosts
+     * @return array<string>
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function getAllowedHosts()
+    {
+        return array_merge(
+            [$this->getCurrentHttpHost()],
+            $this->allowedHosts,
+            $this->getUserAllowedHosts()
+        );
+    }
 
-	/**
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	protected function getUserAllowedHosts()
-	{
-		static $hosts = null;
+    /**
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     */
+    protected function getUserAllowedHosts()
+    {
+        static $hosts = null;
 
-		if ($hosts === null)
-		{
-			$hosts = Option::get('main', 'imageeditor_proxy_white_list', []);
-			if (is_string($hosts))
-			{
-				$hosts = unserialize($hosts);
-			}
-		}
+        if ($hosts === null) {
+            $hosts = Option::get('main', 'imageeditor_proxy_white_list', []);
+            if (is_string($hosts)) {
+                $hosts = unserialize($hosts);
+            }
+        }
 
-		return $hosts;
-	}
+        return $hosts;
+    }
 
-	/**
-	 * Checks that this host is allowed
-	 * @param string $host
-	 * @return bool
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function isAllowedHost($host)
-	{
-		return (
-			in_array($host, $this->getAllowedHosts()) ||
-			(in_array('*', $this->getAllowedHosts()) && $this->isEnabledForAll())
-		);
-	}
+    /**
+     * Checks that this host is allowed
+     * @param string $host
+     * @return bool
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function isAllowedHost($host)
+    {
+        return (
+            in_array($host, $this->getAllowedHosts()) ||
+            (in_array('*', $this->getAllowedHosts()) && $this->isEnabledForAll())
+        );
+    }
 
 
-	/**
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	protected function isEnabledForAll()
-	{
-		return static::getEnabledOption() === 'Y';
-	}
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     */
+    protected function isEnabledForAll()
+    {
+        return static::getEnabledOption() === 'Y';
+    }
 
-	/**
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	protected static function isEnabledForWhiteList()
-	{
-		return static::getEnabledOption() === 'YWL';
-	}
+    /**
+     * @return bool
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     */
+    protected static function isEnabledForWhiteList()
+    {
+        return static::getEnabledOption() === 'YWL';
+    }
 
-	/**
-	 * @return string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	protected static function getEnabledOption()
-	{
-		static $option = null;
+    /**
+     * @return string
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     */
+    protected static function getEnabledOption()
+    {
+        static $option = null;
 
-		if ($option === null)
-		{
-			$option = Option::get('main', 'imageeditor_proxy_enabled', 'N');
-		}
+        if ($option === null) {
+            $option = Option::get('main', 'imageeditor_proxy_enabled', 'N');
+        }
 
-		return $option;
-	}
+        return $option;
+    }
 
-	/**
-	 * @param $host
-	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function isEnabledForHost($host)
-	{
-		return static::isEnabledForWhiteList() && $this->isAllowedHost($host);
-	}
+    /**
+     * @param $host
+     * @return bool
+     * @throws \Bitrix\Main\ArgumentNullException
+     * @throws \Bitrix\Main\ArgumentOutOfRangeException
+     * @throws \Bitrix\Main\SystemException
+     */
+    protected function isEnabledForHost($host)
+    {
+        return static::isEnabledForWhiteList() && $this->isAllowedHost($host);
+    }
 
-	public function output()
-	{
-		$remoteHost = $this->uri->getHost();
-		$currentHost = static::getCurrentHttpHost();
-		$response = static::getResponse();
+    public function output()
+    {
+        $remoteHost = $this->uri->getHost();
+        $currentHost = static::getCurrentHttpHost();
+        $response = static::getResponse();
 
-		if ($this->isEnabledForAll() ||
-			$this->isEnabledForHost($remoteHost) ||
-			$remoteHost === $currentHost)
-		{
-			$client = new HttpClient();
+        if ($this->isEnabledForAll() ||
+            $this->isEnabledForHost($remoteHost) ||
+            $remoteHost === $currentHost) {
+            $client = new HttpClient();
 
-			//prevents proxy to LAN
-			$client->setPrivateIp(false);
+            //prevents proxy to LAN
+            $client->setPrivateIp(false);
 
-			$contents = $client->get($this->uri->getUri());
-			if($contents !== false)
-			{
-				$response->addHeader('Content-Type', $client->getContentType());
-				$response->flush($contents);
-				return;
-			}
-		}
-		$response->setStatus(404)->flush();
-	}
+            $contents = $client->get($this->uri->getUri());
+            if ($contents !== false) {
+                $response->addHeader('Content-Type', $client->getContentType());
+                $response->flush($contents);
+                return;
+            }
+        }
+        $response->setStatus(404)->flush();
+    }
 }

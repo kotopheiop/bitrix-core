@@ -1,4 +1,5 @@
 <?
+
 namespace Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Requests;
 
 use Bitrix\Main\Web\HttpClient;
@@ -11,6 +12,6 @@ use Bitrix\Main\Web\HttpClient;
  */
 class UnreliableRecipient extends Base
 {
-	protected $path = "/1.0/unreliable-recipient";
-	protected $type = HttpClient::HTTP_POST;
+    protected $path = "/1.0/unreliable-recipient";
+    protected $type = HttpClient::HTTP_POST;
 }

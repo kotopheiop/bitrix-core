@@ -8,60 +8,60 @@ use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\ProxyType;
+
 Loc::loadMessages(__FILE__);
 
-if (Loader::includeModule('disk'))
-{
-	class Im extends ProxyType\Base
-	{
+if (Loader::includeModule('disk')) {
+    class Im extends ProxyType\Base
+    {
 
-		/**
-		 * @param $user
-		 * @return SecurityContext
-		 */
-		public function getSecurityContextByUser($user)
-		{
-			return new DiskSecurityContext($user);
-		}
+        /**
+         * @param $user
+         * @return SecurityContext
+         */
+        public function getSecurityContextByUser($user)
+        {
+            return new DiskSecurityContext($user);
+        }
 
-		/**
-		 * @inheritdoc
-		 */
-		public function getStorageBaseUrl()
-		{
-			return '/';
-		}
+        /**
+         * @inheritdoc
+         */
+        public function getStorageBaseUrl()
+        {
+            return '/';
+        }
 
-		/**
-		 * @inheritdoc
-		 */
-		public function getEntityUrl()
-		{
-			return '/';
-		}
+        /**
+         * @inheritdoc
+         */
+        public function getEntityUrl()
+        {
+            return '/';
+        }
 
-		/**
-		 * @inheritdoc
-		 */
-		public function getEntityTitle()
-		{
-			return Loc::getMessage('IM_DISK_STORAGE_TITLE');
-		}
+        /**
+         * @inheritdoc
+         */
+        public function getEntityTitle()
+        {
+            return Loc::getMessage('IM_DISK_STORAGE_TITLE');
+        }
 
-		/**
-		 * @inheritdoc
-		 */
-		public function getEntityImageSrc($width, $height)
-		{
-			return '/bitrix/js/im/images/blank.gif';
-		}
+        /**
+         * @inheritdoc
+         */
+        public function getEntityImageSrc($width, $height)
+        {
+            return '/bitrix/js/im/images/blank.gif';
+        }
 
-		/**
-		 * @inheritdoc
-		 */
-		public function getTitle()
-		{
-			return $this->getEntityTitle();
-		}
-	}
+        /**
+         * @inheritdoc
+         */
+        public function getTitle()
+        {
+            return $this->getEntityTitle();
+        }
+    }
 }

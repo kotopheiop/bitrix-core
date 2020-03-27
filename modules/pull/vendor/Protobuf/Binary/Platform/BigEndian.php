@@ -31,7 +31,7 @@ class BigEndian
             return self::$isBigEndian;
         }
 
-        list(, $result)    = unpack('L', pack('V', 1));
+        list(, $result) = unpack('L', pack('V', 1));
         self::$isBigEndian = $result !== 1;
 
         return self::$isBigEndian;

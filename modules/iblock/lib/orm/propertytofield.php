@@ -28,77 +28,75 @@ use Bitrix\Main\ORM\Query\Join;
  */
 class PropertyToField
 {
-	/**
-	 * @param Property $property
-	 * @param Entity $propertyValueEntity
-	 *
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public static function attachField($property, $propertyValueEntity)
-	{
-		switch ($property->getPropertyType())
-		{
-			case PropertyTable::TYPE_STRING:
+    /**
+     * @param Property $property
+     * @param Entity $propertyValueEntity
+     *
+     * @throws \Bitrix\Main\SystemException
+     */
+    public static function attachField($property, $propertyValueEntity)
+    {
+        switch ($property->getPropertyType()) {
+            case PropertyTable::TYPE_STRING:
 
-				$propertyValueEntity->addField(new StringField('VALUE'));
-				break;
+                $propertyValueEntity->addField(new StringField('VALUE'));
+                break;
 
-			case PropertyTable::TYPE_NUMBER:
+            case PropertyTable::TYPE_NUMBER:
 
-				$propertyValueEntity->addField(new IntegerField('VALUE'));
-				break;
+                $propertyValueEntity->addField(new IntegerField('VALUE'));
+                break;
 
-			case PropertyTable::TYPE_FILE:
+            case PropertyTable::TYPE_FILE:
 
-				$propertyValueEntity->addField(new IntegerField('VALUE'));
+                $propertyValueEntity->addField(new IntegerField('VALUE'));
 
-				// add reference to file
-				$propertyValueEntity->addField(new Reference(
-					'FILE', FileTable::class,
-					Join::on("this.VALUE", 'ref.ID')
-				));
-				break;
+                // add reference to file
+                $propertyValueEntity->addField(new Reference(
+                    'FILE', FileTable::class,
+                    Join::on("this.VALUE", 'ref.ID')
+                ));
+                break;
 
-			case PropertyTable::TYPE_ELEMENT:
+            case PropertyTable::TYPE_ELEMENT:
 
-				$propertyValueEntity->addField(new IntegerField('VALUE'));
+                $propertyValueEntity->addField(new IntegerField('VALUE'));
 
-				// add reference to element
-				$refIblock = Iblock::wakeUp($property->getLinkIblockId());
-				$refIblock->fill('API_CODE');
+                // add reference to element
+                $refIblock = Iblock::wakeUp($property->getLinkIblockId());
+                $refIblock->fill('API_CODE');
 
-				if (strlen($refIblock->getApiCode()))
-				{
-					$refEntityName = $refIblock->getEntityDataClass();
+                if (strlen($refIblock->getApiCode())) {
+                    $refEntityName = $refIblock->getEntityDataClass();
 
-					$propertyValueEntity->addField(
-						new Reference('ELEMENT', $refEntityName, Join::on("this.VALUE", 'ref.ID'))
-					);
-				}
-				break;
+                    $propertyValueEntity->addField(
+                        new Reference('ELEMENT', $refEntityName, Join::on("this.VALUE", 'ref.ID'))
+                    );
+                }
+                break;
 
-			case PropertyTable::TYPE_SECTION:
+            case PropertyTable::TYPE_SECTION:
 
-				$propertyValueEntity->addField(new IntegerField('VALUE'));
+                $propertyValueEntity->addField(new IntegerField('VALUE'));
 
-				// add reference to section
-				$propertyValueEntity->addField(new Reference(
-					'SECTION', SectionTable::class,
-					Join::on("this.VALUE", 'ref.ID')
-				));
-				break;
+                // add reference to section
+                $propertyValueEntity->addField(new Reference(
+                    'SECTION', SectionTable::class,
+                    Join::on("this.VALUE", 'ref.ID')
+                ));
+                break;
 
-			case PropertyTable::TYPE_LIST:
+            case PropertyTable::TYPE_LIST:
 
-				$propertyValueEntity->addField(new IntegerField('VALUE'));
+                $propertyValueEntity->addField(new IntegerField('VALUE'));
 
-				// add reference to list item
-				$propertyValueEntity->addField(new Reference(
-					'ITEM',
-					PropertyEnumerationTable::class,
-					Join::on('this.VALUE', 'ref.ID')
-				));
-				break;
-		}
-	}
+                // add reference to list item
+                $propertyValueEntity->addField(new Reference(
+                    'ITEM',
+                    PropertyEnumerationTable::class,
+                    Join::on('this.VALUE', 'ref.ID')
+                ));
+                break;
+        }
+    }
 }

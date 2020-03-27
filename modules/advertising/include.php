@@ -1,16 +1,16 @@
 <?
 global $DB, $MESS, $DBType;
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/filter_tools.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/filter_tools.php");
 IncludeModuleLangFile(__FILE__);
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/errors.php");
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/errors.php");
 
 
 $GLOBALS["CACHE_ADVERTISING"] = Array(
-	"BANNERS_ALL" => Array(),
-	"BANNERS_CNT" => Array(),
-	"CONTRACTS_ALL" => Array(),
-	"CONTRACTS_CNT" => Array(),
+    "BANNERS_ALL" => Array(),
+    "BANNERS_CNT" => Array(),
+    "CONTRACTS_ALL" => Array(),
+    "CONTRACTS_CNT" => Array(),
 );
 
 /*
@@ -25,10 +25,10 @@ CModule::AddAutoloadClasses(
 );
 */
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/advertising/classes/".strtolower($DB->type)."/advertising.php");
+require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/advertising/classes/" . strtolower($DB->type) . "/advertising.php");
 
 \CJSCore::RegisterExt("adv_templates", Array(
-	"js" =>    "/bitrix/js/advertising/template.js",
-	"rel" =>   array()
+    "js" => "/bitrix/js/advertising/template.js",
+    "rel" => array()
 ));
 ?>

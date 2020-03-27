@@ -16,8 +16,8 @@ use Bitrix\Main\Result as MainResult;
  */
 class EventResult extends MainResult
 {
-	public function setSuccess($isSuccess)
-	{
-		$this->isSuccess = !!$isSuccess;
-	}
+    public function setSuccess($isSuccess)
+    {
+        $this->isSuccess = !!$isSuccess;
+    }
 }

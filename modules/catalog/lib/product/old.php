@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Catalog;
 
 use Bitrix\Catalog\Product;

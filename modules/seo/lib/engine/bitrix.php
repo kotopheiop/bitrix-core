@@ -12,66 +12,60 @@ use Bitrix\Main\Loader;
 use Bitrix\Seo\Engine;
 use Bitrix\Seo\IEngine;
 
-if(!defined("BITRIX_CLOUD_ADV_URL"))
-{
-	define("BITRIX_CLOUD_ADV_URL", 'https://cloud-adv.bitrix.info');
+if (!defined("BITRIX_CLOUD_ADV_URL")) {
+    define("BITRIX_CLOUD_ADV_URL", 'https://cloud-adv.bitrix.info');
 }
 
-if(!defined("SEO_BITRIX_API_URL"))
-{
-	define("SEO_BITRIX_API_URL", BITRIX_CLOUD_ADV_URL."/rest/");
+if (!defined("SEO_BITRIX_API_URL")) {
+    define("SEO_BITRIX_API_URL", BITRIX_CLOUD_ADV_URL . "/rest/");
 }
 
 class Bitrix extends Engine implements IEngine
 {
-	const ENGINE_ID = 'bitrix';
+    const ENGINE_ID = 'bitrix';
 
-	protected $engineId = 'bitrix';
-	protected $engineRegistered = false;
+    protected $engineId = 'bitrix';
+    protected $engineRegistered = false;
 
-	CONST API_URL = SEO_BITRIX_API_URL;
+    CONST API_URL = SEO_BITRIX_API_URL;
 
-	public function __construct()
-	{
-		$this->engine = static::getEngine($this->engineId);
-		if($this->engine)
-		{
-			$this->engineRegistered = true;
-			parent::__construct();
-		}
-	}
+    public function __construct()
+    {
+        $this->engine = static::getEngine($this->engineId);
+        if ($this->engine) {
+            $this->engineRegistered = true;
+            parent::__construct();
+        }
+    }
 
-	/**
-	 * Checks if domain is registered.
-	 *
-	 * @return bool
-	 */
-	public function isRegistered()
-	{
-		return $this->engineRegistered;
-	}
+    /**
+     * Checks if domain is registered.
+     *
+     * @return bool
+     */
+    public function isRegistered()
+    {
+        return $this->engineRegistered;
+    }
 
-	public function getInterface()
-	{
-		if($this->authInterface === null)
-		{
-			if(Loader::includeModule('socialservices'))
-			{
-				$this->authInterface = new \CBitrixSeoOAuthInterface($this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']);
-			}
-		}
+    public function getInterface()
+    {
+        if ($this->authInterface === null) {
+            if (Loader::includeModule('socialservices')) {
+                $this->authInterface = new \CBitrixSeoOAuthInterface($this->engine['CLIENT_ID'], $this->engine['CLIENT_SECRET']);
+            }
+        }
 
-		return $this->authInterface;
-	}
+        return $this->authInterface;
+    }
 
-	public function setAuthSettings($settings = null)
-	{
-		if(is_array($settings) && array_key_exists("expires_in" ,$settings))
-		{
-			$settings["expires_in"] += time();
-		}
+    public function setAuthSettings($settings = null)
+    {
+        if (is_array($settings) && array_key_exists("expires_in", $settings)) {
+            $settings["expires_in"] += time();
+        }
 
-		$this->engineSettings['AUTH'] = $settings;
-		$this->saveSettings();
-	}
+        $this->engineSettings['AUTH'] = $settings;
+        $this->saveSettings();
+    }
 }

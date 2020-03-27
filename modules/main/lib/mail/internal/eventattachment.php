@@ -13,38 +13,38 @@ use Bitrix\Main\Entity;
 class EventAttachmentTable extends Entity\DataManager
 {
 
-	/**
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_event_attachment';
-	}
+    /**
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_event_attachment';
+    }
 
-	/**
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			'EVENT_ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-			),
-			'FILE_ID' => array(
-				'data_type' => 'integer',
-			),
-			'IS_FILE_COPIED' => array(
-				'data_type' => 'boolean',
-				'required' => true,
-				'values' => array('N', 'Y'),
-				'default_value' => 'Y'
-			),
-			'EVENT' => array(
-				'data_type' => EventTable::class,
-				'reference' => array('=this.EVENT_ID' => 'ref.ID'),
-			),
-		);
-	}
+    /**
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            'EVENT_ID' => array(
+                'data_type' => 'integer',
+                'primary' => true,
+            ),
+            'FILE_ID' => array(
+                'data_type' => 'integer',
+            ),
+            'IS_FILE_COPIED' => array(
+                'data_type' => 'boolean',
+                'required' => true,
+                'values' => array('N', 'Y'),
+                'default_value' => 'Y'
+            ),
+            'EVENT' => array(
+                'data_type' => EventTable::class,
+                'reference' => array('=this.EVENT_ID' => 'ref.ID'),
+            ),
+        );
+    }
 
 }

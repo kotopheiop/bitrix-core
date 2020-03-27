@@ -8,6 +8,7 @@
 
 interface IPaymentOrder
 {
-	public function getPaymentCollection();
-	public function loadPaymentCollection();
+    public function getPaymentCollection();
+
+    public function loadPaymentCollection();
 }

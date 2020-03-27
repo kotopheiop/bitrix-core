@@ -16,5 +16,5 @@ use Bitrix\Main\ORM\Fields\Relations\OneToMany;
  */
 class PropertyOneToMany extends OneToMany
 {
-	use PropertyRelation;
+    use PropertyRelation;
 }

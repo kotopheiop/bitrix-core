@@ -28,115 +28,110 @@ Loc::loadMessages(__FILE__);
  **/
 class PasswordTable extends Main\Entity\DataManager
 {
-	const ACTIVE = 'Y';
-	const INACTIVE = 'N';
+    const ACTIVE = 'Y';
+    const INACTIVE = 'N';
 
-	const DEFAULT_LENGTH = 16;
+    const DEFAULT_LENGTH = 16;
 
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_rest_ap';
-	}
+    /**
+     * Returns DB table name for entity.
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_rest_ap';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-			),
-			'PASSWORD' => array(
-				'data_type' => 'string',
-				'required' => true,
-			),
-			'ACTIVE' => array(
-				'data_type' => 'boolean',
-				'values' => array(static::INACTIVE, static::ACTIVE),
-			),
-			'TITLE' => array(
-				'data_type' => 'string',
-			),
-			'COMMENT' => array(
-				'data_type' => 'string',
-			),
-			'DATE_CREATE' => array(
-				'data_type' => 'datetime',
-			),
-			'DATE_LOGIN' => array(
-				'data_type' => 'datetime',
-			),
-			'LAST_IP' => array(
-				'data_type' => 'string',
-			),
-		);
-	}
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            'ID' => array(
+                'data_type' => 'integer',
+                'primary' => true,
+                'autocomplete' => true,
+            ),
+            'USER_ID' => array(
+                'data_type' => 'integer',
+                'required' => true,
+            ),
+            'PASSWORD' => array(
+                'data_type' => 'string',
+                'required' => true,
+            ),
+            'ACTIVE' => array(
+                'data_type' => 'boolean',
+                'values' => array(static::INACTIVE, static::ACTIVE),
+            ),
+            'TITLE' => array(
+                'data_type' => 'string',
+            ),
+            'COMMENT' => array(
+                'data_type' => 'string',
+            ),
+            'DATE_CREATE' => array(
+                'data_type' => 'datetime',
+            ),
+            'DATE_LOGIN' => array(
+                'data_type' => 'datetime',
+            ),
+            'LAST_IP' => array(
+                'data_type' => 'string',
+            ),
+        );
+    }
 
-	public static function generatePassword($length = self::DEFAULT_LENGTH)
-	{
-		return Random::getString($length);
-	}
+    public static function generatePassword($length = self::DEFAULT_LENGTH)
+    {
+        return Random::getString($length);
+    }
 
 
-	/**
-	 * Generates AP for REST access.
-	 *
-	 * @param string $siteTitle Site title for AP description.
-	 *
-	 * @return bool|string password or false
-	 * @throws \Exception
-	 */
-	public static function createPassword($userId, array $scopeList, $siteTitle, $returnArray = false)
-	{
-		$password = static::generatePassword();
-		$passwordData = [
-			'USER_ID' => $userId,
-			'PASSWORD' => $password,
-			'DATE_CREATE' => new Main\Type\DateTime(),
-			'TITLE' => Loc::getMessage('REST_APP_SYSCOMMENT', array(
-				'#TITLE#' => $siteTitle,
-			)),
-			'COMMENT' => Loc::getMessage('REST_APP_COMMENT'),
-		];
-		$res = static::add($passwordData);
+    /**
+     * Generates AP for REST access.
+     *
+     * @param string $siteTitle Site title for AP description.
+     *
+     * @return bool|string password or false
+     * @throws \Exception
+     */
+    public static function createPassword($userId, array $scopeList, $siteTitle, $returnArray = false)
+    {
+        $password = static::generatePassword();
+        $passwordData = [
+            'USER_ID' => $userId,
+            'PASSWORD' => $password,
+            'DATE_CREATE' => new Main\Type\DateTime(),
+            'TITLE' => Loc::getMessage('REST_APP_SYSCOMMENT', array(
+                '#TITLE#' => $siteTitle,
+            )),
+            'COMMENT' => Loc::getMessage('REST_APP_COMMENT'),
+        ];
+        $res = static::add($passwordData);
 
-		if($res->isSuccess())
-		{
-			$scopeList = array_unique($scopeList);
-			foreach($scopeList as $scope)
-			{
-				PermissionTable::add(array(
-					'PASSWORD_ID' => $res->getId(),
-					'PERM' => $scope,
-				));
-			}
+        if ($res->isSuccess()) {
+            $scopeList = array_unique($scopeList);
+            foreach ($scopeList as $scope) {
+                PermissionTable::add(array(
+                    'PASSWORD_ID' => $res->getId(),
+                    'PERM' => $scope,
+                ));
+            }
 
-			if(!$returnArray)
-			{
-				$return = $password;
-			}
-			else
-			{
-				$passwordData['ID'] = $res->getId();
-				$return = $passwordData;
-			}
-			return $return;
-		}
+            if (!$returnArray) {
+                $return = $password;
+            } else {
+                $passwordData['ID'] = $res->getId();
+                $return = $passwordData;
+            }
+            return $return;
+        }
 
-		return false;
-	}
+        return false;
+    }
 }

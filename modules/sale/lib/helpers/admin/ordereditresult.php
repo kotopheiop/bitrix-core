@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Helpers\Admin;
 
 /**
@@ -8,21 +9,21 @@ namespace Bitrix\Sale\Helpers\Admin;
  */
 class OrderEditResult extends \Bitrix\Sale\Result
 {
-	protected $isTerminal = false;
+    protected $isTerminal = false;
 
-	/**
-	 * @return bool
-	 */
-	public function isTerminal()
-	{
-		return $this->isTerminal;
-	}
+    /**
+     * @return bool
+     */
+    public function isTerminal()
+    {
+        return $this->isTerminal;
+    }
 
-	/**
-	 * @param bool $isTerminal
-	 */
-	public function setIsTerminal($isTerminal)
-	{
-		$this->isTerminal = $isTerminal;
-	}
+    /**
+     * @param bool $isTerminal
+     */
+    public function setIsTerminal($isTerminal)
+    {
+        $this->isTerminal = $isTerminal;
+    }
 }

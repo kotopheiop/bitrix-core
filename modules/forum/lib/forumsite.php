@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Forum;
 
 use Bitrix\Main\Entity;
@@ -22,47 +23,47 @@ Loc::loadMessages(__FILE__);
  */
 class ForumSiteTable extends \Bitrix\Main\Entity\DataManager
 {
-	/**
-	 * Returns DB table name for entity
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_forum2site';
-	}
+    /**
+     * Returns DB table name for entity
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_forum2site';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			'FORUM_ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'title' => Loc::getMessage('FORUM_SITE_TABLE_FIELD_FORUM_ID'),
-			),
-			'SITE_ID' => array(
-				'data_type' => 'string',
-				'primary' => true,
-				'size' => 2,
-				'title' => Loc::getMessage('FORUM_SITE_TABLE_FIELD_SITE_ID'),
-			),
-			'PATH2FORUM_MESSAGE' =>  array(
-				'data_type' => 'string',
-				'title' => Loc::getMessage('FORUM_SITE_TABLE_FIELD_SITE_ID'),
-			),
-			'FORUM' => array(
-				'data_type' => 'Bitrix\Forum\Forum',
-				'reference' => array('=this.FORUM_ID' => 'ref.ID')
-			),
-			'SITE' => array(
-				'data_type' => 'Bitrix\Main\Site',
-				'reference' => array('=this.SITE_ID' => 'ref.LID'),
-			),
-		);
-	}
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            'FORUM_ID' => array(
+                'data_type' => 'integer',
+                'primary' => true,
+                'title' => Loc::getMessage('FORUM_SITE_TABLE_FIELD_FORUM_ID'),
+            ),
+            'SITE_ID' => array(
+                'data_type' => 'string',
+                'primary' => true,
+                'size' => 2,
+                'title' => Loc::getMessage('FORUM_SITE_TABLE_FIELD_SITE_ID'),
+            ),
+            'PATH2FORUM_MESSAGE' => array(
+                'data_type' => 'string',
+                'title' => Loc::getMessage('FORUM_SITE_TABLE_FIELD_SITE_ID'),
+            ),
+            'FORUM' => array(
+                'data_type' => 'Bitrix\Forum\Forum',
+                'reference' => array('=this.FORUM_ID' => 'ref.ID')
+            ),
+            'SITE' => array(
+                'data_type' => 'Bitrix\Main\Site',
+                'reference' => array('=this.SITE_ID' => 'ref.LID'),
+            ),
+        );
+    }
 }

@@ -11,43 +11,41 @@ Loc::loadMessages(__FILE__);
 
 final class ComponentController extends Controller
 {
-	/**
-	 * @var \CBitrixComponent
-	 */
-	private $component;
+    /**
+     * @var \CBitrixComponent
+     */
+    private $component;
 
-	/**
-	 * ComponentController constructor.
-	 *
-	 * @param Controllerable $component
-	 */
-	public function __construct(Controllerable $component)
-	{
-		$this->component = $component;
+    /**
+     * ComponentController constructor.
+     *
+     * @param Controllerable $component
+     */
+    public function __construct(Controllerable $component)
+    {
+        $this->component = $component;
 
-		parent::__construct();
-	}
+        parent::__construct();
+    }
 
-	public function configureActions()
-	{
-		return $this->component->configureActions();
-	}
+    public function configureActions()
+    {
+        return $this->component->configureActions();
+    }
 
-	protected function create($actionName)
-	{
-		$config = $this->getActionConfig($actionName);
-		$methodName = $this->generateActionMethodName($actionName);
+    protected function create($actionName)
+    {
+        $config = $this->getActionConfig($actionName);
+        $methodName = $this->generateActionMethodName($actionName);
 
-		if (method_exists($this->component, $methodName))
-		{
-			$method = new \ReflectionMethod($this->component, $methodName);
-			if ($method->isPublic() && strtolower($method->getName()) === strtolower($methodName))
-			{
-				return new InlineAction($actionName, $this->component, $this, $config);
-			}
-		}
+        if (method_exists($this->component, $methodName)) {
+            $method = new \ReflectionMethod($this->component, $methodName);
+            if ($method->isPublic() && strtolower($method->getName()) === strtolower($methodName)) {
+                return new InlineAction($actionName, $this->component, $this, $config);
+            }
+        }
 
-		return parent::create($actionName);
-	}
+        return parent::create($actionName);
+    }
 
 }

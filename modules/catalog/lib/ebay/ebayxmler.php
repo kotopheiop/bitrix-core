@@ -1,74 +1,69 @@
 <?php
+
 namespace Bitrix\Catalog\Ebay;
 
 class EbayXMLer
 {
-	protected $fieldsMap = array(
-		"NAME" => array(
-			"PATH" => "ProductInformation/Title"
-		),
-		"CATEGORIES" => array(
-			"PATH" => "ProductInformation/Categories/Category",
-			"TYPE" => "eBayLeafCategory"
-		)
-	);
+    protected $fieldsMap = array(
+        "NAME" => array(
+            "PATH" => "ProductInformation/Title"
+        ),
+        "CATEGORIES" => array(
+            "PATH" => "ProductInformation/Categories/Category",
+            "TYPE" => "eBayLeafCategory"
+        )
+    );
 
-	public function makeProductNode($product)
-	{
-		$dom = new \DOMDocument('1.0', 'utf-8');
+    public function makeProductNode($product)
+    {
+        $dom = new \DOMDocument('1.0', 'utf-8');
 
-		$productNode = $dom->createElement('Product');
+        $productNode = $dom->createElement('Product');
 
-		foreach($this->fieldsMap as $bitrixFieldId => $ebayFieldPath)
-		{
-			if(isset($product[$bitrixFieldId]))
-			{
-				$arPath = $this->parsePath($ebayFieldPath);
+        foreach ($this->fieldsMap as $bitrixFieldId => $ebayFieldPath) {
+            if (isset($product[$bitrixFieldId])) {
+                $arPath = $this->parsePath($ebayFieldPath);
 
-				$newNode = $oldNewNode = null;
+                $newNode = $oldNewNode = null;
 
-				foreach($arPath as $pathItem)
-				{
-					if(!$this->isChildExist($productNode, $pathItem))
-					{
-						$newNode = $dom->createElement($pathItem);
+                foreach ($arPath as $pathItem) {
+                    if (!$this->isChildExist($productNode, $pathItem)) {
+                        $newNode = $dom->createElement($pathItem);
 
-						if($oldNewNode)
-							$oldNewNode->appendChild($newNode);
-						else
-							$productNode->appendChild($newNode);
+                        if ($oldNewNode)
+                            $oldNewNode->appendChild($newNode);
+                        else
+                            $productNode->appendChild($newNode);
 
-						$oldNewNode = $newNode;
-					}
-				}
+                        $oldNewNode = $newNode;
+                    }
+                }
 
-				if($newNode)
-					$newNode->nodeValue = $product[$bitrixFieldId];
-			}
-		}
+                if ($newNode)
+                    $newNode->nodeValue = $product[$bitrixFieldId];
+            }
+        }
 
-		return $dom->saveXML($productNode);
-	}
+        return $dom->saveXML($productNode);
+    }
 
-	public function isChildExist(\DOMNode $node, $childName)
-	{
-		$result = false;
-		$children = $node->childNodes;
+    public function isChildExist(\DOMNode $node, $childName)
+    {
+        $result = false;
+        $children = $node->childNodes;
 
-		foreach($children as $childNode)
-		{
-			if($childNode->nodeName == $childName)
-			{
-				$result = true;
-				break;
-			}
-		}
+        foreach ($children as $childNode) {
+            if ($childNode->nodeName == $childName) {
+                $result = true;
+                break;
+            }
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	protected function parsePath($path)
-	{
-		return explode("/", $path);
-	}
+    protected function parsePath($path)
+    {
+        return explode("/", $path);
+    }
 }

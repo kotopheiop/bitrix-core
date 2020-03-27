@@ -9,5 +9,5 @@ namespace Bitrix\Im\Call\Integration;
  */
 class EntityType
 {
-	const CHAT = 'chat';
+    const CHAT = 'chat';
 }

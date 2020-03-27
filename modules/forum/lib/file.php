@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Forum;
 
 use Bitrix\Main;
@@ -41,193 +42,166 @@ use Bitrix\Vote\Vote\Option;
  **/
 class FileTable extends Main\Entity\DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_forum_file';
-	}
+    /**
+     * Returns DB table name for entity.
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_forum_file';
+    }
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return [
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return [
 //			(new IntegerField("ID", ["primary" => true, "autocomplete" => true])),
-			(new IntegerField("FORUM_ID", ["required" => true])),
-			(new IntegerField("TOPIC_ID")),
-			(new IntegerField("MESSAGE_ID")),
-			(new IntegerField("FILE_ID", ["primary" => true])),
-			(new IntegerField("USER_ID")),
-			(new Reference("USER", \Bitrix\Main\UserTable::class, Join::on("this.USER_ID", "ref.ID"))),
-			(new DatetimeField("TIMESTAMP_X", ["default_value" => function(){return new DateTime();}])),
-			(new IntegerField("HITS")),
-			(new Reference("FORUM", ForumTable::class, Join::on("this.FORUM_ID", "ref.ID")))
-		];
-	}
+            (new IntegerField("FORUM_ID", ["required" => true])),
+            (new IntegerField("TOPIC_ID")),
+            (new IntegerField("MESSAGE_ID")),
+            (new IntegerField("FILE_ID", ["primary" => true])),
+            (new IntegerField("USER_ID")),
+            (new Reference("USER", \Bitrix\Main\UserTable::class, Join::on("this.USER_ID", "ref.ID"))),
+            (new DatetimeField("TIMESTAMP_X", ["default_value" => function () {
+                return new DateTime();
+            }])),
+            (new IntegerField("HITS")),
+            (new Reference("FORUM", ForumTable::class, Join::on("this.FORUM_ID", "ref.ID")))
+        ];
+    }
 }
+
 class File
 {
-	public static function checkFiles(Forum $forum, &$files, $params = ["TOPIC_ID" => 0, "MESSAGE_ID" => 0, "USER_ID" => 0])
-	{
-		$result = new \Bitrix\Main\Result();
+    public static function checkFiles(Forum $forum, &$files, $params = ["TOPIC_ID" => 0, "MESSAGE_ID" => 0, "USER_ID" => 0])
+    {
+        $result = new \Bitrix\Main\Result();
 
-		if (empty($files))
-		{
-			return $result;
-		}
+        if (empty($files)) {
+            return $result;
+        }
 
-		if (array_key_exists("name", $files))
-		{
-			$files = array($files);
-		}
+        if (array_key_exists("name", $files)) {
+            $files = array($files);
+        }
 
-		$filesize = intval(\Bitrix\Main\Config\Option::get("forum", "file_max_size", 5242880));
-		$existingFiles = [];
-		foreach ($files as $key => $file)
-		{
-			if ($file["FILE_ID"] > 0)
-			{
-				$files[$key]["old_file"] = $file["FILE_ID"];
-				$existingFiles[] = $file["FILE_ID"];
-				continue;
-			}
-			if (strLen($file["name"]) <= 0)
-			{
-				unset($files[$key]);
-				continue;
-			}
+        $filesize = intval(\Bitrix\Main\Config\Option::get("forum", "file_max_size", 5242880));
+        $existingFiles = [];
+        foreach ($files as $key => $file) {
+            if ($file["FILE_ID"] > 0) {
+                $files[$key]["old_file"] = $file["FILE_ID"];
+                $existingFiles[] = $file["FILE_ID"];
+                continue;
+            }
+            if (strLen($file["name"]) <= 0) {
+                unset($files[$key]);
+                continue;
+            }
 
-			// Y - Image files		F - Files of specified type		A - All files
-			if ($forum["ALLOW_UPLOAD"] == "Y")
-			{
-				$res = \CFile::CheckImageFile($file, $filesize, 0, 0);
-			}
-			elseif ($forum["ALLOW_UPLOAD"] == "F")
-			{
-				$res = \CFile::CheckFile($file, $filesize, false, $forum["ALLOW_UPLOAD_EXT"]);
-			}
-			elseif ($forum["ALLOW_UPLOAD"] == "A")
-			{
-				$res = \CFile::CheckFile($file, $filesize, false, false);
-			}
-			else
-			{
-				$res = "Uploading is forbidden";
-			}
-			if (strlen($res) > 0)
-			{
-				$result->addError(new Main\Error($res));
-			}
-		}
+            // Y - Image files		F - Files of specified type		A - All files
+            if ($forum["ALLOW_UPLOAD"] == "Y") {
+                $res = \CFile::CheckImageFile($file, $filesize, 0, 0);
+            } elseif ($forum["ALLOW_UPLOAD"] == "F") {
+                $res = \CFile::CheckFile($file, $filesize, false, $forum["ALLOW_UPLOAD_EXT"]);
+            } elseif ($forum["ALLOW_UPLOAD"] == "A") {
+                $res = \CFile::CheckFile($file, $filesize, false, false);
+            } else {
+                $res = "Uploading is forbidden";
+            }
+            if (strlen($res) > 0) {
+                $result->addError(new Main\Error($res));
+            }
+        }
 
-		if (!empty($existingFiles))
-		{
-			$dbRes = FileTable::getList([
-				"select" => ["FILE_ID"],
-				"filter" => [
-					"FORUM_ID" => $params["FORUM_ID"] ?: $forum->getId(),
-					"TOPIC_ID" => $params["TOPIC_ID"],
-					"MESSAGE_ID" => $params["MESSAGE_ID"],
-					"USER_ID" => $params["USER_ID"],
-					"FILE_ID" => $existingFiles
-				],
-				"order" => [
-					"FILE_ID" => "ASC"
-				]
-			]);
-			while ($res = $dbRes->fetch())
-			{
-				if (in_array($res["FILE_ID"], $existingFiles))
-				{
-					$existingFiles = array_diff($existingFiles, [$res["FILE_ID"]]);
-				}
-			}
-			if (!empty($existingFiles))
-			{
-				$result->addError(new Main\Error("The file is occupied."));
-			}
-		}
-		return $result;
-	}
+        if (!empty($existingFiles)) {
+            $dbRes = FileTable::getList([
+                "select" => ["FILE_ID"],
+                "filter" => [
+                    "FORUM_ID" => $params["FORUM_ID"] ?: $forum->getId(),
+                    "TOPIC_ID" => $params["TOPIC_ID"],
+                    "MESSAGE_ID" => $params["MESSAGE_ID"],
+                    "USER_ID" => $params["USER_ID"],
+                    "FILE_ID" => $existingFiles
+                ],
+                "order" => [
+                    "FILE_ID" => "ASC"
+                ]
+            ]);
+            while ($res = $dbRes->fetch()) {
+                if (in_array($res["FILE_ID"], $existingFiles)) {
+                    $existingFiles = array_diff($existingFiles, [$res["FILE_ID"]]);
+                }
+            }
+            if (!empty($existingFiles)) {
+                $result->addError(new Main\Error("The file is occupied."));
+            }
+        }
+        return $result;
+    }
 
-	public static function saveFiles(&$files, $params, $uploadDir = "forum/upload")
-	{
-		$filesToUpdate = [];
-		$filesToAdd = [];
-		$filesToDel = [];
-		$result = new \Bitrix\Main\Result();
-		foreach ($files as $key => $file)
-		{
-			$file["MODULE_ID"] = "forum";
+    public static function saveFiles(&$files, $params, $uploadDir = "forum/upload")
+    {
+        $filesToUpdate = [];
+        $filesToAdd = [];
+        $filesToDel = [];
+        $result = new \Bitrix\Main\Result();
+        foreach ($files as $key => $file) {
+            $file["MODULE_ID"] = "forum";
 
-			if (array_key_exists("del", $file))
-			{
-				$id = $file["old_file"] ?: $file["FILE_ID"];
-				\CFile::Delete($id);
-				$filesToDel[$id] = $file + ["key" => $key];
-			}
-			if ($file["FILE_ID"] > 0)
-			{
-				$filesToUpdate[$file["FILE_ID"]] = $file + ["key" => $key];
-			}
-			else
-			{
-				$id = \CFile::SaveFile($file, $uploadDir, true, true);
-				if ($id > 0)
-				{
-					$files[$key]["FILE_ID"] = $id;
-					$filesToAdd[$id] = $file + ["key" => $key];
-				}
-				else
-				{
-					$result->addError(new Main\Error("The file is not saved."));
-				}
-			}
-		}
-		foreach ($filesToDel as $id => $file)
-		{
-			FileTable::delete($id);
-			unset($files[$file["key"]]);
-		}
-		if (!empty($filesToUpdate))
-		{
-			$row = [
-				"FORUM_ID" => $params["FORUM_ID"],
-				"TOPIC_ID" => $params["TOPIC_ID"],
-				"MESSAGE_ID" => $params["MESSAGE_ID"],
-				"USER_ID" => $params["USER_ID"]
-			];
-			FileTable::updateMulti(array_keys($filesToUpdate), $row);
-			foreach ($filesToUpdate as $id => $file)
-			{
-				$files[$file["key"]] = array_merge($files[$file["key"]], $row);
-			}
-		}
-		if (!empty($filesToAdd))
-		{
-			$rows = [];
-			foreach ($filesToAdd as $id => $file)
-			{
-				$row = [
-					"FILE_ID" => $id,
-					"FORUM_ID" => $params["FORUM_ID"],
-					"TOPIC_ID" => $params["TOPIC_ID"],
-					"MESSAGE_ID" => $params["MESSAGE_ID"],
-					"USER_ID" => $params["USER_ID"]
-				];
-				$files[$file["key"]] = array_merge($files[$file["key"]], $row);
-				$rows[] = $row;
-			}
-			FileTable::addMulti($rows);
-		}
-		$result->setData(array_keys($filesToUpdate) + array_keys($filesToAdd));
-		return $result;
-	}
+            if (array_key_exists("del", $file)) {
+                $id = $file["old_file"] ?: $file["FILE_ID"];
+                \CFile::Delete($id);
+                $filesToDel[$id] = $file + ["key" => $key];
+            }
+            if ($file["FILE_ID"] > 0) {
+                $filesToUpdate[$file["FILE_ID"]] = $file + ["key" => $key];
+            } else {
+                $id = \CFile::SaveFile($file, $uploadDir, true, true);
+                if ($id > 0) {
+                    $files[$key]["FILE_ID"] = $id;
+                    $filesToAdd[$id] = $file + ["key" => $key];
+                } else {
+                    $result->addError(new Main\Error("The file is not saved."));
+                }
+            }
+        }
+        foreach ($filesToDel as $id => $file) {
+            FileTable::delete($id);
+            unset($files[$file["key"]]);
+        }
+        if (!empty($filesToUpdate)) {
+            $row = [
+                "FORUM_ID" => $params["FORUM_ID"],
+                "TOPIC_ID" => $params["TOPIC_ID"],
+                "MESSAGE_ID" => $params["MESSAGE_ID"],
+                "USER_ID" => $params["USER_ID"]
+            ];
+            FileTable::updateMulti(array_keys($filesToUpdate), $row);
+            foreach ($filesToUpdate as $id => $file) {
+                $files[$file["key"]] = array_merge($files[$file["key"]], $row);
+            }
+        }
+        if (!empty($filesToAdd)) {
+            $rows = [];
+            foreach ($filesToAdd as $id => $file) {
+                $row = [
+                    "FILE_ID" => $id,
+                    "FORUM_ID" => $params["FORUM_ID"],
+                    "TOPIC_ID" => $params["TOPIC_ID"],
+                    "MESSAGE_ID" => $params["MESSAGE_ID"],
+                    "USER_ID" => $params["USER_ID"]
+                ];
+                $files[$file["key"]] = array_merge($files[$file["key"]], $row);
+                $rows[] = $row;
+            }
+            FileTable::addMulti($rows);
+        }
+        $result->setData(array_keys($filesToUpdate) + array_keys($filesToAdd));
+        return $result;
+    }
 }

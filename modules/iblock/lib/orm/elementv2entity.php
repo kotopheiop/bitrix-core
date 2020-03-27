@@ -14,13 +14,13 @@ namespace Bitrix\Iblock\ORM;
  */
 class ElementV2Entity extends ElementEntity
 {
-	public function getSingleValueTableName()
-	{
-		return "b_iblock_element_prop_s{$this->iblock->getId()}";
-	}
+    public function getSingleValueTableName()
+    {
+        return "b_iblock_element_prop_s{$this->iblock->getId()}";
+    }
 
-	public function getMultiValueTableName()
-	{
-		return "b_iblock_element_prop_m{$this->iblock->getId()}";
-	}
+    public function getMultiValueTableName()
+    {
+        return "b_iblock_element_prop_m{$this->iblock->getId()}";
+    }
 }

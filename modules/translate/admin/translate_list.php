@@ -761,7 +761,7 @@ if ($permissionRight == Translate\Permission::WRITE) {
                     <input type="checkbox" name="use_custom_list" value="Y">
                 </td>
             </tr>
-        <?endif ?>
+        <? endif ?>
 
 
         <tr>

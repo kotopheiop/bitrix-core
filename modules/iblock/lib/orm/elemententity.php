@@ -19,26 +19,26 @@ use Bitrix\Main\ORM\Entity;
  */
 abstract class ElementEntity extends Entity
 {
-	/** @var Iblock */
-	protected $iblock;
+    /** @var Iblock */
+    protected $iblock;
 
-	/**
-	 * @param EO_Iblock $iblock
-	 */
-	public function setIblock($iblock)
-	{
-		$this->iblock = $iblock;
-	}
+    /**
+     * @param EO_Iblock $iblock
+     */
+    public function setIblock($iblock)
+    {
+        $this->iblock = $iblock;
+    }
 
-	/**
-	 * @return EO_Iblock
-	 */
-	public function getIblock()
-	{
-		return $this->iblock;
-	}
+    /**
+     * @return EO_Iblock
+     */
+    public function getIblock()
+    {
+        return $this->iblock;
+    }
 
-	abstract public function getSingleValueTableName();
+    abstract public function getSingleValueTableName();
 
-	abstract public function getMultiValueTableName();
+    abstract public function getMultiValueTableName();
 }

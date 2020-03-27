@@ -1,44 +1,45 @@
 <?php
+
 namespace Bitrix\Sale\Discount\Context;
 
 use Bitrix\Main;
 
 abstract class BaseContext
 {
-	const GUEST_USER_ID = 0;
+    const GUEST_USER_ID = 0;
 
-	/** @var int */
-	protected $userId;
-	/** @var array */
-	protected $userGroups = array();
+    /** @var int */
+    protected $userId;
+    /** @var array */
+    protected $userGroups = array();
 
-	protected $userGroupsHash = '';
+    protected $userGroupsHash = '';
 
-	/**
-	 * @return int
-	 */
-	public function getUserId()
-	{
-		return $this->userId;
-	}
+    /**
+     * @return int
+     */
+    public function getUserId()
+    {
+        return $this->userId;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getUserGroups()
-	{
-		return $this->userGroups;
-	}
+    /**
+     * @return array
+     */
+    public function getUserGroups()
+    {
+        return $this->userGroups;
+    }
 
-	public function getUserGroupsHash()
-	{
-		return $this->userGroupsHash;
-	}
+    public function getUserGroupsHash()
+    {
+        return $this->userGroupsHash;
+    }
 
-	protected function setUserGroups(array $userGroups)
-	{
-		Main\Type\Collection::normalizeArrayValuesByInt($userGroups, true);
-		$this->userGroups = $userGroups;
-		$this->userGroupsHash = md5(serialize($this->userGroups));
-	}
+    protected function setUserGroups(array $userGroups)
+    {
+        Main\Type\Collection::normalizeArrayValuesByInt($userGroups, true);
+        $this->userGroups = $userGroups;
+        $this->userGroupsHash = md5(serialize($this->userGroups));
+    }
 }

@@ -10,20 +10,20 @@ use Bitrix\Sale\Internals\EO_Reliability;
  */
 class Reliability extends EO_Reliability
 {
-	/**
-	 * @param string $fullName
-	 * @param string $address
-	 * @param string $phone
-	 * @return Reliability
-	 */
-	public static function create(string $fullName, string $address, string $phone)
-	{
-		$hash = Service::createHash($fullName, $address, $phone);
+    /**
+     * @param string $fullName
+     * @param string $address
+     * @param string $phone
+     * @return Reliability
+     */
+    public static function create(string $fullName, string $address, string $phone)
+    {
+        $hash = Service::createHash($fullName, $address, $phone);
 
-		return (new static())
-			->setFullName($fullName)
-			->setAddress($address)
-			->setPhone($phone)
-			->setHash($hash);
-	}
+        return (new static())
+            ->setFullName($fullName)
+            ->setAddress($address)
+            ->setPhone($phone)
+            ->setHash($hash);
+    }
 }

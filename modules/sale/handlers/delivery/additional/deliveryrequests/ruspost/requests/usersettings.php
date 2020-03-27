@@ -1,4 +1,5 @@
 <?
+
 namespace Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Requests;
 
 use Bitrix\Main\Web\HttpClient;
@@ -11,6 +12,6 @@ use Bitrix\Main\Web\HttpClient;
  */
 class UserSettings extends Base
 {
-	protected $path = "/1.0/settings";
-	protected $type = HttpClient::HTTP_GET;
+    protected $path = "/1.0/settings";
+    protected $type = HttpClient::HTTP_GET;
 }

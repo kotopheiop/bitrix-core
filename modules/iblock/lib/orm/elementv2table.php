@@ -19,31 +19,31 @@ use Bitrix\Main\ORM\Objectify\EntityObject;
  */
 class ElementV2Table extends CommonElementTable
 {
-	public static function getEntityClass()
-	{
-		return ElementV2Entity::class;
-	}
+    public static function getEntityClass()
+    {
+        return ElementV2Entity::class;
+    }
 
-	public static function getObjectParentClass()
-	{
-		return ElementV2::class;
-	}
+    public static function getObjectParentClass()
+    {
+        return ElementV2::class;
+    }
 
-	/**
-	 * Protection from ElementTable classes
-	 * @return EntityObject|string
-	 */
-	public static function getObjectClass()
-	{
-		return static::getObjectClassByDataClass(get_called_class());
-	}
+    /**
+     * Protection from ElementTable classes
+     * @return EntityObject|string
+     */
+    public static function getObjectClass()
+    {
+        return static::getObjectClassByDataClass(get_called_class());
+    }
 
-	/**
-	 * Protection from ElementTable classes
-	 * @return Collection|string
-	 */
-	public static function getCollectionClass()
-	{
-		return static::getCollectionClassByDataClass(get_called_class());
-	}
+    /**
+     * Protection from ElementTable classes
+     * @return Collection|string
+     */
+    public static function getCollectionClass()
+    {
+        return static::getCollectionClassByDataClass(get_called_class());
+    }
 }

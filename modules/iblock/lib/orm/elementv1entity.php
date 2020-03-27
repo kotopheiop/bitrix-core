@@ -15,13 +15,13 @@ namespace Bitrix\Iblock\ORM;
  */
 class ElementV1Entity extends ElementEntity
 {
-	public function getSingleValueTableName()
-	{
-		return 'b_iblock_element_property';
-	}
+    public function getSingleValueTableName()
+    {
+        return 'b_iblock_element_property';
+    }
 
-	public function getMultiValueTableName()
-	{
-		return 'b_iblock_element_property';
-	}
+    public function getMultiValueTableName()
+    {
+        return 'b_iblock_element_property';
+    }
 }

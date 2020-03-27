@@ -13,10 +13,10 @@ use Bitrix\Main\ORM\Objectify\EntityObject;
  */
 class Type extends EntityObject
 {
-	protected function getFactory(): TypeFactory
-	{
-		/** @var TypeDataManager $dataClass */
-		$dataClass = static::$dataClass;
-		return $dataClass::getFactory();
-	}
+    protected function getFactory(): TypeFactory
+    {
+        /** @var TypeDataManager $dataClass */
+        $dataClass = static::$dataClass;
+        return $dataClass::getFactory();
+    }
 }

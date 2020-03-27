@@ -491,7 +491,7 @@ else {
                         for ($i = 0; $i < $rootDSEcount; $i++):?>
                             <option value="<?= htmlspecialcharsbx($ar_rootdse[$i]) ?>"
                                     title="<?= htmlspecialcharsbx($ar_rootdse[$i]) ?>"><?= htmlspecialcharsbx($ar_rootdse[$i]) ?></option>
-                        <?endfor; ?>
+                        <? endfor; ?>
                     </select>
                 <?
                 endif;
@@ -911,13 +911,13 @@ else {
                         <td><? echo GetMessage("LDAP_EDIT_GROUP_LOC") ?></td>
                         <td><? echo GetMessage("LDAP_EDIT_GROUP_MAP_DEL") ?></td>
                     </tr>
-                    <? foreach ($arGroups as $t_id => $arGroup):?>
+                    <? foreach ($arGroups as $t_id => $arGroup): ?>
                         <tr>
                             <td>
                                 <select name="LDAP_GROUP[<?= htmlspecialcharsbx($t_id) ?>][LDAP_GROUP_ID]"
                                         style="width:360px;">
                                     <option value=""></option>
-                                    <? foreach ($arLDAPGroups as $gid => $gname):?>
+                                    <? foreach ($arLDAPGroups as $gid => $gname): ?>
                                         <option value="<?= $gid ?>"
                                                 title="<?= $gname ?>" <? if (htmlspecialcharsEx($arGroup['LDAP_GROUP_ID']) == $gid) echo ' selected' ?>><?= $gname ?></option>
                                     <? endforeach ?>
@@ -940,7 +940,7 @@ else {
                                 </select>
                             </td>
                             <td align="center">
-                                <? if (strlen($arGroup['LDAP_GROUP_ID']) > 0 || $arGroup['GROUP_ID'] > 0):?>
+                                <? if (strlen($arGroup['LDAP_GROUP_ID']) > 0 || $arGroup['GROUP_ID'] > 0): ?>
                                     <input type="checkbox"
                                            name="LDAP_GROUP[<?= htmlspecialcharsbx($t_id) ?>][DEL_GROUP]"
                                            value="Y" <? if ($arGroup['DEL_GROUP'] == 'Y') echo ' checked' ?>>
@@ -965,7 +965,7 @@ else {
                     <tr>
                         <td>
                             <select size="8" name="LDAP_NOIMP_GROUPS[]" style="width:360px;" multiple="">
-                                <? foreach ($arLDAPGroups as $gid => $gname):?>
+                                <? foreach ($arLDAPGroups as $gid => $gname): ?>
                                     <option value="<?= $gid ?>"
                                             title="<?= $gname ?>" <? if (array_key_exists(md5(htmlspecialcharsback($gid)), $noimportGroups)) echo ' selected' ?>><?= $gname ?></option>
                                 <? endforeach ?>

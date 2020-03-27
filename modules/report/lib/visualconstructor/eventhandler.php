@@ -25,64 +25,64 @@ use Bitrix\Report\VisualConstructor\Views\Component\NumberBlock;
 class EventHandler
 {
 
-	/**
-	 * @return BaseWidgetHandler[]
-	 */
-	public static function onWidgetCollect()
-	{
-		$widget = new BaseWidget();
-		$result[] = $widget;
-		return $result;
-	}
+    /**
+     * @return BaseWidgetHandler[]
+     */
+    public static function onWidgetCollect()
+    {
+        $widget = new BaseWidget();
+        $result[] = $widget;
+        return $result;
+    }
 
-	/**
-	 * @return BaseReportHandler[]
-	 */
-	public static function onReportsCollect()
-	{
-		$emptyReportHandler = new EmptyReport();
+    /**
+     * @return BaseReportHandler[]
+     */
+    public static function onReportsCollect()
+    {
+        $emptyReportHandler = new EmptyReport();
 //		$formula = new Formula();
-		$result[] = $emptyReportHandler;
+        $result[] = $emptyReportHandler;
 //		$result[] = $formula;
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * @return Category[]
-	 */
-	public static function onCategoriesCollect()
-	{
-		$main = new Category();
-		$main->setKey('main');
-		$main->setLabel('Main');
+    /**
+     * @return Category[]
+     */
+    public static function onCategoriesCollect()
+    {
+        $main = new Category();
+        $main->setKey('main');
+        $main->setLabel('Main');
 
-		$categories[] = $main;
-		return $categories;
-	}
+        $categories[] = $main;
+        return $categories;
+    }
 
-	/**
-	 * @return View[]
-	 */
-	public static function onViewsCollect()
-	{
+    /**
+     * @return View[]
+     */
+    public static function onViewsCollect()
+    {
 
-		return array(
-			new PieDiagram(),
-			new DonutDiagram(),
-			new Column(),
-			new Stack(),
-			new LinearGraph(),
-			new SmoothedGraph(),
-			new Number(),
-			new NumberBlock(),
-			new Grid(),
+        return array(
+            new PieDiagram(),
+            new DonutDiagram(),
+            new Column(),
+            new Stack(),
+            new LinearGraph(),
+            new SmoothedGraph(),
+            new Number(),
+            new NumberBlock(),
+            new Grid(),
 //			new NumberBlockWithFormula(),
-			new Funnel(),
-			new MultiDirectional(),
-			new Activity(),
-			new GroupedDataGrid()
-		);
-	}
+            new Funnel(),
+            new MultiDirectional(),
+            new Activity(),
+            new GroupedDataGrid()
+        );
+    }
 
 }

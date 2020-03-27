@@ -16,12 +16,12 @@ use Bitrix\Sender\Message;
  */
 interface iDuration
 {
-	/**
-	 * Get send duration in seconds.
-	 *
-	 * @param Message\Adapter|null $message Message.
-	 *
-	 * @return float
-	 */
-	public function getDuration(Message\Adapter $message = null);
+    /**
+     * Get send duration in seconds.
+     *
+     * @param Message\Adapter|null $message Message.
+     *
+     * @return float
+     */
+    public function getDuration(Message\Adapter $message = null);
 }

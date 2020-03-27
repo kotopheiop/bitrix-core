@@ -1,8 +1,10 @@
 <?php
+
 namespace Bitrix\Catalog;
 
 use Bitrix\Main\ORM,
-	Bitrix\Main\Localization\Loc;
+    Bitrix\Main\Localization\Loc;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -19,52 +21,52 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Catalog
  **/
-
 class GroupAccessTable extends ORM\Data\DataManager
 {
-	const ACCESS_BUY = 'Y';
-	const ACCESS_VIEW = 'N';
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
-	{
-		return 'b_catalog_group2group';
-	}
+    const ACCESS_BUY = 'Y';
+    const ACCESS_VIEW = 'N';
 
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
-	public static function getMap()
-	{
-		return array(
-			'ID' => new ORM\Fields\IntegerField('ID', array(
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_ID_FIELD')
-			)),
-			'CATALOG_GROUP_ID' => new ORM\Fields\IntegerField('CATALOG_GROUP_ID', array(
-				'required' => true,
-				'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_CATALOG_GROUP_ID_FIELD')
-			)),
-			'GROUP_ID' => new ORM\Fields\IntegerField('GROUP_ID', array(
-				'required' => true,
-				'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_GROUP_ID_FIELD')
-			)),
-			'ACCESS' => new ORM\Fields\BooleanField('ACCESS', array(
-				'column_name' => 'BUY',
-				'values' => array(self::ACCESS_VIEW, self::ACCESS_BUY),
-				'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_ACCESS_FIELD')
-			)),
-			'CATALOG_GROUP' => new ORM\Fields\Relations\Reference(
-				'CATALOG_GROUP',
-				'\Bitrix\Catalog\Group',
-				array('=this.CATALOG_GROUP_ID' => 'ref.ID')
-			)
-		);
-	}
+    /**
+     * Returns DB table name for entity.
+     *
+     * @return string
+     */
+    public static function getTableName()
+    {
+        return 'b_catalog_group2group';
+    }
+
+    /**
+     * Returns entity map definition.
+     *
+     * @return array
+     */
+    public static function getMap()
+    {
+        return array(
+            'ID' => new ORM\Fields\IntegerField('ID', array(
+                'primary' => true,
+                'autocomplete' => true,
+                'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_ID_FIELD')
+            )),
+            'CATALOG_GROUP_ID' => new ORM\Fields\IntegerField('CATALOG_GROUP_ID', array(
+                'required' => true,
+                'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_CATALOG_GROUP_ID_FIELD')
+            )),
+            'GROUP_ID' => new ORM\Fields\IntegerField('GROUP_ID', array(
+                'required' => true,
+                'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_GROUP_ID_FIELD')
+            )),
+            'ACCESS' => new ORM\Fields\BooleanField('ACCESS', array(
+                'column_name' => 'BUY',
+                'values' => array(self::ACCESS_VIEW, self::ACCESS_BUY),
+                'title' => Loc::getMessage('GROUP_ACCESS_ENTITY_ACCESS_FIELD')
+            )),
+            'CATALOG_GROUP' => new ORM\Fields\Relations\Reference(
+                'CATALOG_GROUP',
+                '\Bitrix\Catalog\Group',
+                array('=this.CATALOG_GROUP_ID' => 'ref.ID')
+            )
+        );
+    }
 }

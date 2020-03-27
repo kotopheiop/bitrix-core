@@ -14,62 +14,63 @@ namespace Bitrix\Sender\Transport;
  */
 interface iLimiter
 {
-	const MONTHS = 'months';
-	const DAYS = 'days';
-	const HOURS = 'hours';
-	const MINUTES = 'minutes';
-	/**
-	 * Get max.
-	 *
-	 * @return integer
-	 */
-	public function getLimit();
+    const MONTHS = 'months';
+    const DAYS = 'days';
+    const HOURS = 'hours';
+    const MINUTES = 'minutes';
 
-	/**
-	 * Get current.
-	 *
-	 * @return integer
-	 */
-	public function getCurrent();
+    /**
+     * Get max.
+     *
+     * @return integer
+     */
+    public function getLimit();
 
-	/**
-	 * Get unit name.
-	 *
-	 * @return string
-	 */
-	public function getUnitName();
+    /**
+     * Get current.
+     *
+     * @return integer
+     */
+    public function getCurrent();
 
-	/**
-	 * Get unit.
-	 * Examples:
-	 * "14 d" is equals 14 days;
-	 * "d" is equals 1 day.
-	 *
-	 * @return string
-	 */
-	public function getUnit();
+    /**
+     * Get unit name.
+     *
+     * @return string
+     */
+    public function getUnitName();
 
-	/**
-	 * Get caption.
-	 *
-	 * @return string|null
-	 */
-	public function getCaption();
+    /**
+     * Get unit.
+     * Examples:
+     * "14 d" is equals 14 days;
+     * "d" is equals 1 day.
+     *
+     * @return string
+     */
+    public function getUnit();
 
-	/**
-	 * Get parameter.
-	 *
-	 * @param string $name Name.
-	 * @return mixed|null
-	 */
-	public function getParameter($name);
+    /**
+     * Get caption.
+     *
+     * @return string|null
+     */
+    public function getCaption();
 
-	/**
-	 * Set parameter.
-	 *
-	 * @param string $name Name.
-	 * @param mixed $value Value.
-	 * @return $this
-	 */
-	public function setParameter($name, $value);
+    /**
+     * Get parameter.
+     *
+     * @param string $name Name.
+     * @return mixed|null
+     */
+    public function getParameter($name);
+
+    /**
+     * Set parameter.
+     *
+     * @param string $name Name.
+     * @param mixed $value Value.
+     * @return $this
+     */
+    public function setParameter($name, $value);
 }

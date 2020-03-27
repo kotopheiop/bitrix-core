@@ -18,5 +18,5 @@ Loc::loadMessages(__FILE__);
  */
 class TransportYa extends TransportBase
 {
-	const CODE = self::CODE_ADS_YA;
+    const CODE = self::CODE_ADS_YA;
 }

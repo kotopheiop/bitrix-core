@@ -12,76 +12,71 @@ use Bitrix\Main\UI\PageNavigation;
 
 final class Extra extends Controller
 {
-	//region Actions
-	public function getFieldsAction()
-	{
-		$view = $this->getViewManager()
-			->getView($this);
+    //region Actions
+    public function getFieldsAction()
+    {
+        $view = $this->getViewManager()
+            ->getView($this);
 
-		return ['EXTRA'=>$view->prepareFieldInfos(
-			$view->getFields()
-		)];
-	}
+        return ['EXTRA' => $view->prepareFieldInfos(
+            $view->getFields()
+        )];
+    }
 
-	public function listAction($select=[], $filter=[], $order=[], PageNavigation $pageNavigation)
-	{
-		return new Page('EXTRAS',
-			$this->getList($select, $filter, $order, $pageNavigation),
-			$this->count($filter)
-		);
-	}
+    public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
+    {
+        return new Page('EXTRAS',
+            $this->getList($select, $filter, $order, $pageNavigation),
+            $this->count($filter)
+        );
+    }
 
-	public function getAction($id)
-	{
-		$r = $this->exists($id);
-		if($r->isSuccess())
-		{
-			return ['EXTRA'=>$this->get($id)];
-		}
-		else
-		{
-			$this->addErrors($r->getErrors());
-			return null;
-		}
-	}
-	//endregion
+    public function getAction($id)
+    {
+        $r = $this->exists($id);
+        if ($r->isSuccess()) {
+            return ['EXTRA' => $this->get($id)];
+        } else {
+            $this->addErrors($r->getErrors());
+            return null;
+        }
+    }
 
-	protected function getEntityTable()
-	{
-		return new ExtraTable();
-	}
+    //endregion
 
-	protected function exists($id)
-	{
-		$r = new Result();
-		if(isset($this->get($id)['ID']) == false)
-			$r->addError(new Error('Extra is not exists'));
+    protected function getEntityTable()
+    {
+        return new ExtraTable();
+    }
 
-		return $r;
-	}
+    protected function exists($id)
+    {
+        $r = new Result();
+        if (isset($this->get($id)['ID']) == false)
+            $r->addError(new Error('Extra is not exists'));
 
-	protected function checkModifyPermissionEntity()
-	{
-		$r = $this->checkReadPermissionEntity();
-		if($r->isSuccess())
-		{
-			if (!static::getGlobalUser()->CanDoOperation('catalog_extra'))
-			{
-				$r->addError(new Error('Access Denied', 200040300020));
-			}
-		}
+        return $r;
+    }
 
-		return $r;
-	}
+    protected function checkModifyPermissionEntity()
+    {
+        $r = $this->checkReadPermissionEntity();
+        if ($r->isSuccess()) {
+            if (!static::getGlobalUser()->CanDoOperation('catalog_extra')) {
+                $r->addError(new Error('Access Denied', 200040300020));
+            }
+        }
 
-	protected function checkReadPermissionEntity()
-	{
-		$r = new Result();
+        return $r;
+    }
 
-		if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation('catalog_price')))
-		{
-			$r->addError(new Error('Access Denied', 200040300010));
-		}
-		return $r;
-	}
+    protected function checkReadPermissionEntity()
+    {
+        $r = new Result();
+
+        if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation('catalog_price'))) {
+            $r->addError(new Error('Access Denied', 200040300010));
+        }
+        return $r;
+    }
 }

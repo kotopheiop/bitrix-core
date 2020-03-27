@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Delivery\Restrictions;
 
 use Bitrix\Sale\Delivery\Restrictions;
@@ -15,84 +16,80 @@ Loc::loadMessages(__FILE__);
  */
 class ByMaxSize extends Restrictions\Base
 {
-	public static function getClassTitle()
-	{
-		return Loc::getMessage("SALE_DLVR_RSTR_BY_MAXSIZE_NAME");
-	}
+    public static function getClassTitle()
+    {
+        return Loc::getMessage("SALE_DLVR_RSTR_BY_MAXSIZE_NAME");
+    }
 
-	public static function getClassDescription()
-	{
-		return Loc::getMessage("SALE_DLVR_RSTR_BY_MAXSIZE_DESCRIPT");
-	}
+    public static function getClassDescription()
+    {
+        return Loc::getMessage("SALE_DLVR_RSTR_BY_MAXSIZE_DESCRIPT");
+    }
 
-	/**
-	 * @param array $dimensionsList
-	 * @param array $restrictionParams
-	 * @param int $deliveryId
-	 * @return bool
-	 */
-	public static function check($dimensionsList, array $restrictionParams, $deliveryId = 0)
-	{
-		if(empty($restrictionParams))
-			return true;
+    /**
+     * @param array $dimensionsList
+     * @param array $restrictionParams
+     * @param int $deliveryId
+     * @return bool
+     */
+    public static function check($dimensionsList, array $restrictionParams, $deliveryId = 0)
+    {
+        if (empty($restrictionParams))
+            return true;
 
-		$maxSize = intval($restrictionParams["MAX_SIZE"]);
+        $maxSize = intval($restrictionParams["MAX_SIZE"]);
 
-		if($maxSize <= 0)
-			return true;
+        if ($maxSize <= 0)
+            return true;
 
-		foreach($dimensionsList as $dimensions)
-		{
-			if(!is_array($dimensions))
-				continue;
+        foreach ($dimensionsList as $dimensions) {
+            if (!is_array($dimensions))
+                continue;
 
-			foreach($dimensions as $dimension)
-			{
-				if(intval($dimension) <= 0)
-					continue;
+            foreach ($dimensions as $dimension) {
+                if (intval($dimension) <= 0)
+                    continue;
 
-				if(intval($dimension) > $maxSize)
-					return false;
-			}
-		}
+                if (intval($dimension) > $maxSize)
+                    return false;
+            }
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	protected static function extractParams(Entity $entity)
-	{
-		$result = array();
+    protected static function extractParams(Entity $entity)
+    {
+        $result = array();
 
-		if ($entity instanceof Shipment)
-		{
-			foreach($entity->getShipmentItemCollection() as $shipmentItem)
-			{
-				$basketItem = $shipmentItem->getBasketItem();
+        if ($entity instanceof Shipment) {
+            foreach ($entity->getShipmentItemCollection() as $shipmentItem) {
+                $basketItem = $shipmentItem->getBasketItem();
 
-				if(!$basketItem)
-					continue;
+                if (!$basketItem)
+                    continue;
 
-				$dimensions = $basketItem->getField("DIMENSIONS");
+                $dimensions = $basketItem->getField("DIMENSIONS");
 
-				if(is_string($dimensions))
-					$dimensions = unserialize($dimensions);
+                if (is_string($dimensions))
+                    $dimensions = unserialize($dimensions);
 
-				$result[] = $dimensions;
-			}
-		}
+                $result[] = $dimensions;
+            }
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	public static function getParamsStructure($entityId = 0)
-	{
-		return array(
-			"MAX_SIZE" => array(
-				'TYPE' => 'NUMBER',
-				'DEFAULT' => "0",
-				'MIN' => 0,
-				'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_MAXSIZE_SIZE")
-			)
-		);
-	}
+    public static function getParamsStructure($entityId = 0)
+    {
+        return array(
+            "MAX_SIZE" => array(
+                'TYPE' => 'NUMBER',
+                'DEFAULT' => "0",
+                'MIN' => 0,
+                'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_MAXSIZE_SIZE")
+            )
+        );
+    }
 } 

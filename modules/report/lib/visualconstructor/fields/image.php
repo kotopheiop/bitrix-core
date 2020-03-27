@@ -8,41 +8,41 @@ namespace Bitrix\Report\VisualConstructor\Fields;
  */
 class Image extends Base
 {
-	const JS_EVENT_ON_CLICK = 'onClick';
+    const JS_EVENT_ON_CLICK = 'onClick';
 
-	private $uri;
+    private $uri;
 
-	/**
-	 * Image constructor.
-	 * @param string $sourceUri
-	 */
-	public function __construct($sourceUri = '')
-	{
-		$this->setUri($sourceUri);
-	}
+    /**
+     * Image constructor.
+     * @param string $sourceUri
+     */
+    public function __construct($sourceUri = '')
+    {
+        $this->setUri($sourceUri);
+    }
 
-	/**
-	 * @return void
-	 */
-	public function printContent()
-	{
-		$this->includeFieldComponent('image');
-	}
+    /**
+     * @return void
+     */
+    public function printContent()
+    {
+        $this->includeFieldComponent('image');
+    }
 
-	/**
-	 * @return mixed
-	 */
-	public function getUri()
-	{
-		return $this->uri;
-	}
+    /**
+     * @return mixed
+     */
+    public function getUri()
+    {
+        return $this->uri;
+    }
 
-	/**
-	 * @param mixed $uri Src of image.
-	 * @return void
-	 */
-	public function setUri($uri)
-	{
-		$this->uri = $uri;
-	}
+    /**
+     * @param mixed $uri Src of image.
+     * @return void
+     */
+    public function setUri($uri)
+    {
+        $this->uri = $uri;
+    }
 }

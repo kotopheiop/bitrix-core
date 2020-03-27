@@ -1987,9 +1987,9 @@ function html($ar)
                 <?
                 if ($isCrm):?>
                     <a href="" target="_blank" class="logo-link"><span class="logo <?= LANG ?>"></span></a>
-                <? else:?>
+                <? else: ?>
                     <a href="" target="_blank" class="buslogo-link"><span class="buslogo <?= LANG ?>"></span></a>
-                <?endif ?>
+                <? endif ?>
             </header>
 
             <section class="content">

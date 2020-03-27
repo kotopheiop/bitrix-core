@@ -14,7 +14,7 @@ namespace Bitrix\Sender\Message;
  */
 interface iBeforeAfter
 {
-	public function onBeforeStart():\Bitrix\Main\Result;
+    public function onBeforeStart(): \Bitrix\Main\Result;
 
-	public function onAfterEnd():\Bitrix\Main\Result;
+    public function onAfterEnd(): \Bitrix\Main\Result;
 }

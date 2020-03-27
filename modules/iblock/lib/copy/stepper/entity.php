@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Iblock\Copy\Stepper;
 
 use Bitrix\Iblock\Copy\Implement\Element as ElementImplementer;
@@ -10,33 +11,32 @@ use Bitrix\Main\Update\Stepper;
 
 abstract class Entity extends Stepper
 {
-	protected static $moduleId = "iblock";
+    protected static $moduleId = "iblock";
 
-	protected function getContainerCollection($elementIds, array $sectionsRatio, array $enumRatio, $targetIblockId = 0)
-	{
-		$containerCollection = new ContainerCollection();
+    protected function getContainerCollection($elementIds, array $sectionsRatio, array $enumRatio, $targetIblockId = 0)
+    {
+        $containerCollection = new ContainerCollection();
 
-		foreach ($elementIds as $elementId)
-		{
-			$container = new Container($elementId);
-			$dictionary = new Dictionary(
-				[
-					"targetIblockId" => $targetIblockId,
-					"enumRatio" => $enumRatio,
-					"sectionsRatio" => $sectionsRatio
-				]
-			);
-			$container->setDictionary($dictionary);
+        foreach ($elementIds as $elementId) {
+            $container = new Container($elementId);
+            $dictionary = new Dictionary(
+                [
+                    "targetIblockId" => $targetIblockId,
+                    "enumRatio" => $enumRatio,
+                    "sectionsRatio" => $sectionsRatio
+                ]
+            );
+            $container->setDictionary($dictionary);
 
-			$containerCollection[] = $container;
-		}
+            $containerCollection[] = $container;
+        }
 
-		return $containerCollection;
-	}
+        return $containerCollection;
+    }
 
-	protected function getElementCopier()
-	{
-		$elementImplementer = new ElementImplementer();
-		return new EntityCopier($elementImplementer);
-	}
+    protected function getElementCopier()
+    {
+        $elementImplementer = new ElementImplementer();
+        return new EntityCopier($elementImplementer);
+    }
 }

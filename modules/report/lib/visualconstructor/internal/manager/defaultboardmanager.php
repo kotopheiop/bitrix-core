@@ -11,53 +11,51 @@ use Bitrix\Report\VisualConstructor\Entity\Dashboard;
  */
 class DefaultBoardManager extends Base
 {
-	private static $defaultBoardsList;
-	private static $indices = array(
-		'boardKey' => array()
-	);
+    private static $defaultBoardsList;
+    private static $indices = array(
+        'boardKey' => array()
+    );
 
-	/**
-	 * @return Dashboard[]
-	 */
-	public function getDefaultBoardsList()
-	{
-		return self::$defaultBoardsList;
-	}
+    /**
+     * @return Dashboard[]
+     */
+    public function getDefaultBoardsList()
+    {
+        return self::$defaultBoardsList;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getIndices()
-	{
-		return self::$indices;
-	}
+    /**
+     * @return array
+     */
+    public function getIndices()
+    {
+        return self::$indices;
+    }
 
-	/**
-	 * @return string
-	 */
-	protected function getEventTypeKey()
-	{
-		return Common::EVENT_DEFAULT_BOARDS_COLLECT;
-	}
+    /**
+     * @return string
+     */
+    protected function getEventTypeKey()
+    {
+        return Common::EVENT_DEFAULT_BOARDS_COLLECT;
+    }
 
-	/**
-	 * @return mixed
-	 */
-	public function call()
-	{
-		if (!self::$defaultBoardsList)
-		{
-			/** @var Dashboard[] $boards */
-			$boards = $this->getResult();
-			foreach ($boards as $board)
-			{
-				self::$defaultBoardsList[$board->getBoardKey()] = $board;
-				self::$indices['boardKey'][$board->getBoardKey()][] = $board->getBoardKey();
+    /**
+     * @return mixed
+     */
+    public function call()
+    {
+        if (!self::$defaultBoardsList) {
+            /** @var Dashboard[] $boards */
+            $boards = $this->getResult();
+            foreach ($boards as $board) {
+                self::$defaultBoardsList[$board->getBoardKey()] = $board;
+                self::$indices['boardKey'][$board->getBoardKey()][] = $board->getBoardKey();
 
-			}
-		}
-		return self::$defaultBoardsList;
-	}
+            }
+        }
+        return self::$defaultBoardsList;
+    }
 
 
 }

@@ -16,28 +16,26 @@ use Bitrix\Iblock\ORM\CommonElementTable;
  */
 class Iblock extends EO_Iblock
 {
-	public function getEntityDataClassName()
-	{
-		$code = $this->fillApiCode();
+    public function getEntityDataClassName()
+    {
+        $code = $this->fillApiCode();
 
-		if (strlen($code))
-		{
-			return IblockTable::DATA_CLASS_PREFIX.ucfirst($code).'Table';
-		}
-	}
+        if (strlen($code)) {
+            return IblockTable::DATA_CLASS_PREFIX . ucfirst($code) . 'Table';
+        }
+    }
 
-	/**
-	 * @return CommonElementTable|string
-	 */
-	public function getEntityDataClass()
-	{
-		$className = $this->getEntityDataClassName();
+    /**
+     * @return CommonElementTable|string
+     */
+    public function getEntityDataClass()
+    {
+        $className = $this->getEntityDataClassName();
 
-		if (strlen($className))
-		{
-			return '\\'.IblockTable::DATA_CLASS_NAMESPACE.'\\'.$className;
-		}
+        if (strlen($className)) {
+            return '\\' . IblockTable::DATA_CLASS_NAMESPACE . '\\' . $className;
+        }
 
-		trigger_error('API_CODE required for DataClass of iblock #'.$this->getId(), E_USER_WARNING);
-	}
+        trigger_error('API_CODE required for DataClass of iblock #' . $this->getId(), E_USER_WARNING);
+    }
 }

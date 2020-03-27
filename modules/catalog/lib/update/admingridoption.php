@@ -1,4 +1,5 @@
 <?
+
 namespace Bitrix\Catalog\Update;
 
 use Bitrix\Main\Update\AdminGridOption as BaseAdminGridOption;
@@ -11,5 +12,5 @@ use Bitrix\Main\Update\AdminGridOption as BaseAdminGridOption;
  */
 class AdminGridOption extends BaseAdminGridOption
 {
-	protected static $moduleId = "catalog";
+    protected static $moduleId = "catalog";
 }

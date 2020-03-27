@@ -35,7 +35,7 @@ class EnumCollection extends ArrayObject implements Collection
      */
     public function offsetSet($offset, $value)
     {
-        if ( ! $value instanceof Enum) {
+        if (!$value instanceof Enum) {
             throw new InvalidArgumentException(sprintf(
                 'Argument 2 passed to %s must be a \Protobuf\Enum, %s given',
                 __METHOD__,

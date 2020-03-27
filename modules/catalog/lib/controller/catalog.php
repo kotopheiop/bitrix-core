@@ -12,265 +12,231 @@ use Bitrix\Rest\Integration\View\Base;
 
 final class Catalog extends Controller
 {
-	//region Actions
-	public function getFieldsAction()
-	{
-		/** @var Base $view */
-		$view = $this->getViewManager()
-			->getView($this);
+    //region Actions
+    public function getFieldsAction()
+    {
+        /** @var Base $view */
+        $view = $this->getViewManager()
+            ->getView($this);
 
-		return ['CATALOG'=>$view->prepareFieldInfos(
-			$view->getFields()
-		)];
-	}
+        return ['CATALOG' => $view->prepareFieldInfos(
+            $view->getFields()
+        )];
+    }
 
-	public function isOffersAction($id)
-	{
-		$r = $this->exists($id);
-		if($r->isSuccess())
-		{
-			return $this->isOffers($id);
-		}
-		else
-		{
-			$this->addErrors($r->getErrors());
-			return null;
-		}
-	}
+    public function isOffersAction($id)
+    {
+        $r = $this->exists($id);
+        if ($r->isSuccess()) {
+            return $this->isOffers($id);
+        } else {
+            $this->addErrors($r->getErrors());
+            return null;
+        }
+    }
 
-	public function listAction($select=[], $filter=[], $order=[], $start=0)
-	{
-		$result = [];
+    public function listAction($select = [], $filter = [], $order = [], $start = 0)
+    {
+        $result = [];
 
-		$catalog = new \CCatalog();
+        $catalog = new \CCatalog();
 
-		$select = empty($select)? ['*']:$select;
-		$order = empty($order)? ['ID'=>'ASC']:$order;
+        $select = empty($select) ? ['*'] : $select;
+        $order = empty($order) ? ['ID' => 'ASC'] : $order;
 
-		$r = $catalog::GetList($order, $filter, false, self::getNavData($start), $select);
-		while ($l = $r->fetch())
-		{
-			$result[] = $l;
-		}
+        $r = $catalog::GetList($order, $filter, false, self::getNavData($start), $select);
+        while ($l = $r->fetch()) {
+            $result[] = $l;
+        }
 
-		return new Page('CATALOGS', $result, function() use ($filter)
-		{
-			$catalog = new \CCatalog();
+        return new Page('CATALOGS', $result, function () use ($filter) {
+            $catalog = new \CCatalog();
 
-			$list = [];
-			$r = $catalog::GetList([], $filter);
-			while ($l = $r->fetch())
-				$list[] = $l;
+            $list = [];
+            $r = $catalog::GetList([], $filter);
+            while ($l = $r->fetch())
+                $list[] = $l;
 
-			return count($list);
-		});
-	}
+            return count($list);
+        });
+    }
 
-	public function getAction($id)
-	{
-		$r = $this->exists($id);
-		if($r->isSuccess())
-		{
-			return ['CATALOG'=>$this->get($id)];
-		}
-		else
-		{
-			$this->addErrors($r->getErrors());
-			return null;
-		}
-	}
+    public function getAction($id)
+    {
+        $r = $this->exists($id);
+        if ($r->isSuccess()) {
+            return ['CATALOG' => $this->get($id)];
+        } else {
+            $this->addErrors($r->getErrors());
+            return null;
+        }
+    }
 
-	public function addAction($fields)
-	{
-		$r = new Result();
+    public function addAction($fields)
+    {
+        $r = new Result();
 
-		$res = $this->exists($fields['IBLOCK_ID']);
-		if($res->isSuccess() == false)
-		{
-			$r = $this->addValidate($fields);
-			if($r->isSuccess())
-			{
-				\CCatalog::add($fields);
-			}
-		}
-		else
-		{
-			$r->addError(new Error('Duplicate entry for key [iblockId]'));
-		}
+        $res = $this->exists($fields['IBLOCK_ID']);
+        if ($res->isSuccess() == false) {
+            $r = $this->addValidate($fields);
+            if ($r->isSuccess()) {
+                \CCatalog::add($fields);
+            }
+        } else {
+            $r->addError(new Error('Duplicate entry for key [iblockId]'));
+        }
 
-		if(!$r->isSuccess())
-		{
-			$this->addErrors($r->getErrors());
-			return null;
-		}
-		else
-		{
-			return ['CATALOG'=>$this->get($fields['IBLOCK_ID'])];
-		}
-	}
+        if (!$r->isSuccess()) {
+            $this->addErrors($r->getErrors());
+            return null;
+        } else {
+            return ['CATALOG' => $this->get($fields['IBLOCK_ID'])];
+        }
+    }
 
-	public function updateAction($id, array $fields)
-	{
-		$r = $this->exists($id);
-		if($r->isSuccess())
-		{
-			$r = $this->updateValidate($fields+['ID'=>$id]);
-			if($r->isSuccess())
-			{
-				\CCatalog::update($id, $fields);
-			}
-		}
+    public function updateAction($id, array $fields)
+    {
+        $r = $this->exists($id);
+        if ($r->isSuccess()) {
+            $r = $this->updateValidate($fields + ['ID' => $id]);
+            if ($r->isSuccess()) {
+                \CCatalog::update($id, $fields);
+            }
+        }
 
-		if($r->isSuccess())
-		{
-			return ['CATALOG'=>$this->get($id)];
-		}
-		else
-		{
-			$this->addErrors($r->getErrors());
-			return null;
-		}
-	}
+        if ($r->isSuccess()) {
+            return ['CATALOG' => $this->get($id)];
+        } else {
+            $this->addErrors($r->getErrors());
+            return null;
+        }
+    }
 
-	public function deleteAction($id)
-	{
-		$r = $this->exists($id);
-		if($r->isSuccess())
-		{
-			$r = $this->deleteValidate($id);
-			if($r->isSuccess())
-			{
-				if (!\CCatalog::Delete($id))
-				{
-					if ($ex = self::getApplication()->GetException())
-						$r->addError(new Error($ex->GetString(), $ex->GetId()));
-					else
-						$r->addError(new Error('delete catalog error'));
-				}
-			}
-		}
+    public function deleteAction($id)
+    {
+        $r = $this->exists($id);
+        if ($r->isSuccess()) {
+            $r = $this->deleteValidate($id);
+            if ($r->isSuccess()) {
+                if (!\CCatalog::Delete($id)) {
+                    if ($ex = self::getApplication()->GetException())
+                        $r->addError(new Error($ex->GetString(), $ex->GetId()));
+                    else
+                        $r->addError(new Error('delete catalog error'));
+                }
+            }
+        }
 
-		if($r->isSuccess())
-		{
-			return true;
-		}
-		else
-		{
-			$this->addErrors($r->getErrors());
-			return null;
-		}
-	}
-	//endregion
+        if ($r->isSuccess()) {
+            return true;
+        } else {
+            $this->addErrors($r->getErrors());
+            return null;
+        }
+    }
 
-	protected function isOffers($id)
-	{
-		return $this->get($id)["PRODUCT_IBLOCK_ID"] ? true:false;
-	}
+    //endregion
 
-	protected function getEntityTable()
-	{
-		return new CatalogIblockTable();
-	}
+    protected function isOffers($id)
+    {
+        return $this->get($id)["PRODUCT_IBLOCK_ID"] ? true : false;
+    }
 
-	protected function exists($id)
-	{
-		$r = new Result();
+    protected function getEntityTable()
+    {
+        return new CatalogIblockTable();
+    }
 
-		if(isset($this->get($id)['ID']) == false)
-			$r->addError(new Error('Catalog is not exists'));
+    protected function exists($id)
+    {
+        $r = new Result();
 
-		return $r;
-	}
+        if (isset($this->get($id)['ID']) == false)
+            $r->addError(new Error('Catalog is not exists'));
 
-	protected function get($id)
-	{
-		return \CCatalog::GetByID($id);
-	}
+        return $r;
+    }
 
-	protected function addValidate(array $fields)
-	{
-		$r = new Result();
+    protected function get($id)
+    {
+        return \CCatalog::GetByID($id);
+    }
 
-		if(!\CCatalog::CheckFields("ADD", $fields, $fields['ID']))
-		{
-			if ($ex = self::getApplication()->GetException())
-				$r->addError(new Error($ex->GetString(), $ex->GetId()));
-			else
-				$r->addError(new Error('Validate catalog error'));
-		}
+    protected function addValidate(array $fields)
+    {
+        $r = new Result();
 
-		return $r;
-	}
+        if (!\CCatalog::CheckFields("ADD", $fields, $fields['ID'])) {
+            if ($ex = self::getApplication()->GetException())
+                $r->addError(new Error($ex->GetString(), $ex->GetId()));
+            else
+                $r->addError(new Error('Validate catalog error'));
+        }
 
-	protected function updateValidate(array $fields)
-	{
-		$r = new Result();
+        return $r;
+    }
 
-		if(!\CCatalog::CheckFields("UPDATE", $fields, $fields['ID']))
-		{
-			if ($ex = self::getApplication()->GetException())
-				$r->addError(new Error($ex->GetString(), $ex->GetId()));
-			else
-				$r->addError(new Error('Validate catalog error'));
-		}
+    protected function updateValidate(array $fields)
+    {
+        $r = new Result();
 
-		return $r;
-	}
+        if (!\CCatalog::CheckFields("UPDATE", $fields, $fields['ID'])) {
+            if ($ex = self::getApplication()->GetException())
+                $r->addError(new Error($ex->GetString(), $ex->GetId()));
+            else
+                $r->addError(new Error('Validate catalog error'));
+        }
 
-	protected function deleteValidate($id)
-	{
-		$r = new Result();
+        return $r;
+    }
 
-		if($this->isOffers($id))
-			$r->addError(new Error('Catalog is offers'));
+    protected function deleteValidate($id)
+    {
+        $r = new Result();
 
-		return $r;
-	}
+        if ($this->isOffers($id))
+            $r->addError(new Error('Catalog is offers'));
 
-	protected function checkPermissionEntity($name, $arguments=[])
-	{
-		$name = strtolower($name); //for ajax mode
+        return $r;
+    }
 
-		if($name == 'isoffers')
-		{
-			$r = $this->checkReadPermissionEntity();
-		}
-		else
-		{
-			$r = parent::checkPermissionEntity($name);
-		}
+    protected function checkPermissionEntity($name, $arguments = [])
+    {
+        $name = strtolower($name); //for ajax mode
 
-		return $r;
-	}
+        if ($name == 'isoffers') {
+            $r = $this->checkReadPermissionEntity();
+        } else {
+            $r = parent::checkPermissionEntity($name);
+        }
 
-	protected function checkModifyPermissionEntity()
-	{
-		$r = $this->checkReadPermissionEntity();
-		if($r->isSuccess())
-		{
-			if (!static::getGlobalUser()->CanDoOperation('catalog_settings'))
-			{
-				$r->addError(new Error('Access Denied', 200040300020));
-			}
-		}
+        return $r;
+    }
 
-		return $r;
-	}
+    protected function checkModifyPermissionEntity()
+    {
+        $r = $this->checkReadPermissionEntity();
+        if ($r->isSuccess()) {
+            if (!static::getGlobalUser()->CanDoOperation('catalog_settings')) {
+                $r->addError(new Error('Access Denied', 200040300020));
+            }
+        }
 
-	protected function checkReadPermissionEntity()
-	{
-		$r = new Result();
+        return $r;
+    }
 
-		if(!static::getGlobalUser()->CanDoOperation('view_other_settings') && !static::getGlobalUser()->CanDoOperation('edit_other_settings'))
-		{
-			$r->addError(new Error('Access Denied', 200040300010));
-		}
+    protected function checkReadPermissionEntity()
+    {
+        $r = new Result();
 
-		if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation('catalog_settings'))
-		{
-			$r->addError(new Error('Access Denied', 200040300030));
-		}
+        if (!static::getGlobalUser()->CanDoOperation('view_other_settings') && !static::getGlobalUser()->CanDoOperation('edit_other_settings')) {
+            $r->addError(new Error('Access Denied', 200040300010));
+        }
 
-		return $r;
-	}
+        if (!static::getGlobalUser()->CanDoOperation('catalog_read') && !static::getGlobalUser()->CanDoOperation('catalog_settings')) {
+            $r->addError(new Error('Access Denied', 200040300030));
+        }
+
+        return $r;
+    }
 }

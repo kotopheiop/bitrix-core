@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Exchange\OneC;
 
 use Bitrix\Main;
@@ -16,47 +17,30 @@ class DocumentImportFactory
      */
     public static function create($documentTypeID)
     {
-        if(!is_int($documentTypeID))
-        {
+        if (!is_int($documentTypeID)) {
             $documentTypeID = (int)$documentTypeID;
         }
 
-        if(!DocumentType::IsDefined($documentTypeID))
-        {
+        if (!DocumentType::IsDefined($documentTypeID)) {
             throw new Main\ArgumentOutOfRangeException('documentTypeID', DocumentType::FIRST, DocumentType::LAST);
         }
 
-        if($documentTypeID === DocumentType::ORDER)
-        {
+        if ($documentTypeID === DocumentType::ORDER) {
             return new OrderDocument();
-        }
-        elseif($documentTypeID === DocumentType::SHIPMENT)
-        {
+        } elseif ($documentTypeID === DocumentType::SHIPMENT) {
             return new ShipmentDocument();
-        }
-        elseif($documentTypeID === DocumentType::PAYMENT_CASH)
-        {
+        } elseif ($documentTypeID === DocumentType::PAYMENT_CASH) {
             return new PaymentCashDocument();
-        }
-        elseif($documentTypeID === DocumentType::PAYMENT_CASH_LESS)
-        {
+        } elseif ($documentTypeID === DocumentType::PAYMENT_CASH_LESS) {
             return new PaymentCashLessDocument();
-        }
-        elseif($documentTypeID === DocumentType::PAYMENT_CARD_TRANSACTION)
-        {
+        } elseif ($documentTypeID === DocumentType::PAYMENT_CARD_TRANSACTION) {
             return new PaymentCardDocument();
-        }
-        elseif($documentTypeID === DocumentType::PROFILE)
-        {
+        } elseif ($documentTypeID === DocumentType::PROFILE) {
             return new ProfileDocument();
-        }
-		elseif($documentTypeID === DocumentType::USER_PROFILE)
-		{
-			return new UserProfileDocument();
-		}
-        else
-        {
-            throw new Main\NotSupportedException("Document type: '".Exchange\EntityType::ResolveName($documentTypeID)."' is not supported in current context");
+        } elseif ($documentTypeID === DocumentType::USER_PROFILE) {
+            return new UserProfileDocument();
+        } else {
+            throw new Main\NotSupportedException("Document type: '" . Exchange\EntityType::ResolveName($documentTypeID) . "' is not supported in current context");
         }
     }
 }

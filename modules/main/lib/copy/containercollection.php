@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Main\Copy;
 
 use Bitrix\Main\Type\Dictionary;
@@ -10,13 +11,13 @@ use Bitrix\Main\Type\Dictionary;
  */
 class ContainerCollection extends Dictionary
 {
-	protected function addContainer(Container $container, $offset = null)
-	{
-		parent::offsetSet($offset, $container);
-	}
+    protected function addContainer(Container $container, $offset = null)
+    {
+        parent::offsetSet($offset, $container);
+    }
 
-	public function offsetSet($offset, $value)
-	{
-		$this->addContainer($value, $offset);
-	}
+    public function offsetSet($offset, $value)
+    {
+        $this->addContainer($value, $offset);
+    }
 }

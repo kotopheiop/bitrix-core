@@ -5,6 +5,7 @@
  * @subpackage seo
  * @copyright 2001-2013 Bitrix
  */
+
 namespace Bitrix\Seo\Adv;
 
 use Bitrix\Main\Localization\Loc;
@@ -29,35 +30,34 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Seo
  **/
-
 class YandexGroupTable extends AdvEntity
 {
-	const ENGINE = 'yandex_direct';
+    const ENGINE = 'yandex_direct';
 
-	public static function getFilePath()
-	{
-		return __FILE__;
-	}
+    public static function getFilePath()
+    {
+        return __FILE__;
+    }
 
-	public static function getTableName()
-	{
-		return 'b_seo_adv_group';
-	}
+    public static function getTableName()
+    {
+        return 'b_seo_adv_group';
+    }
 
-	public static function getMap()
-	{
-		return array_merge(
-			parent::getMap(),
-			array(
-				'CAMPAIGN_ID' => array(
-					'data_type' => 'integer',
-					'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_CAMPAIGN_ID_FIELD'),
-				),
-				'CAMPAIGN' => array(
-					'data_type' => 'Bitrix\Seo\Adv\YandexCampaignTable',
-					'reference' => array('=this.CAMPAIGN_ID' => 'ref.ID'),
-				),
-			)
-		);
-	}
+    public static function getMap()
+    {
+        return array_merge(
+            parent::getMap(),
+            array(
+                'CAMPAIGN_ID' => array(
+                    'data_type' => 'integer',
+                    'title' => Loc::getMessage('ADV_CAMPAIGN_ENTITY_CAMPAIGN_ID_FIELD'),
+                ),
+                'CAMPAIGN' => array(
+                    'data_type' => 'Bitrix\Seo\Adv\YandexCampaignTable',
+                    'reference' => array('=this.CAMPAIGN_ID' => 'ref.ID'),
+                ),
+            )
+        );
+    }
 }

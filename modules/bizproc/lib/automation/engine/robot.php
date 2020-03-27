@@ -1,176 +1,171 @@
 <?php
+
 namespace Bitrix\Bizproc\Automation\Engine;
 
 class Robot
 {
-	/** @var array */
-	protected $bizprocActivity;
-	/** @var  DelayInterval */
-	protected $delayInterval;
-	protected $delayName;
-	/** @var  ConditionGroup $condition */
-	protected $condition;
-	protected $executeAfterPrevious = false;
+    /** @var array */
+    protected $bizprocActivity;
+    /** @var  DelayInterval */
+    protected $delayInterval;
+    protected $delayName;
+    /** @var  ConditionGroup $condition */
+    protected $condition;
+    protected $executeAfterPrevious = false;
 
-	public function __construct(array $bizprocActivity)
-	{
-		if (isset($bizprocActivity['Delay']))
-		{
-			$this->setDelayInterval(new DelayInterval($bizprocActivity['Delay']));
-			unset($bizprocActivity['Delay']);
-		}
-		if (isset($bizprocActivity['DelayName']))
-		{
-			$this->setDelayName($bizprocActivity['DelayName']);
-			unset($bizprocActivity['DelayName']);
-		}
-		if (isset($bizprocActivity['Condition']))
-		{
-			$this->setCondition(new ConditionGroup($bizprocActivity['Condition']));
-			unset($bizprocActivity['Condition']);
-		}
+    public function __construct(array $bizprocActivity)
+    {
+        if (isset($bizprocActivity['Delay'])) {
+            $this->setDelayInterval(new DelayInterval($bizprocActivity['Delay']));
+            unset($bizprocActivity['Delay']);
+        }
+        if (isset($bizprocActivity['DelayName'])) {
+            $this->setDelayName($bizprocActivity['DelayName']);
+            unset($bizprocActivity['DelayName']);
+        }
+        if (isset($bizprocActivity['Condition'])) {
+            $this->setCondition(new ConditionGroup($bizprocActivity['Condition']));
+            unset($bizprocActivity['Condition']);
+        }
 
-		if (isset($bizprocActivity['ExecuteAfterPrevious']) && (int)$bizprocActivity['ExecuteAfterPrevious'] === 1)
-		{
-			$this->setExecuteAfterPrevious();
-		}
-		unset($bizprocActivity['ExecuteAfterPrevious']);
+        if (isset($bizprocActivity['ExecuteAfterPrevious']) && (int)$bizprocActivity['ExecuteAfterPrevious'] === 1) {
+            $this->setExecuteAfterPrevious();
+        }
+        unset($bizprocActivity['ExecuteAfterPrevious']);
 
-		$this->bizprocActivity = $bizprocActivity;
-	}
+        $this->bizprocActivity = $bizprocActivity;
+    }
 
-	/**
-	 * @param DelayInterval $delayInterval Robot delay interval.
-	 */
-	public function setDelayInterval(DelayInterval $delayInterval)
-	{
-		$this->delayInterval = $delayInterval;
-	}
+    /**
+     * @param DelayInterval $delayInterval Robot delay interval.
+     */
+    public function setDelayInterval(DelayInterval $delayInterval)
+    {
+        $this->delayInterval = $delayInterval;
+    }
 
-	/**
-	 * @return DelayInterval Robot delay interval.
-	 */
-	public function getDelayInterval()
-	{
-		return $this->delayInterval;
-	}
+    /**
+     * @return DelayInterval Robot delay interval.
+     */
+    public function getDelayInterval()
+    {
+        return $this->delayInterval;
+    }
 
-	/**
-	 * @param ConditionGroup $condition Robot condition.
-	 */
-	public function setCondition(ConditionGroup $condition)
-	{
-		$this->condition = $condition;
-	}
+    /**
+     * @param ConditionGroup $condition Robot condition.
+     */
+    public function setCondition(ConditionGroup $condition)
+    {
+        $this->condition = $condition;
+    }
 
-	/**
-	 * @return ConditionGroup Robot condition.
-	 */
-	public function getCondition()
-	{
-		return $this->condition;
-	}
+    /**
+     * @return ConditionGroup Robot condition.
+     */
+    public function getCondition()
+    {
+        return $this->condition;
+    }
 
-	/**
-	 * @param string $delayName Robot delay name.
-	 */
-	public function setDelayName($delayName)
-	{
-		$this->delayName = (string)$delayName;
-	}
+    /**
+     * @param string $delayName Robot delay name.
+     */
+    public function setDelayName($delayName)
+    {
+        $this->delayName = (string)$delayName;
+    }
 
-	/**
-	 * @return string Robot delay name.
-	 */
-	public function getDelayName()
-	{
-		return $this->delayName;
-	}
+    /**
+     * @return string Robot delay name.
+     */
+    public function getDelayName()
+    {
+        return $this->delayName;
+    }
 
-	public function setExecuteAfterPrevious()
-	{
-		$this->executeAfterPrevious = true;
-	}
+    public function setExecuteAfterPrevious()
+    {
+        $this->executeAfterPrevious = true;
+    }
 
-	public function isExecuteAfterPrevious()
-	{
-		return $this->executeAfterPrevious;
-	}
+    public function isExecuteAfterPrevious()
+    {
+        return $this->executeAfterPrevious;
+    }
 
-	public function getProperties()
-	{
-		return isset($this->bizprocActivity['Properties']) && is_array($this->bizprocActivity['Properties'])
-			? $this->bizprocActivity['Properties'] : array();
-	}
+    public function getProperties()
+    {
+        return isset($this->bizprocActivity['Properties']) && is_array($this->bizprocActivity['Properties'])
+            ? $this->bizprocActivity['Properties'] : array();
+    }
 
-	public function setProperties(array $properties): self
-	{
-		$this->bizprocActivity['Properties'] = $properties;
-		return $this;
-	}
+    public function setProperties(array $properties): self
+    {
+        $this->bizprocActivity['Properties'] = $properties;
+        return $this;
+    }
 
-	public function getProperty(string $name)
-	{
-		$properties = $this->getProperties();
-		return array_key_exists($name, $properties) ? $properties[$name] : null;
-	}
+    public function getProperty(string $name)
+    {
+        $properties = $this->getProperties();
+        return array_key_exists($name, $properties) ? $properties[$name] : null;
+    }
 
-	public function setProperty(string $name, $value)
-	{
-		$properties = $this->getProperties();
-		$properties[$name] = $value;
-		return $this->setProperties($properties);
-	}
+    public function setProperty(string $name, $value)
+    {
+        $properties = $this->getProperties();
+        $properties[$name] = $value;
+        return $this->setProperties($properties);
+    }
 
-	public function getTitle()
-	{
-		return $this->getProperty('Title');
-	}
+    public function getTitle()
+    {
+        return $this->getProperty('Title');
+    }
 
-	public function getName()
-	{
-		return $this->bizprocActivity['Name'];
-	}
+    public function getName()
+    {
+        return $this->bizprocActivity['Name'];
+    }
 
-	public function getType()
-	{
-		return $this->bizprocActivity['Type'];
-	}
+    public function getType()
+    {
+        return $this->bizprocActivity['Type'];
+    }
 
-	public function toArray()
-	{
-		$activity = $this->bizprocActivity;
-		unset($activity['Children']); //Robot activities has no Children
-		$delayInterval = $this->getDelayInterval();
-		if ($delayInterval)
-		{
-			$activity['Delay'] = $delayInterval->toArray();
-			$activity['DelayName'] = $this->getDelayName();
-		}
-		if ($this->isExecuteAfterPrevious())
-			$activity['ExecuteAfterPrevious'] = 1;
+    public function toArray()
+    {
+        $activity = $this->bizprocActivity;
+        unset($activity['Children']); //Robot activities has no Children
+        $delayInterval = $this->getDelayInterval();
+        if ($delayInterval) {
+            $activity['Delay'] = $delayInterval->toArray();
+            $activity['DelayName'] = $this->getDelayName();
+        }
+        if ($this->isExecuteAfterPrevious())
+            $activity['ExecuteAfterPrevious'] = 1;
 
-		$condition = $this->getCondition();
-		if ($condition)
-		{
-			$activity['Condition'] = $condition->toArray();
-		}
+        $condition = $this->getCondition();
+        if ($condition) {
+            $activity['Condition'] = $condition->toArray();
+        }
 
-		return $activity;
-	}
+        return $activity;
+    }
 
-	public function getBizprocActivity()
-	{
-		$activity = $this->bizprocActivity;
-		$activity['Children'] = array();
-		return $activity;
-	}
+    public function getBizprocActivity()
+    {
+        $activity = $this->bizprocActivity;
+        $activity['Children'] = array();
+        return $activity;
+    }
 
-	public static function generateName()
-	{
-		return 'A'.mt_rand(10000, 99999)
-		.'_'.mt_rand(10000, 99999)
-		.'_'.mt_rand(10000, 99999)
-		.'_'.mt_rand(10000, 99999);
-	}
+    public static function generateName()
+    {
+        return 'A' . mt_rand(10000, 99999)
+            . '_' . mt_rand(10000, 99999)
+            . '_' . mt_rand(10000, 99999)
+            . '_' . mt_rand(10000, 99999);
+    }
 }

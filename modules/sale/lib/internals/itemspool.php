@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Internals;
 
 /**
@@ -7,7 +8,7 @@ namespace Bitrix\Sale\Internals;
  */
 class ItemsPool extends PoolBase
 {
-	protected static $pool = array();
+    protected static $pool = array();
 //	public static function get($code, $providerName, $productId)
 //	{
 //		$hash = $providerName."|".$productId;

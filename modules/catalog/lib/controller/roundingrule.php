@@ -12,76 +12,71 @@ use Bitrix\Main\UI\PageNavigation;
 
 final class RoundingRule extends Controller
 {
-	//region Actions
-	public function getFieldsAction()
-	{
-		$view = $this->getViewManager()
-			->getView($this);
+    //region Actions
+    public function getFieldsAction()
+    {
+        $view = $this->getViewManager()
+            ->getView($this);
 
-		return ['ROUNDING_RULE'=>$view->prepareFieldInfos(
-			$view->getFields()
-		)];
-	}
+        return ['ROUNDING_RULE' => $view->prepareFieldInfos(
+            $view->getFields()
+        )];
+    }
 
-	public function listAction($select=[], $filter=[], $order=[], PageNavigation $pageNavigation)
-	{
-		return new Page('ROUNDING_RULES',
-			$this->getList($select, $filter, $order, $pageNavigation),
-			$this->count($filter)
-		);
-	}
+    public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
+    {
+        return new Page('ROUNDING_RULES',
+            $this->getList($select, $filter, $order, $pageNavigation),
+            $this->count($filter)
+        );
+    }
 
-	public function getAction($id)
-	{
-		$r = $this->exists($id);
-		if($r->isSuccess())
-		{
-			return ['ROUNDING_RULE'=>$this->get($id)];
-		}
-		else
-		{
-			$this->addErrors($r->getErrors());
-			return null;
-		}
-	}
-	//endregion
+    public function getAction($id)
+    {
+        $r = $this->exists($id);
+        if ($r->isSuccess()) {
+            return ['ROUNDING_RULE' => $this->get($id)];
+        } else {
+            $this->addErrors($r->getErrors());
+            return null;
+        }
+    }
 
-	protected function exists($id)
-	{
-		$r = new Result();
-		if(isset($this->get($id)['ID']) == false)
-			$r->addError(new Error('Rounding is not exists'));
+    //endregion
 
-		return $r;
-	}
+    protected function exists($id)
+    {
+        $r = new Result();
+        if (isset($this->get($id)['ID']) == false)
+            $r->addError(new Error('Rounding is not exists'));
 
-	protected function getEntityTable()
-	{
-		return new RoundingTable();
-	}
+        return $r;
+    }
 
-	protected function checkModifyPermissionEntity()
-	{
-		$r = $this->checkReadPermissionEntity();
-		if($r->isSuccess())
-		{
-			if (!static::getGlobalUser()->CanDoOperation('catalog_group'))
-			{
-				$r->addError(new Error('Access Denied', 200040300020));
-			}
-		}
+    protected function getEntityTable()
+    {
+        return new RoundingTable();
+    }
 
-		return $r;
-	}
+    protected function checkModifyPermissionEntity()
+    {
+        $r = $this->checkReadPermissionEntity();
+        if ($r->isSuccess()) {
+            if (!static::getGlobalUser()->CanDoOperation('catalog_group')) {
+                $r->addError(new Error('Access Denied', 200040300020));
+            }
+        }
 
-	protected function checkReadPermissionEntity()
-	{
-		$r = new Result();
+        return $r;
+    }
 
-		if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation('catalog_group')))
-		{
-			$r->addError(new Error('Access Denied', 200040300010));
-		}
-		return $r;
-	}
+    protected function checkReadPermissionEntity()
+    {
+        $r = new Result();
+
+        if (!(static::getGlobalUser()->CanDoOperation('catalog_read') || static::getGlobalUser()->CanDoOperation('catalog_group'))) {
+            $r->addError(new Error('Access Denied', 200040300010));
+        }
+        return $r;
+    }
 }

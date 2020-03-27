@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Translate;
 
 use Bitrix\Main;
@@ -8,151 +9,141 @@ use Bitrix\Main;
  */
 trait Error
 {
-	/** @var  Main\ErrorCollection */
-	protected $errorCollection;
+    /** @var  Main\ErrorCollection */
+    protected $errorCollection;
 
-	/**
-	 * Adds error to error collection.
-	 *
-	 * @param Main\Error $error Error.
-	 *
-	 * @return $this
-	 */
-	final public function addError(Main\Error $error)
-	{
-		if (!$this->errorCollection instanceof Main\ErrorCollection)
-		{
-			$this->errorCollection = new Main\ErrorCollection;
-		}
+    /**
+     * Adds error to error collection.
+     *
+     * @param Main\Error $error Error.
+     *
+     * @return $this
+     */
+    final public function addError(Main\Error $error)
+    {
+        if (!$this->errorCollection instanceof Main\ErrorCollection) {
+            $this->errorCollection = new Main\ErrorCollection;
+        }
 
-		$this->errorCollection[] = $error;
+        $this->errorCollection[] = $error;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Adds list of errors to error collection.
-	 *
-	 * @param Main\Error[] $errors Errors.
-	 *
-	 * @return $this
-	 */
-	final public function addErrors(array $errors)
-	{
-		if (!$this->errorCollection instanceof Main\ErrorCollection)
-		{
-			$this->errorCollection = new Main\ErrorCollection;
-		}
+    /**
+     * Adds list of errors to error collection.
+     *
+     * @param Main\Error[] $errors Errors.
+     *
+     * @return $this
+     */
+    final public function addErrors(array $errors)
+    {
+        if (!$this->errorCollection instanceof Main\ErrorCollection) {
+            $this->errorCollection = new Main\ErrorCollection;
+        }
 
-		$this->errorCollection->add($errors);
+        $this->errorCollection->add($errors);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Getting array of errors.
-	 *
-	 * @return Main\Error[]
-	 */
-	final public function getErrors()
-	{
-		if (!$this->errorCollection instanceof Main\ErrorCollection)
-		{
-			return array();
-		}
+    /**
+     * Getting array of errors.
+     *
+     * @return Main\Error[]
+     */
+    final public function getErrors()
+    {
+        if (!$this->errorCollection instanceof Main\ErrorCollection) {
+            return array();
+        }
 
-		return $this->errorCollection->toArray();
-	}
+        return $this->errorCollection->toArray();
+    }
 
-	/**
-	 * Getting once error with the necessary code.
-	 *
-	 * @param string $code Code of error.
-	 *
-	 * @return Main\Error|null
-	 */
-	final public function getErrorByCode($code)
-	{
-		if (!$this->errorCollection instanceof Main\ErrorCollection)
-		{
-			return null;
-		}
+    /**
+     * Getting once error with the necessary code.
+     *
+     * @param string $code Code of error.
+     *
+     * @return Main\Error|null
+     */
+    final public function getErrorByCode($code)
+    {
+        if (!$this->errorCollection instanceof Main\ErrorCollection) {
+            return null;
+        }
 
-		return $this->errorCollection->getErrorByCode($code);
-	}
+        return $this->errorCollection->getErrorByCode($code);
+    }
 
-	/**
-	 * Returns last error from list.
-	 *
-	 * @return Main\Error|null
-	 */
-	final public function getLastError()
-	{
-		if (!$this->errorCollection instanceof Main\ErrorCollection)
-		{
-			return null;
-		}
-		if (!$this->hasErrors())
-		{
-			return null;
-		}
+    /**
+     * Returns last error from list.
+     *
+     * @return Main\Error|null
+     */
+    final public function getLastError()
+    {
+        if (!$this->errorCollection instanceof Main\ErrorCollection) {
+            return null;
+        }
+        if (!$this->hasErrors()) {
+            return null;
+        }
 
-		$offset = $this->errorCollection->count() - 1;
-		return $this->errorCollection->offsetGet($offset);
-	}
+        $offset = $this->errorCollection->count() - 1;
+        return $this->errorCollection->offsetGet($offset);
+    }
 
-	/**
-	 * Returns first error from list.
-	 *
-	 * @return Main\Error|null
-	 */
-	final public function getFirstError()
-	{
-		if (!$this->errorCollection instanceof Main\ErrorCollection)
-		{
-			return null;
-		}
-		if (!$this->hasErrors())
-		{
-			return null;
-		}
+    /**
+     * Returns first error from list.
+     *
+     * @return Main\Error|null
+     */
+    final public function getFirstError()
+    {
+        if (!$this->errorCollection instanceof Main\ErrorCollection) {
+            return null;
+        }
+        if (!$this->hasErrors()) {
+            return null;
+        }
 
-		return $this->errorCollection->offsetGet(0);
-	}
+        return $this->errorCollection->offsetGet(0);
+    }
 
-	/**
-	 * Checks if error occurred.
-	 *
-	 * @return boolean
-	 */
-	final public function hasErrors()
-	{
-		if (!$this->errorCollection instanceof Main\ErrorCollection)
-		{
-			return false;
-		}
+    /**
+     * Checks if error occurred.
+     *
+     * @return boolean
+     */
+    final public function hasErrors()
+    {
+        if (!$this->errorCollection instanceof Main\ErrorCollection) {
+            return false;
+        }
 
-		return !$this->errorCollection->isEmpty();
-	}
+        return !$this->errorCollection->isEmpty();
+    }
 
-	/**
-	 * Returns an error with the necessary code.
-	 * @param string|int $code The code of the error.
-	 *
-	 * @return boolean
-	 */
-	final public function hasError($code)
-	{
-		if (
-			!$this->errorCollection instanceof Main\ErrorCollection ||
-			$this->errorCollection->isEmpty()
-		)
-		{
-			return false;
-		}
+    /**
+     * Returns an error with the necessary code.
+     * @param string|int $code The code of the error.
+     *
+     * @return boolean
+     */
+    final public function hasError($code)
+    {
+        if (
+            !$this->errorCollection instanceof Main\ErrorCollection ||
+            $this->errorCollection->isEmpty()
+        ) {
+            return false;
+        }
 
-		$err = $this->errorCollection->getErrorByCode($code);
+        $err = $this->errorCollection->getErrorByCode($code);
 
-		return ($err instanceof Main\Error);
-	}
+        return ($err instanceof Main\Error);
+    }
 }

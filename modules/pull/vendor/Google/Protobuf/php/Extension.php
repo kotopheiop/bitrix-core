@@ -63,8 +63,8 @@ class Extension implements \Protobuf\Extension
         };
 
         $writeCallback = function (\Protobuf\WriteContext $context, $value) {
-            $stream      = $context->getStream();
-            $writer      = $context->getWriter();
+            $stream = $context->getStream();
+            $writer = $context->getWriter();
             $sizeContext = $context->getComputeSizeContext();
 
             $writer->writeVarint($stream, 400018);
@@ -73,7 +73,7 @@ class Extension implements \Protobuf\Extension
 
         $sizeCallback = function (\Protobuf\ComputeSizeContext $context, $value) {
             $calculator = $context->getSizeCalculator();
-            $size       = 0;
+            $size = 0;
 
             $size += 3;
             $size += $calculator->computeStringSize($value);
@@ -108,8 +108,8 @@ class Extension implements \Protobuf\Extension
         };
 
         $writeCallback = function (\Protobuf\WriteContext $context, $value) {
-            $stream      = $context->getStream();
-            $writer      = $context->getWriter();
+            $stream = $context->getStream();
+            $writer = $context->getWriter();
             $sizeContext = $context->getComputeSizeContext();
 
             $writer->writeVarint($stream, 400024);
@@ -118,7 +118,7 @@ class Extension implements \Protobuf\Extension
 
         $sizeCallback = function (\Protobuf\ComputeSizeContext $context, $value) {
             $calculator = $context->getSizeCalculator();
-            $size       = 0;
+            $size = 0;
 
             $size += 3;
             $size += 1;

@@ -31,7 +31,7 @@ class SplitReportContext extends ReportContext
         return $result;
     }
 
-    private static function subtructCounters(array & $one, array $two)
+    private static function subtructCounters(array &$one, array $two)
     {
         // TODO first STEPS than loop
 
@@ -46,7 +46,7 @@ class SplitReportContext extends ReportContext
         }
     }
 
-    private static function subtructDayCounters(array & $one, array $two)
+    private static function subtructDayCounters(array &$one, array $two)
     {
         foreach ($one as $day => & $oneDay) {
             if ($twoDay = $two[$day]) {

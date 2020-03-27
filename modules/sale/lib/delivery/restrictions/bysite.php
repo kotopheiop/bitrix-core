@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Delivery\Restrictions;
 
 use Bitrix\Sale\Delivery\Restrictions\Base;
@@ -16,84 +17,82 @@ Loc::loadMessages(__FILE__);
  */
 class BySite extends Base
 {
-	public static function getClassTitle()
-	{
-		return Loc::getMessage("SALE_DLVR_RSTR_BY_SITE_NAME");
-	}
+    public static function getClassTitle()
+    {
+        return Loc::getMessage("SALE_DLVR_RSTR_BY_SITE_NAME");
+    }
 
-	public static function getClassDescription()
-	{
-		return Loc::getMessage("SALE_DLVR_RSTR_BY_SITE_DESCRIPT");
-	}
-	public static function check($siteId, array $restrictionParams, $deliveryId = 0)
-	{
-		if(empty($restrictionParams))
-			return true;
+    public static function getClassDescription()
+    {
+        return Loc::getMessage("SALE_DLVR_RSTR_BY_SITE_DESCRIPT");
+    }
 
-		$result = true;
+    public static function check($siteId, array $restrictionParams, $deliveryId = 0)
+    {
+        if (empty($restrictionParams))
+            return true;
 
-		if(strlen($siteId) > 0 && isset($restrictionParams["SITE_ID"]) && is_array($restrictionParams["SITE_ID"]))
-			$result = in_array($siteId, $restrictionParams["SITE_ID"]);
+        $result = true;
 
-		return $result;
-	}
+        if (strlen($siteId) > 0 && isset($restrictionParams["SITE_ID"]) && is_array($restrictionParams["SITE_ID"]))
+            $result = in_array($siteId, $restrictionParams["SITE_ID"]);
 
-	protected static function extractParams(Entity $entity)
-	{
-		if ($entity instanceof CollectableEntity)
-		{
-			/** @var \Bitrix\Sale\ShipmentCollection $collection */
-			$collection = $entity->getCollection();
+        return $result;
+    }
 
-			/** @var \Bitrix\Sale\Order $order */
-			$order = $collection->getOrder();
-		}
-		elseif ($entity instanceof Order)
-		{
-			/** @var \Bitrix\Sale\Order $order */
-			$order = $entity;
-		}
+    protected static function extractParams(Entity $entity)
+    {
+        if ($entity instanceof CollectableEntity) {
+            /** @var \Bitrix\Sale\ShipmentCollection $collection */
+            $collection = $entity->getCollection();
 
-		if (!$order)
-			return false;
+            /** @var \Bitrix\Sale\Order $order */
+            $order = $collection->getOrder();
+        } elseif ($entity instanceof Order) {
+            /** @var \Bitrix\Sale\Order $order */
+            $order = $entity;
+        }
 
-		return $order->getSiteId();
-	}
+        if (!$order)
+            return false;
 
-	public static function getParamsStructure($entityId = 0)
-	{
-		$siteList = array();
+        return $order->getSiteId();
+    }
 
-		$rsSite = \Bitrix\Main\SiteTable::getList();
+    public static function getParamsStructure($entityId = 0)
+    {
+        $siteList = array();
 
-		while ($site = $rsSite->fetch())
-			$siteList[$site["LID"]] = $site["NAME"]." (".$site["LID"].")";
+        $rsSite = \Bitrix\Main\SiteTable::getList();
 
-		return array(
-			"SITE_ID" => array(
-				"TYPE" => "ENUM",
-				'MULTIPLE' => 'Y',
-				"DEFAULT" => SITE_ID,
-				"LABEL" => Loc::getMessage("SALE_DLVR_RSTR_BY_SITE_SITE_ID"),
-				"OPTIONS" => $siteList
-			)
-		);
-	}
+        while ($site = $rsSite->fetch())
+            $siteList[$site["LID"]] = $site["NAME"] . " (" . $site["LID"] . ")";
 
-	public static function getSeverity($mode)
-	{
-		if($mode == Manager::MODE_MANAGER)
-			return Manager::SEVERITY_STRICT;
+        return array(
+            "SITE_ID" => array(
+                "TYPE" => "ENUM",
+                'MULTIPLE' => 'Y',
+                "DEFAULT" => SITE_ID,
+                "LABEL" => Loc::getMessage("SALE_DLVR_RSTR_BY_SITE_SITE_ID"),
+                "OPTIONS" => $siteList
+            )
+        );
+    }
 
-		return parent::getSeverity($mode);
-	}
+    public static function getSeverity($mode)
+    {
+        if ($mode == Manager::MODE_MANAGER)
+            return Manager::SEVERITY_STRICT;
 
-	/**
-	 * @return bool
-	 */
-	public static function isAvailable()
-	{
-		return IsModuleInstalled('crm') ? false : true;
-	}
+        return parent::getSeverity($mode);
+    }
+
+    /**
+     * @return bool
+     */
+    public static function isAvailable()
+    {
+        return IsModuleInstalled('crm') ? false : true;
+    }
 
 } 

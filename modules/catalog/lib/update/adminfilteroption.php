@@ -1,4 +1,5 @@
 <?
+
 namespace Bitrix\Catalog\Update;
 
 use Bitrix\Main\Update\AdminFilterOption as BaseAdminFilterOption;
@@ -11,5 +12,5 @@ use Bitrix\Main\Update\AdminFilterOption as BaseAdminFilterOption;
  */
 class AdminFilterOption extends BaseAdminFilterOption
 {
-	protected static $moduleId = "catalog";
+    protected static $moduleId = "catalog";
 }

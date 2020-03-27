@@ -1,23 +1,24 @@
 <?php
+
 namespace Bitrix\Perfmon\Php;
 
 class Condition
 {
-	protected $predicate = '';
+    protected $predicate = '';
 
-	/**
-	 * @param string $predicate Php condition.
-	 */
-	function __construct($predicate)
-	{
-		$this->predicate = (string)$predicate;
-	}
+    /**
+     * @param string $predicate Php condition.
+     */
+    function __construct($predicate)
+    {
+        $this->predicate = (string)$predicate;
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getPredicate()
-	{
-		return $this->predicate;
-	}
+    /**
+     * @return string
+     */
+    public function getPredicate()
+    {
+        return $this->predicate;
+    }
 }

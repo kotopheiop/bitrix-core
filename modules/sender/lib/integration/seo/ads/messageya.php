@@ -16,14 +16,14 @@ use Bitrix\Main\Localization\Loc;
  */
 class MessageYa extends MessageBase
 {
-	const CODE = self::CODE_ADS_YA;
+    const CODE = self::CODE_ADS_YA;
 
-	/**
-	 * Get name.
-	 * @return string
-	 */
-	public function getName()
-	{
-		return Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_NAME_ADS_YA');
-	}
+    /**
+     * Get name.
+     * @return string
+     */
+    public function getName()
+    {
+        return Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_NAME_ADS_YA');
+    }
 }

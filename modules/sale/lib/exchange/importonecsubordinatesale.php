@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Exchange;
 
 
@@ -18,491 +19,429 @@ use Bitrix\Sale\Shipment;
 
 final class ImportOneCSubordinateSale extends ImportOneCPackage
 {
-	public static function configuration()
-	{
-		ManagerImport::registerInstance(static::getShipmentEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionShipment(), new CriterionShipment());
+    public static function configuration()
+    {
+        ManagerImport::registerInstance(static::getShipmentEntityTypeId(), OneC\ImportSettings::getCurrent(), new OneC\CollisionShipment(), new CriterionShipment());
 
-		parent::configuration();
-	}
+        parent::configuration();
+    }
 
-	/**
-	 * @param DocumentBase[] $documents
-	 * @return \Bitrix\Sale\Result
-	 */
-	protected function convert(array $documents)
-	{
-		$documentOrder = $this->getDocumentByTypeId(EntityType::ORDER, $documents);
+    /**
+     * @param DocumentBase[] $documents
+     * @return \Bitrix\Sale\Result
+     */
+    protected function convert(array $documents)
+    {
+        $documentOrder = $this->getDocumentByTypeId(EntityType::ORDER, $documents);
 
-		if($documentOrder instanceof OneC\OrderDocument)
-		{
-			$fieldsOrder = $documentOrder->getFieldValues();
-			$itemsOrder = $this->getProductsItems($fieldsOrder);
+        if ($documentOrder instanceof OneC\OrderDocument) {
+            $fieldsOrder = $documentOrder->getFieldValues();
+            $itemsOrder = $this->getProductsItems($fieldsOrder);
 
-			if(is_array($fieldsOrder['SUBORDINATES']))
-			{
-				foreach ($fieldsOrder['SUBORDINATES'] as $subordinateDocumentFields)
-				{
-					$typeId = $this->resolveSubordinateDocumentTypeId($subordinateDocumentFields);
+            if (is_array($fieldsOrder['SUBORDINATES'])) {
+                foreach ($fieldsOrder['SUBORDINATES'] as $subordinateDocumentFields) {
+                    $typeId = $this->resolveSubordinateDocumentTypeId($subordinateDocumentFields);
 
-					if($typeId == static::getShipmentEntityTypeId())
-					{
-						$subordinateDocumentItems = array();
-						$itemsSubordinate = $this->getProductsItems($subordinateDocumentFields);
+                    if ($typeId == static::getShipmentEntityTypeId()) {
+                        $subordinateDocumentItems = array();
+                        $itemsSubordinate = $this->getProductsItems($subordinateDocumentFields);
 
-						foreach ($itemsSubordinate as $itemSubordinate)
-						{
-							$xmlId = key($itemSubordinate);
+                        foreach ($itemsSubordinate as $itemSubordinate) {
+                            $xmlId = key($itemSubordinate);
 
-							if($xmlId == self::DELIVERY_SERVICE_XMLID)
-							{
-								$itemSubordinate[$xmlId]['TYPE'] = ImportBase::ITEM_SERVICE;
-								$subordinateDocumentItems[] = $itemSubordinate;
-							}
-							else
-							{
-								$item = $this->getItemByParam($xmlId, $itemsOrder);
+                            if ($xmlId == self::DELIVERY_SERVICE_XMLID) {
+                                $itemSubordinate[$xmlId]['TYPE'] = ImportBase::ITEM_SERVICE;
+                                $subordinateDocumentItems[] = $itemSubordinate;
+                            } else {
+                                $item = $this->getItemByParam($xmlId, $itemsOrder);
 
-								if($item !== null)
-								{
-									$item[$xmlId]['QUANTITY'] = $itemSubordinate[$xmlId]['QUANTITY'];
-									$subordinateDocumentItems[] = $item;
-								}
-							}
-						}
+                                if ($item !== null) {
+                                    $item[$xmlId]['QUANTITY'] = $itemSubordinate[$xmlId]['QUANTITY'];
+                                    $subordinateDocumentItems[] = $item;
+                                }
+                            }
+                        }
 
-						unset($subordinateDocumentFields['ITEMS']);
-						unset($subordinateDocumentFields['ITEMS_FIELDS']);
+                        unset($subordinateDocumentFields['ITEMS']);
+                        unset($subordinateDocumentFields['ITEMS_FIELDS']);
 
-						if(count($subordinateDocumentItems)>0)
-						{
-							$subordinateDocumentFields['ITEMS'] = $subordinateDocumentItems;
-						}
-					}
+                        if (count($subordinateDocumentItems) > 0) {
+                            $subordinateDocumentFields['ITEMS'] = $subordinateDocumentItems;
+                        }
+                    }
 
-					$document = OneC\DocumentImportFactory::create($typeId);
-					$document->setFields($subordinateDocumentFields);
-					$documents[] = $document;
-				}
-				$documentOrder->setField('SUBORDINATES', '');
-			}
+                    $document = OneC\DocumentImportFactory::create($typeId);
+                    $document->setFields($subordinateDocumentFields);
+                    $documents[] = $document;
+                }
+                $documentOrder->setField('SUBORDINATES', '');
+            }
 
-			//region Presset - генерируем фэйковую отгрузку
-			/*
-			 * генерируем фэйковую отгрузку, если выполнены условия
-			 * 1 обмен с новым модулем от 1С,
-			 * 2 отгрузки не переданы в подчиненных документах
-			 * 3 все отгрузки по заказу в БУС в статусе не отгружено
-			 * 4 и от 1С в табличной части заказа передана ORDER_DELIVERY
-			 * */
-			if(!$this->hasDocumentByTypeId(static::getShipmentEntityTypeId(), $documents))
-			{
-				if($this->deliveryServiceExists($itemsOrder))
-				{
-					//$deliveryItem
-					$entityOrder = $this->convertDocument($documentOrder);
-					if($entityOrder->getFieldValues()['TRAITS']['ID']>0)
-					{
-						self::load($entityOrder, ['ID'=>$entityOrder->getFieldValues()['TRAITS']['ID']]);
-						/** @var Order $order */
-						$order = $entityOrder->getEntity();
-						if(!$order->isShipped())
-						{
-							$shipmentList = [];
-							$shipmentIsShipped = false;
-							/** @var Shipment $shipment */
-							foreach ($order->getShipmentCollection() as $shipment)
-							{
-								if($shipment->isShipped())
-								{
-									$shipmentIsShipped = true;
-									break;
-								}
+            //region Presset - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+            /*
+             * пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+             * 1 пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1пїЅ,
+             * 2 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+             * 3 пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+             * 4 пїЅ пїЅпїЅ 1пїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ORDER_DELIVERY
+             * */
+            if (!$this->hasDocumentByTypeId(static::getShipmentEntityTypeId(), $documents)) {
+                if ($this->deliveryServiceExists($itemsOrder)) {
+                    //$deliveryItem
+                    $entityOrder = $this->convertDocument($documentOrder);
+                    if ($entityOrder->getFieldValues()['TRAITS']['ID'] > 0) {
+                        self::load($entityOrder, ['ID' => $entityOrder->getFieldValues()['TRAITS']['ID']]);
+                        /** @var Order $order */
+                        $order = $entityOrder->getEntity();
+                        if (!$order->isShipped()) {
+                            $shipmentList = [];
+                            $shipmentIsShipped = false;
+                            /** @var Shipment $shipment */
+                            foreach ($order->getShipmentCollection() as $shipment) {
+                                if ($shipment->isShipped()) {
+                                    $shipmentIsShipped = true;
+                                    break;
+                                }
 
-								if(!$shipment->isSystem())
-								{
-									$shipmentList[] = $shipment->getFieldValues();
-								}
-							}
+                                if (!$shipment->isSystem()) {
+                                    $shipmentList[] = $shipment->getFieldValues();
+                                }
+                            }
 
-							if(!$shipmentIsShipped)
-							{
-								if(count($shipmentList)>0)
-								{
-									//системная и реальная отгрузка
-									$externalId = current($shipmentList)['ID_1C'];
-									$shipmentFields['ID_1C'] = strlen($externalId)<=0? $documentOrder->getField('ID_1C'):$externalId;
-									$shipmentFields['ID'] = current($shipmentList)['ID'];
-								}
-								else
-								{
-									//только системная отгрузка
-									$shipmentFields['ID_1C'] = $documentOrder->getField('ID_1C');
-								}
-								// колличество и вся табличная часть всегда береться из заказа т.к. все отгрузки вводятся в 1С и на сайте вообще не может измениться что-то в отгрузке. (требования 1С)
-								$shipmentFields['ITEMS'] = $itemsOrder;
+                            if (!$shipmentIsShipped) {
+                                if (count($shipmentList) > 0) {
+                                    //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                                    $externalId = current($shipmentList)['ID_1C'];
+                                    $shipmentFields['ID_1C'] = strlen($externalId) <= 0 ? $documentOrder->getField('ID_1C') : $externalId;
+                                    $shipmentFields['ID'] = current($shipmentList)['ID'];
+                                } else {
+                                    //пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                                    $shipmentFields['ID_1C'] = $documentOrder->getField('ID_1C');
+                                }
+                                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ.пїЅ. пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ 1пїЅ пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 1пїЅ)
+                                $shipmentFields['ITEMS'] = $itemsOrder;
 
-								$documentShipment = new ShipmentDocument();
-								$documentShipment->setFields($shipmentFields);
-								$documents[] = $documentShipment;
-							}
-						}
-					}
-				}
-			}
-			//endregion
+                                $documentShipment = new ShipmentDocument();
+                                $documentShipment->setFields($shipmentFields);
+                                $documents[] = $documentShipment;
+                            }
+                        }
+                    }
+                }
+            }
+            //endregion
 
-			//region - оплаты
+            //region - пїЅпїЅпїЅпїЅпїЅпїЅ
 
-			// от 1С может приходить только оплаченные оплаты, шаблоны приходить не могут.
-			// Удаляем все не оплаченные оплаты из коллекции документов оплат
+            // пїЅпїЅ 1пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 
-			$documents = $this->deletePaymentDocumentNotPaid($documents);
+            $documents = $this->deletePaymentDocumentNotPaid($documents);
 
-			/** @var OrderImport $entityOrder */
-			$entityOrder = $this->convertDocument($documentOrder);
-			if($entityOrder->getFieldValues()['TRAITS']['ID']>0)
-			{
-				self::load($entityOrder, ['ID'=>$entityOrder->getFieldValues()['TRAITS']['ID']]);
-				/** @var Order $order */
-				$order = $entityOrder->getEntity();
+            /** @var OrderImport $entityOrder */
+            $entityOrder = $this->convertDocument($documentOrder);
+            if ($entityOrder->getFieldValues()['TRAITS']['ID'] > 0) {
+                self::load($entityOrder, ['ID' => $entityOrder->getFieldValues()['TRAITS']['ID']]);
+                /** @var Order $order */
+                $order = $entityOrder->getEntity();
 
-				if(!empty($order))
-				{
-					$hasPayment = $order->isPaid() || $this->orderPartiallyIsPaid($order);
+                if (!empty($order)) {
+                    $hasPayment = $order->isPaid() || $this->orderPartiallyIsPaid($order);
 
-					if($this->hasPaymentDocuments($documents))
-					{
-						// оплаченных оплат - нет
-						if(!$hasPayment)
-						{
-							if($order->getPrice() <= $this->getPaymentDocumentsPaidSum($documents))
-							{
-								//region 2. Из 1С приходит полная оплата - удаляем шаблоны в БУС, заменяем на оплату из 1С
-								//endregion
-							}
-						}
+                    if ($this->hasPaymentDocuments($documents)) {
+                        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅ
+                        if (!$hasPayment) {
+                            if ($order->getPrice() <= $this->getPaymentDocumentsPaidSum($documents)) {
+                                //region 2. пїЅпїЅ 1пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1пїЅ
+                                //endregion
+                            }
+                        }
 
-						// частичная оплата заказа коллекцией документов оплат
-						$paymentDocumentsPaidSum = $this->getPaymentDocumentsPaidSum($documents);
-						if($order->getPrice() > $paymentDocumentsPaidSum)
-						{
-							//region 3. Из 1С приходит частичная оплата - пытаемся сверить по сумме и по типу,
-							// если подходит - удаляем шаблон с такой же суммой и типом, создаем оплату из 1С.
-							// Остальные шаблоны оплаты не трогаем.
-							// Если по выбранным критериям (сумма + тип) выбираются 2 и более шаблонов выбираем последнюю оплату по ID
+                        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+                        $paymentDocumentsPaidSum = $this->getPaymentDocumentsPaidSum($documents);
+                        if ($order->getPrice() > $paymentDocumentsPaidSum) {
+                            //region 3. пїЅпїЅ 1пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ,
+                            // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1пїЅ.
+                            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+                            // пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅ + пїЅпїЅпїЅ) пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 2 пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ ID
 
-							//$r = $this->documentPaymentReplaceId($order, $documents);
-							//TODO: оплата должна удаляться через срзданный документ удаления оплаты.
-							$r = $this->deletePaymentToReplace($order, $documents);
-							if($r->isSuccess())
-							{
-								$entityOrder->save();
-							}
+                            //$r = $this->documentPaymentReplaceId($order, $documents);
+                            //TODO: пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+                            $r = $this->deletePaymentToReplace($order, $documents);
+                            if ($r->isSuccess()) {
+                                $entityOrder->save();
+                            }
 
-							if($r->getData()['IS_REPLACE'] === true)
-							{
-								static::setConfig(static::DELETE_IF_NOT_FOUND_RELATED_PAYMENT_DOCUMENT, false);
-							}
-							else
-							{
-								//3.1. Если по сумме ничего не находим.
-								//- удаляем все шаблоны
-								//- если есть оплаченная оплата в БУС, которая не пришла из 1С – коллизия
-								//-обновляем те оплаты информация по которым пришла от 1С
-								//-создаем частичную оплату от 1С
-								//-создаем шаблон оплаты согласно настройкам интеграции на оставшуюся сумму
+                            if ($r->getData()['IS_REPLACE'] === true) {
+                                static::setConfig(static::DELETE_IF_NOT_FOUND_RELATED_PAYMENT_DOCUMENT, false);
+                            } else {
+                                //3.1. пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
+                                //- пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                                //- пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1пїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                                //-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1пїЅ
+                                //-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1пїЅ
+                                //-пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 
-								$documentPayment = new PaymentCardDocument();
-								$documentPayment->setFields([
-									'ID_1C'=>$documentOrder->getField('ID_1C'),
-									'AMOUNT'=>abs($order->getPrice() - $paymentDocumentsPaidSum)
+                                $documentPayment = new PaymentCardDocument();
+                                $documentPayment->setFields([
+                                    'ID_1C' => $documentOrder->getField('ID_1C'),
+                                    'AMOUNT' => abs($order->getPrice() - $paymentDocumentsPaidSum)
 
-								]);
-								$documents[] = $documentPayment;
-							}
+                                ]);
+                                $documents[] = $documentPayment;
+                            }
 
-							//endregion
-						}
-					}
-					else
-					{
-						//region 1. Из 1С не приходит оплат - в БУС шаблоны оплат не удаляем
-						if(!$hasPayment)
-						{
-							static::setConfig(static::DELETE_IF_NOT_FOUND_RELATED_PAYMENT_DOCUMENT, false);
-						}
-						//endregion
-					}
-				}
-			}
-			//TODO: доделать удаления оплат из списка документов оплат к импорту. И создания шаблона на всю оставшуюся сумму после импорта частичной оплаты от 1С
+                            //endregion
+                        }
+                    } else {
+                        //region 1. пїЅпїЅ 1пїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ - пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+                        if (!$hasPayment) {
+                            static::setConfig(static::DELETE_IF_NOT_FOUND_RELATED_PAYMENT_DOCUMENT, false);
+                        }
+                        //endregion
+                    }
+                }
+            }
+            //TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ 1пїЅ
 
-			//endregion
-		}
-		return parent::convert($documents);
-	}
+            //endregion
+        }
+        return parent::convert($documents);
+    }
 
-	/**
-	 * @param DocumentBase[] $documents
-	 * @return array
-	 */
-	protected function deletePaymentDocumentNotPaid(array $documents)
-	{
-		$result=[];
+    /**
+     * @param DocumentBase[] $documents
+     * @return array
+     */
+    protected function deletePaymentDocumentNotPaid(array $documents)
+    {
+        $result = [];
 
-		foreach ($documents as $document)
-		{
-			if($this->isPaymentDocument($document))
-			{
-				if($this->documentIsPaid($document))
-				{
-					$result[] = $document;
-				}
-			}
-			else
-			{
-				$result[] = $document;
-			}
-		}
+        foreach ($documents as $document) {
+            if ($this->isPaymentDocument($document)) {
+                if ($this->documentIsPaid($document)) {
+                    $result[] = $document;
+                }
+            } else {
+                $result[] = $document;
+            }
+        }
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * @param DocumentBase $document
-	 * @return bool
-	 */
-	protected function documentIsPaid(DocumentBase $document)
-	{
-		return ($document->getField('REK_VALUES')['1C_PAYED'] == 'Y');
-	}
+    /**
+     * @param DocumentBase $document
+     * @return bool
+     */
+    protected function documentIsPaid(DocumentBase $document)
+    {
+        return ($document->getField('REK_VALUES')['1C_PAYED'] == 'Y');
+    }
 
-	/**
-	 * @param DocumentBase $document
-	 * @return bool
-	 */
-	protected function isPaymentDocument(DocumentBase $document)
-	{
-		return ($document->getTypeId() == static::getPaymentCardEntityTypeId()
-			|| $document->getTypeId() == static::getPaymentCashLessEntityTypeId()
-			|| $document->getTypeId() == static::getPaymentCashEntityTypeId());
-	}
+    /**
+     * @param DocumentBase $document
+     * @return bool
+     */
+    protected function isPaymentDocument(DocumentBase $document)
+    {
+        return ($document->getTypeId() == static::getPaymentCardEntityTypeId()
+            || $document->getTypeId() == static::getPaymentCashLessEntityTypeId()
+            || $document->getTypeId() == static::getPaymentCashEntityTypeId());
+    }
 
 
-	protected function documentPaymentReplaceId(Order $order, $documents)
-	{
-		$result = new Result();
+    protected function documentPaymentReplaceId(Order $order, $documents)
+    {
+        $result = new Result();
 
-		$paymentCollection = $order->getPaymentCollection();
-		$paymentIsReplace = false;
+        $paymentCollection = $order->getPaymentCollection();
+        $paymentIsReplace = false;
 
-		/** @var Payment $payment */
-		foreach($paymentCollection as $payment)
-		{
-			if(!$payment->isPaid())
-			{
-				/** @var DocumentBase $document */
-				foreach($this->getPaymentDocuments($documents) as $document)
-				{
-					if(
-						$payment->getSum() == (float)$document->getField('AMOUNT') &&
-						$this->resolveEntityTypeId($payment) == DocumentType::resolveID($document->getField('OPERATION'))
-					)
-					{
-						$document->setField('ID', $payment->getId());
-						$paymentIsReplace = true;
-					}
-				}
-			}
-		}
+        /** @var Payment $payment */
+        foreach ($paymentCollection as $payment) {
+            if (!$payment->isPaid()) {
+                /** @var DocumentBase $document */
+                foreach ($this->getPaymentDocuments($documents) as $document) {
+                    if (
+                        $payment->getSum() == (float)$document->getField('AMOUNT') &&
+                        $this->resolveEntityTypeId($payment) == DocumentType::resolveID($document->getField('OPERATION'))
+                    ) {
+                        $document->setField('ID', $payment->getId());
+                        $paymentIsReplace = true;
+                    }
+                }
+            }
+        }
 
-		$result->setData(['IS_REPLACE'=>$paymentIsReplace]);
+        $result->setData(['IS_REPLACE' => $paymentIsReplace]);
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * @param Order $order
-	 * @param DocumentBase[] $documents
-	 */
-	protected function deletePaymentToReplace(Order $order, $documents)
-	{
-		$result = new Result();
+    /**
+     * @param Order $order
+     * @param DocumentBase[] $documents
+     */
+    protected function deletePaymentToReplace(Order $order, $documents)
+    {
+        $result = new Result();
 
-		$paymentCollection = $order->getPaymentCollection();
-		$paymentIsReplace = false;
-		$list = [];
+        $paymentCollection = $order->getPaymentCollection();
+        $paymentIsReplace = false;
+        $list = [];
 
-		foreach ($documents as $document)
-		{
-			if($this->isPaymentDocument($document))
-			{
-				$list[] = [
-					'AMOUNT'=>(float)$document->getField('AMOUNT'),
-					'OPERATION'=>DocumentType::resolveID($document->getField('OPERATION'))
-				];
-			}
-		}
+        foreach ($documents as $document) {
+            if ($this->isPaymentDocument($document)) {
+                $list[] = [
+                    'AMOUNT' => (float)$document->getField('AMOUNT'),
+                    'OPERATION' => DocumentType::resolveID($document->getField('OPERATION'))
+                ];
+            }
+        }
 
-		if(count($list)>0)
-		{
-			/** @var Payment $payment */
-			foreach($paymentCollection as $payment)
-			{
-				if(!$payment->isPaid())
-				{
-					foreach($list as $k=>$documentPayment)
-					{
-						//echo $this->resolveEntityTypeId($payment);
+        if (count($list) > 0) {
+            /** @var Payment $payment */
+            foreach ($paymentCollection as $payment) {
+                if (!$payment->isPaid()) {
+                    foreach ($list as $k => $documentPayment) {
+                        //echo $this->resolveEntityTypeId($payment);
 
-						if(
-							$payment->getSum() == $documentPayment['AMOUNT'] &&
-							$this->resolveEntityTypeId($payment) == $documentPayment['OPERATION']
-						)
-						{
-							$r = $this->paymentDelete($payment);
-							if(!$r->isSuccess())
-							{
-								$result->addErrors($r->getErrors());
-							}
-							else
-							{
-								$paymentIsReplace = true;
-							}
+                        if (
+                            $payment->getSum() == $documentPayment['AMOUNT'] &&
+                            $this->resolveEntityTypeId($payment) == $documentPayment['OPERATION']
+                        ) {
+                            $r = $this->paymentDelete($payment);
+                            if (!$r->isSuccess()) {
+                                $result->addErrors($r->getErrors());
+                            } else {
+                                $paymentIsReplace = true;
+                            }
 
-							unset($list[$k]);
-						}
-					}
-				}
-			}
-		}
+                            unset($list[$k]);
+                        }
+                    }
+                }
+            }
+        }
 
-		if($result->isSuccess() && $paymentIsReplace)
-			$result->setData(['IS_REPLACE'=>true]);
+        if ($result->isSuccess() && $paymentIsReplace)
+            $result->setData(['IS_REPLACE' => true]);
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
-	 * @param DocumentBase[] $documents
-	 * @return bool
-	 */
-	protected function hasPaymentDocuments(array $documents)
-	{
-		return ($this->hasDocumentByTypeId(static::getPaymentCardEntityTypeId(), $documents)
-				|| $this->hasDocumentByTypeId(static::getPaymentCashLessEntityTypeId(), $documents)
-				|| $this->hasDocumentByTypeId(static::getPaymentCashEntityTypeId(), $documents));
-	}
+    /**
+     * @param DocumentBase[] $documents
+     * @return bool
+     */
+    protected function hasPaymentDocuments(array $documents)
+    {
+        return ($this->hasDocumentByTypeId(static::getPaymentCardEntityTypeId(), $documents)
+            || $this->hasDocumentByTypeId(static::getPaymentCashLessEntityTypeId(), $documents)
+            || $this->hasDocumentByTypeId(static::getPaymentCashEntityTypeId(), $documents));
+    }
 
-	/**
-	 * @param DocumentBase[] $documents
-	 * @return array
-	 */
-	protected function getPaymentDocuments($documents)
-	{
-		$list = [];
+    /**
+     * @param DocumentBase[] $documents
+     * @return array
+     */
+    protected function getPaymentDocuments($documents)
+    {
+        $list = [];
 
-		foreach ($documents as $document)
-		{
-			if($this->isPaymentDocument($document))
-			{
-				$list[] = $document;
-			}
-		}
-		return $list;
-	}
+        foreach ($documents as $document) {
+            if ($this->isPaymentDocument($document)) {
+                $list[] = $document;
+            }
+        }
+        return $list;
+    }
 
-	/**
-	 * @param DocumentBase[] $documents
-	 * @return float|int
-	 */
-	protected function getPaymentDocumentsPaidSum($documents)
-	{
-		$sum = 0;
-		/** @var DocumentBase $document */
-		foreach ($this->getPaymentDocuments($documents) as $document)
-		{
-			//echo '<pre>';print_r($document->getFieldValues());
-			if($this->documentIsPaid($document))
-			{
-				$sum += (float)$document->getField('AMOUNT');
-			}
-		}
-		return $sum;
-	}
+    /**
+     * @param DocumentBase[] $documents
+     * @return float|int
+     */
+    protected function getPaymentDocumentsPaidSum($documents)
+    {
+        $sum = 0;
+        /** @var DocumentBase $document */
+        foreach ($this->getPaymentDocuments($documents) as $document) {
+            //echo '<pre>';print_r($document->getFieldValues());
+            if ($this->documentIsPaid($document)) {
+                $sum += (float)$document->getField('AMOUNT');
+            }
+        }
+        return $sum;
+    }
 
-	protected function orderPartiallyIsPaid(Order $order)
-	{
-		$paymentCollection = $order->getPaymentCollection();
-		if(count($paymentCollection)>0)
-		{
-			/** @var Payment $payment */
-			foreach ($paymentCollection as $payment)
-			{
-				if($payment->isPaid())
-					return true;
-			}
-		}
-		return false;
-	}
+    protected function orderPartiallyIsPaid(Order $order)
+    {
+        $paymentCollection = $order->getPaymentCollection();
+        if (count($paymentCollection) > 0) {
+            /** @var Payment $payment */
+            foreach ($paymentCollection as $payment) {
+                if ($payment->isPaid())
+                    return true;
+            }
+        }
+        return false;
+    }
 
-	/**
-	 * @param array $fields
-	 * @return int
-	 */
-	protected function resolveSubordinateDocumentTypeId(array $fields)
-	{
-		$typeId = EntityType::UNDEFINED;
+    /**
+     * @param array $fields
+     * @return int
+     */
+    protected function resolveSubordinateDocumentTypeId(array $fields)
+    {
+        $typeId = EntityType::UNDEFINED;
 
-		if(isset($fields['OPERATION']))
-		{
-			$typeId = EntityType::resolveID($fields['OPERATION']);
-		}
-		return $typeId;
-	}
+        if (isset($fields['OPERATION'])) {
+            $typeId = EntityType::resolveID($fields['OPERATION']);
+        }
+        return $typeId;
+    }
 
-	/**
-	 * @param $xmlId
-	 * @param array $items
-	 * @param array|null $params
-	 * @return mixed|null
-	 */
-	protected function getItemByParam($key, array $items, array $params=null)
-	{
-		foreach ($items as $item)
-		{
-			if(array_key_exists($key, $item))
-			{
-				return $item;
-			}
-		}
-		return null;
-	}
+    /**
+     * @param $xmlId
+     * @param array $items
+     * @param array|null $params
+     * @return mixed|null
+     */
+    protected function getItemByParam($key, array $items, array $params = null)
+    {
+        foreach ($items as $item) {
+            if (array_key_exists($key, $item)) {
+                return $item;
+            }
+        }
+        return null;
+    }
 
-	/**
-	 * @param $typeId
-	 * @return IConverter
-	 */
-	protected function converterFactoryCreate($typeId)
-	{
-		return ConverterFactory::create($typeId);
-	}
+    /**
+     * @param $typeId
+     * @return IConverter
+     */
+    protected function converterFactoryCreate($typeId)
+    {
+        return ConverterFactory::create($typeId);
+    }
 
-	/**
-	 * @param $typeId
-	 * @return DocumentBase
-	 */
-	protected function documentFactoryCreate($typeId)
-	{
-		return DocumentFactory::create($typeId);
-	}
+    /**
+     * @param $typeId
+     * @return DocumentBase
+     */
+    protected function documentFactoryCreate($typeId)
+    {
+        return DocumentFactory::create($typeId);
+    }
 
-	/**
-	 * @param $typeId
-	 * @return ImportBase
-	 */
-	protected function entityFactoryCreate($typeId)
-	{
-		return EntityImportFactory::create($typeId);
-	}
+    /**
+     * @param $typeId
+     * @return ImportBase
+     */
+    protected function entityFactoryCreate($typeId)
+    {
+        return EntityImportFactory::create($typeId);
+    }
 }

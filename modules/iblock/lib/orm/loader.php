@@ -16,26 +16,24 @@ use Bitrix\Iblock\IblockTable;
  */
 class Loader
 {
-	public static function autoLoad($class)
-	{
-		// search for data classes only
-		// object and collection classes will be resolved by main orm loader
-		if (substr($class, -5) !== 'Table')
-		{
-			return;
-		}
+    public static function autoLoad($class)
+    {
+        // search for data classes only
+        // object and collection classes will be resolved by main orm loader
+        if (substr($class, -5) !== 'Table') {
+            return;
+        }
 
-		// check iblock regular namespace
-		$namespace = substr($class, 0, strrpos($class, '\\'));
-		$className = substr($class, strrpos($class, '\\') + 1);
+        // check iblock regular namespace
+        $namespace = substr($class, 0, strrpos($class, '\\'));
+        $className = substr($class, strrpos($class, '\\') + 1);
 
-		if (
-			$namespace == IblockTable::DATA_CLASS_NAMESPACE // regular iblock entity namespace
-			&& strpos($className, IblockTable::DATA_CLASS_PREFIX) === 0 // prefix of iblock entities
-		)
-		{
-			$iblockApiCode = substr($className, strlen(IblockTable::DATA_CLASS_PREFIX), -5);
-			IblockTable::compileEntity($iblockApiCode);
-		}
-	}
+        if (
+            $namespace == IblockTable::DATA_CLASS_NAMESPACE // regular iblock entity namespace
+            && strpos($className, IblockTable::DATA_CLASS_PREFIX) === 0 // prefix of iblock entities
+        ) {
+            $iblockApiCode = substr($className, strlen(IblockTable::DATA_CLASS_PREFIX), -5);
+            IblockTable::compileEntity($iblockApiCode);
+        }
+    }
 }

@@ -4,66 +4,65 @@ IncludeModuleLangFile(__FILE__);
 class CAllSupportUpdate
 {
 
-	function err_mess()
-	{
-		$module_id = "support";
-		@include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$module_id."/install/version.php");
-		return "<br>Module: ".$module_id." (".$arModuleVersion["VERSION"].")<br>Class: CAllSupportUpdate<br>File: ".__FILE__;
-	}
-	
-	function GetUpdateVersion()
-	{
-		return 12000004;
-	}
-	
-	function CurrentVersionLowerThanUpdateVersion()
-	{
-		$supUpdVer = intval(COption::GetOptionString("support", "SUPPORT_UPDATE_VERSION"));
-		return ($supUpdVer < CSupportUpdate::GetUpdateVersion());
-	}
-	
-	function ChangeCurrentVersion()
-	{
-		COption::SetOptionString("support", "SUPPORT_UPDATE_VERSION", CSupportUpdate::GetUpdateVersion());
-	}
-	
-	function Update()
-	{
-		if(CSupportUpdate::CurrentVersionLowerThanUpdateVersion())
-		{
-			
-			$dbType = CSupportUpdate::GetBD();
-				
-			$res = self::AlterTables($dbType);
-			if(!$res) return false;
-				
-			$res = self::SeparateSLAandTimeTable($dbType);
-			if(!$res) return false;
-					
-			CSupportTimetableCache::toCache();
-					
-			CTicketReminder::RecalculateSupportDeadline();
-					
-			CTicketReminder::StartAgent();
-					
-			CSupportUpdate::ChangeCurrentVersion();
-			
-			self::SetHotKeys();
-			
-		}
-	}
-		
-	function AlterTables($dbType)
-	{
-		
-		global $DB;
-		$err_mess = (CAllSupportUpdate::err_mess())."<br>Function: AlterTables<br>Line: ";
-		
-		//add tables
-		$addTables = array(
-		
-			"b_ticket_timetable" => array(
-				"MySQL" =>	"
+    function err_mess()
+    {
+        $module_id = "support";
+        @include($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/" . $module_id . "/install/version.php");
+        return "<br>Module: " . $module_id . " (" . $arModuleVersion["VERSION"] . ")<br>Class: CAllSupportUpdate<br>File: " . __FILE__;
+    }
+
+    function GetUpdateVersion()
+    {
+        return 12000004;
+    }
+
+    function CurrentVersionLowerThanUpdateVersion()
+    {
+        $supUpdVer = intval(COption::GetOptionString("support", "SUPPORT_UPDATE_VERSION"));
+        return ($supUpdVer < CSupportUpdate::GetUpdateVersion());
+    }
+
+    function ChangeCurrentVersion()
+    {
+        COption::SetOptionString("support", "SUPPORT_UPDATE_VERSION", CSupportUpdate::GetUpdateVersion());
+    }
+
+    function Update()
+    {
+        if (CSupportUpdate::CurrentVersionLowerThanUpdateVersion()) {
+
+            $dbType = CSupportUpdate::GetBD();
+
+            $res = self::AlterTables($dbType);
+            if (!$res) return false;
+
+            $res = self::SeparateSLAandTimeTable($dbType);
+            if (!$res) return false;
+
+            CSupportTimetableCache::toCache();
+
+            CTicketReminder::RecalculateSupportDeadline();
+
+            CTicketReminder::StartAgent();
+
+            CSupportUpdate::ChangeCurrentVersion();
+
+            self::SetHotKeys();
+
+        }
+    }
+
+    function AlterTables($dbType)
+    {
+
+        global $DB;
+        $err_mess = (CAllSupportUpdate::err_mess()) . "<br>Function: AlterTables<br>Line: ";
+
+        //add tables
+        $addTables = array(
+
+            "b_ticket_timetable" => array(
+                "MySQL" => "
 	CREATE TABLE b_ticket_timetable
 	(
 		ID INT(18) not null auto_increment,
@@ -72,7 +71,7 @@ class CAllSupportUpdate
 		PRIMARY KEY (ID)
 	)
 	",
-				"MSSQL" =>	"
+                "MSSQL" => "
 	CREATE TABLE b_ticket_timetable
 	(
 		ID int NOT NULL IDENTITY (1, 1),
@@ -83,7 +82,7 @@ GO
 	ALTER TABLE b_ticket_timetable ADD CONSTRAINT PK_b_ticket_timetable PRIMARY KEY (ID)
 GO
 	",
-				"Oracle" =>	"
+                "Oracle" => "
 	CREATE TABLE b_ticket_timetable
 	(
 		ID NUMBER(18) NOT NULL,
@@ -95,11 +94,11 @@ GO
 	
 	CREATE SEQUENCE SQ_b_ticket_timetable START WITH 1 INCREMENT BY 1 NOMINVALUE NOMAXVALUE NOCYCLE NOCACHE NOORDER
 	/
-	"				
-			),
-			
-			"b_ticket_holidays" => array(
-				"MySQL" =>	"
+	"
+            ),
+
+            "b_ticket_holidays" => array(
+                "MySQL" => "
 	CREATE TABLE b_ticket_holidays
 	(
 		ID INT(18) not null auto_increment,
@@ -111,7 +110,7 @@ GO
 		PRIMARY KEY (ID)
 	)
 				",
-				"MSSQL" =>	"
+                "MSSQL" => "
 	CREATE TABLE b_ticket_holidays
 	(
 		ID int NOT NULL IDENTITY (1, 1),
@@ -127,7 +126,7 @@ GO
 	ALTER TABLE b_ticket_holidays ADD CONSTRAINT DF_b_ticket_holidays_OPEN_TIME DEFAULT 'HOLIDAY' FOR OPEN_TIME
 GO
 	",
-				"Oracle" =>	"
+                "Oracle" => "
 	CREATE TABLE b_ticket_holidays
 	(
 		ID NUMBER(18) NOT NULL,
@@ -143,24 +142,24 @@ GO
 	CREATE SEQUENCE SQ_b_ticket_holidays START WITH 1 INCREMENT BY 1 NOMINVALUE NOMAXVALUE NOCYCLE NOCACHE NOORDER
 	/
 	"
-			),
-			
-			"b_ticket_sla_2_holidays" => array(
-				"MySQL" =>	"
+            ),
+
+            "b_ticket_sla_2_holidays" => array(
+                "MySQL" => "
 	CREATE TABLE b_ticket_sla_2_holidays
 	(
 		SLA_ID INT(18) not null,
 		HOLIDAYS_ID INT(18) not null
 	)
 	",
-				"MSSQL" =>	"
+                "MSSQL" => "
 	CREATE TABLE b_ticket_sla_2_holidays
 	(
 		SLA_ID int NOT NULL,
 		HOLIDAYS_ID int NOT NULL
 	)
 	",
-				"Oracle" =>	"
+                "Oracle" => "
 	CREATE TABLE b_ticket_sla_2_holidays
 	(
 		SLA_ID NUMBER(18) NOT NULL,
@@ -168,10 +167,10 @@ GO
 	)
 	/
 	"
-			),
-			
-			"b_ticket_search" => array(
-				"MySQL" =>	"
+            ),
+
+            "b_ticket_search" => array(
+                "MySQL" => "
 	CREATE TABLE b_ticket_search
 	(
 		MESSAGE_ID INT(18) not null,
@@ -180,7 +179,7 @@ GO
 	
 	ALTER TABLE b_ticket_search ADD INDEX UX_b_ticket_search(SEARCH_WORD)
 	",
-				"MSSQL" =>	"
+                "MSSQL" => "
 	CREATE TABLE b_ticket_search
 	(
 		MESSAGE_ID int NOT NULL,
@@ -190,7 +189,7 @@ GO
 	CREATE INDEX UX_b_ticket_search ON b_ticket_search (SEARCH_WORD)
 GO
 	",
-				"Oracle" =>	"
+                "Oracle" => "
 	CREATE TABLE b_ticket_search
 	(
 		MESSAGE_ID NUMBER(18) NOT NULL,
@@ -201,10 +200,10 @@ GO
 	CREATE INDEX UX_b_ticket_search ON b_ticket_search(SEARCH_WORD)
 	/
 	"
-			),
-			
-			"b_ticket_timetable_cache" => array(
-				"MySQL" =>	"
+            ),
+
+            "b_ticket_timetable_cache" => array(
+                "MySQL" => "
 	CREATE TABLE b_ticket_timetable_cache
 	(
 		ID INT(18) not null auto_increment,
@@ -216,7 +215,7 @@ GO
 		PRIMARY KEY (ID)
 	)
 				",
-				"MSSQL" =>	"
+                "MSSQL" => "
 	CREATE TABLE b_ticket_timetable_cache
 	(
 		ID int NOT NULL IDENTITY (1, 1),
@@ -230,7 +229,7 @@ GO
 	ALTER TABLE b_ticket_timetable_cache ADD CONSTRAINT PK_b_ticket_timetable_cache PRIMARY KEY (ID)
 GO
 	",
-				"Oracle" =>	"
+                "Oracle" => "
 	CREATE TABLE b_ticket_timetable_cache
 	(
 		ID NUMBER(18) NOT NULL,
@@ -246,102 +245,90 @@ GO
 	CREATE SEQUENCE SQ_b_ticket_timetable_cache START WITH 1 INCREMENT BY 1 NOMINVALUE NOMAXVALUE NOCYCLE NOCACHE NOORDER
 	/
 	"
-			),
-			
-			
-		);
-		
-		
-		//delete fields
-		$deleteFields = array(
-			"b_ticket" => array(
-				"DATE_OF_FIRST_USER_MSG_AFTER_SUP_MSG",
-				"ID_OF_FIRST_USER_MSG_AFTER_SUP_MSG",
-				"DATE_FIRST_USER_M_AFTER_SUP_M",
-				"ID_FIRST_USER_M_AFTER_SUP_M",
-			),
-		);
-		
-		
-		//add fields
-		$addFields = array(
-			"b_ticket" => array(
-				array("FIELD" => "SUPPORT_DEADLINE", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
-				array("FIELD" => "SUPPORT_DEADLINE_NOTIFY", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
-				array("FIELD" => "D_1_USER_M_AFTER_SUP_M", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
-				array("FIELD" => "ID_1_USER_M_AFTER_SUP_M", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
-			),
-			
-			"b_ticket_sla"=> array(
-				array("FIELD" => "TIMETABLE_ID", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
-			),
-			
-			"b_ticket_sla_shedule" => array(
-				array("FIELD" => "TIMETABLE_ID", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
-			),
-			
-			"b_ticket_user_ugroup" => array(
-				array("FIELD" => "CAN_MAIL_UPDATE_GROUP_MESSAGES", "MySQL" => "char(1) NOT NULL default 'N'", "MSSQL" => "char(1) NOT NULL DEFAULT 'N'", "Oracle" => "CHAR(1 CHAR) DEFAULT 'N' NOT NULL",),	
-			),
-		);
-		
-		if($DB->TableExists("b_ticket"))
-		{
-			foreach($addTables as $table => $arr)
-			{
-				if(!$DB->TableExists($table))
-				{
-					$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arr[$dbType]));
-					foreach($arQuery as $i => $sql)
-					{
-						$res = $DB->Query($sql, true);
-						if(!$res) return false;
-					}					
-				}
-			}
-		}
-		
-		foreach($deleteFields as $table => $arr)
-		{
-			if($DB->TableExists($table))
-			{
-				foreach($arr as $n => $FN)
-				{
-					if($DB->Query("select $FN from $table WHERE 1=0", true))
-					{
-						$res = $DB->Query("ALTER TABLE $table DROP $FN", true);
-						if(!$res) return false;
-					}					
-				}
-			}
-		}
-		
-		foreach($addFields as $table => $arr)
-		{
-			if($DB->TableExists($table))
-			{
-				foreach($arr as $n => $arrF)
-				{
-					$FN = $arrF["FIELD"];
-					$FT = $arrF[$dbType];
-					if(!$DB->Query("select $FN from $table WHERE 1=0", true))
-					{
-						$res = $DB->Query("ALTER TABLE $table ADD $FN $FT", true);
-						if(!$res) return false;
-					}
-				}
-			}
-		}
-		return true;			
-	}
-	
-	function SeparateSLAandTimeTable($dbType)
-	{
-		global $DB;
-		$err_mess = (CAllSupportUpdate::err_mess())."<br>Function: SeparateSLAandTimeTable<br>Line: ";
-		
-		$strUsers = implode(",", CTicket::GetSupportTeamAndAdminUsers());
-		$strSql0 = "
+            ),
+
+
+        );
+
+
+        //delete fields
+        $deleteFields = array(
+            "b_ticket" => array(
+                "DATE_OF_FIRST_USER_MSG_AFTER_SUP_MSG",
+                "ID_OF_FIRST_USER_MSG_AFTER_SUP_MSG",
+                "DATE_FIRST_USER_M_AFTER_SUP_M",
+                "ID_FIRST_USER_M_AFTER_SUP_M",
+            ),
+        );
+
+
+        //add fields
+        $addFields = array(
+            "b_ticket" => array(
+                array("FIELD" => "SUPPORT_DEADLINE", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
+                array("FIELD" => "SUPPORT_DEADLINE_NOTIFY", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
+                array("FIELD" => "D_1_USER_M_AFTER_SUP_M", "MySQL" => "datetime null", "MSSQL" => "datetime NULL", "Oracle" => "DATE NULL",),
+                array("FIELD" => "ID_1_USER_M_AFTER_SUP_M", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
+            ),
+
+            "b_ticket_sla" => array(
+                array("FIELD" => "TIMETABLE_ID", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
+            ),
+
+            "b_ticket_sla_shedule" => array(
+                array("FIELD" => "TIMETABLE_ID", "MySQL" => "int(18) null", "MSSQL" => "int NULL", "Oracle" => "NUMBER(18) NULL",),
+            ),
+
+            "b_ticket_user_ugroup" => array(
+                array("FIELD" => "CAN_MAIL_UPDATE_GROUP_MESSAGES", "MySQL" => "char(1) NOT NULL default 'N'", "MSSQL" => "char(1) NOT NULL DEFAULT 'N'", "Oracle" => "CHAR(1 CHAR) DEFAULT 'N' NOT NULL",),
+            ),
+        );
+
+        if ($DB->TableExists("b_ticket")) {
+            foreach ($addTables as $table => $arr) {
+                if (!$DB->TableExists($table)) {
+                    $arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arr[$dbType]));
+                    foreach ($arQuery as $i => $sql) {
+                        $res = $DB->Query($sql, true);
+                        if (!$res) return false;
+                    }
+                }
+            }
+        }
+
+        foreach ($deleteFields as $table => $arr) {
+            if ($DB->TableExists($table)) {
+                foreach ($arr as $n => $FN) {
+                    if ($DB->Query("select $FN from $table WHERE 1=0", true)) {
+                        $res = $DB->Query("ALTER TABLE $table DROP $FN", true);
+                        if (!$res) return false;
+                    }
+                }
+            }
+        }
+
+        foreach ($addFields as $table => $arr) {
+            if ($DB->TableExists($table)) {
+                foreach ($arr as $n => $arrF) {
+                    $FN = $arrF["FIELD"];
+                    $FT = $arrF[$dbType];
+                    if (!$DB->Query("select $FN from $table WHERE 1=0", true)) {
+                        $res = $DB->Query("ALTER TABLE $table ADD $FN $FT", true);
+                        if (!$res) return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    function SeparateSLAandTimeTable($dbType)
+    {
+        global $DB;
+        $err_mess = (CAllSupportUpdate::err_mess()) . "<br>Function: SeparateSLAandTimeTable<br>Line: ";
+
+        $strUsers = implode(",", CTicket::GetSupportTeamAndAdminUsers());
+        $strSql0 = "
 				b_ticket
 					INNER JOIN (
 						SELECT
@@ -373,32 +360,32 @@ GO
 					INNER JOIN b_ticket_message AS M
 						ON Q.M_ID = M.ID
 			";
-		
-		$updateQueries = array(
-		
-			"b_ticket_timetable,b_ticket_sla,b_ticket_sla_shedule" => array(
-				0 => array(
-					"MySQL" =>	"
+
+        $updateQueries = array(
+
+            "b_ticket_timetable,b_ticket_sla,b_ticket_sla_shedule" => array(
+                0 => array(
+                    "MySQL" => "
 	INSERT INTO b_ticket_timetable (NAME, DESCRIPTION)
 		SELECT NAME, ID
 		FROM b_ticket_sla
 					",
-					
-					"MSSQL" =>	"
+
+                    "MSSQL" => "
 	INSERT INTO b_ticket_timetable (NAME, DESCRIPTION)
 		SELECT NAME, CAST(CAST(ID AS varchar) AS text)
 		FROM b_ticket_sla
 					",
-					
-					"Oracle" =>	"
+
+                    "Oracle" => "
 	INSERT INTO b_ticket_timetable (ID, NAME, DESCRIPTION)
 		SELECT SQ_b_ticket_timetable.nextval, NAME, ID  
 		FROM b_ticket_sla
 					"
-				),
+                ),
 
-				1 => array(
-					"MySQL" =>	"
+                1 => array(
+                    "MySQL" => "
 	UPDATE b_ticket_sla AS S
 		INNER JOIN b_ticket_timetable AS T
 			ON (S.ID = cast(T.DESCRIPTION as UNSIGNED))
@@ -406,8 +393,8 @@ GO
 				AND S.TIMETABLE_ID IS NULL
 	SET S.TIMETABLE_ID = T.ID
 					",
-					
-					"MSSQL" =>	"
+
+                    "MSSQL" => "
 	UPDATE b_ticket_sla
 	SET b_ticket_sla.TIMETABLE_ID = T.ID
 	FROM
@@ -417,8 +404,8 @@ GO
 				AND T.DESCRIPTION IS NOT NULL
 				AND b_ticket_sla.TIMETABLE_ID IS NULL
 					",
-					
-					"Oracle" =>	"
+
+                    "Oracle" => "
 	UPDATE b_ticket_sla SET TIMETABLE_ID = (
 		SELECT T.ID
 		FROM b_ticket_timetable T
@@ -429,18 +416,18 @@ GO
 	WHERE
 		TIMETABLE_ID IS NULL
 					"
-				),
-				
-				2 => array(
-					"MySQL" =>	"
+                ),
+
+                2 => array(
+                    "MySQL" => "
 	UPDATE b_ticket_sla_shedule AS SS
 		INNER JOIN b_ticket_timetable AS T
 			ON (SS.SLA_ID = cast(T.DESCRIPTION as UNSIGNED)) 
 				AND T.DESCRIPTION IS NOT NULL
 	SET SS.TIMETABLE_ID = T.ID
 					",
-					
-					"MSSQL" =>	"
+
+                    "MSSQL" => "
 	UPDATE b_ticket_sla_shedule SET TIMETABLE_ID = (
 		SELECT T.ID
 		FROM 
@@ -450,8 +437,8 @@ GO
 			AND T.DESCRIPTION IS NOT NULL
 		)
 					",
-					
-					"Oracle" =>	"
+
+                    "Oracle" => "
 	UPDATE b_ticket_sla_shedule SET TIMETABLE_ID = (
 		SELECT T.ID
 		FROM 
@@ -461,37 +448,37 @@ GO
 			AND T.DESCRIPTION IS NOT NULL
 		)
 					"
-				),
-				
-				3 => array(
-					"MySQL" =>	"
+                ),
+
+                3 => array(
+                    "MySQL" => "
 	UPDATE b_ticket_timetable
 	SET DESCRIPTION = NULL
 					",
-					
-					"MSSQL" =>	"
+
+                    "MSSQL" => "
 	UPDATE b_ticket_timetable
 	SET DESCRIPTION = NULL
 					",
-					
-					"Oracle" =>	"
+
+                    "Oracle" => "
 	UPDATE b_ticket_timetable
 	SET DESCRIPTION = NULL
 					",
-				),
-			),
-			
-			"b_ticket" => array(
-				0 => array(
-					"MySQL" =>	"
+                ),
+            ),
+
+            "b_ticket" => array(
+                0 => array(
+                    "MySQL" => "
 	UPDATE $strSql0
 	SET
 	b_ticket.D_1_USER_M_AFTER_SUP_M = M.DATE_CREATE,
 	b_ticket.ID_1_USER_M_AFTER_SUP_M = M.ID,
 	b_ticket.LAST_MESSAGE_BY_SUPPORT_TEAM = 'N'
 					",
-					
-					"MSSQL" =>	"
+
+                    "MSSQL" => "
 	UPDATE b_ticket
 	SET
 	b_ticket.D_1_USER_M_AFTER_SUP_M = M.DATE_CREATE,
@@ -499,89 +486,78 @@ GO
 	b_ticket.LAST_MESSAGE_BY_SUPPORT_TEAM = 'N'
 	FROM $strSql0
 					",
-					
-					"Oracle" =>	"
+
+                    "Oracle" => "
 	UPDATE b_ticket T0
 	SET (D_1_USER_M_AFTER_SUP_M, ID_1_USER_M_AFTER_SUP_M, LAST_MESSAGE_BY_SUPPORT_TEAM) = (
 		SELECT
 			M.DATE_CREATE,
 			M.ID,
 			'N'
-		FROM ".str_replace(" AS ", " ", $strSql0)."
+		FROM " . str_replace(" AS ", " ", $strSql0) . "
 		WHERE b_ticket.ID = T0.ID
 	)
 					",
-				),
-			),
-		);
-		
-		foreach($updateQueries as $checkTables => $arT)
-		{
-			$arCT = explode(",", $checkTables);
-			$skipU = false;
-			foreach($arCT as $n => $t)
-			{
-				if(!$DB->TableExists($t))
-				{
-					$skipU = true;
-				}
-			}
-			if(!$skipU)
-			{
-				foreach($arT as $n1 => $arQ)
-				{
-					$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arQ[$dbType]));
-					foreach($arQuery as $i => $sql)
-					{
-						$res = $DB->Query($sql, true);
-						if(!$res) return false;
-					}
-					
-				}
-			}
-		}
-		
-		return true;		
-	}
+                ),
+            ),
+        );
 
-	function SetHotKeys()
-	{
-		$arHK = array(
-			"B" => "Alt+66",
-			"I" => "Alt+73",
-			"U" => "Alt+85",
-			"QUOTE" => "Alt+81",
-			"CODE" => "Alt+67",
-			"TRANSLIT" => "Alt+84",
-		);
-				
-		$hkc = new CHotKeysCode;
-		foreach($arHK as $s => $hk)
-		{
-			$className = "TICKET_EDIT_$s";
-			$arHKC = array (
-				CLASS_NAME => $className,
-				CODE => "var d=document.getElementById('$s'); if (d) d.click();",
-				NAME => " ($id)",
-				TITLE_OBJ => "TICKET_EDIT_" . $s . "_T",
-				IS_CUSTOM => "1"
-			);
-			
-			$objK = $hkc->GetList(array(), Array("CLASS_NAME"=>$className));
-			if($arK = $objK->Fetch())
-			{
-				$hkc->Update($arK["ID"],$arHKC);
-			}
-			else
-			{
-				$id = $hkc->Add($arHKC);
-				if($id > 0)
-				{
-					$result = CHotKeys::GetInstance()->AddDefaultKeyToAll($id, $hk);
-				}
-			}
-		}	
-	}
+        foreach ($updateQueries as $checkTables => $arT) {
+            $arCT = explode(",", $checkTables);
+            $skipU = false;
+            foreach ($arCT as $n => $t) {
+                if (!$DB->TableExists($t)) {
+                    $skipU = true;
+                }
+            }
+            if (!$skipU) {
+                foreach ($arT as $n1 => $arQ) {
+                    $arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $arQ[$dbType]));
+                    foreach ($arQuery as $i => $sql) {
+                        $res = $DB->Query($sql, true);
+                        if (!$res) return false;
+                    }
+
+                }
+            }
+        }
+
+        return true;
+    }
+
+    function SetHotKeys()
+    {
+        $arHK = array(
+            "B" => "Alt+66",
+            "I" => "Alt+73",
+            "U" => "Alt+85",
+            "QUOTE" => "Alt+81",
+            "CODE" => "Alt+67",
+            "TRANSLIT" => "Alt+84",
+        );
+
+        $hkc = new CHotKeysCode;
+        foreach ($arHK as $s => $hk) {
+            $className = "TICKET_EDIT_$s";
+            $arHKC = array(
+                CLASS_NAME => $className,
+                CODE => "var d=document.getElementById('$s'); if (d) d.click();",
+                NAME => " ($id)",
+                TITLE_OBJ => "TICKET_EDIT_" . $s . "_T",
+                IS_CUSTOM => "1"
+            );
+
+            $objK = $hkc->GetList(array(), Array("CLASS_NAME" => $className));
+            if ($arK = $objK->Fetch()) {
+                $hkc->Update($arK["ID"], $arHKC);
+            } else {
+                $id = $hkc->Add($arHKC);
+                if ($id > 0) {
+                    $result = CHotKeys::GetInstance()->AddDefaultKeyToAll($id, $hk);
+                }
+            }
+        }
+    }
 }
 
 ?>

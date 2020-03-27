@@ -13,13 +13,13 @@ use RuntimeException;
  */
 class WireFormat
 {
-    const WIRE_VARINT       = 0;
-    const WIRE_FIXED64      = 1;
-    const WIRE_LENGTH       = 2;
-    const WIRE_GROUP_START  = 3;
-    const WIRE_GROUP_END    = 4;
-    const WIRE_FIXED32      = 5;
-    const WIRE_UNKNOWN      = -1;
+    const WIRE_VARINT = 0;
+    const WIRE_FIXED64 = 1;
+    const WIRE_LENGTH = 2;
+    const WIRE_GROUP_START = 3;
+    const WIRE_GROUP_END = 4;
+    const WIRE_FIXED32 = 5;
+    const WIRE_UNKNOWN = -1;
 
     const TAG_TYPE_BITS = 3;
     const TAG_TYPE_MASK = 0x7;
@@ -28,23 +28,23 @@ class WireFormat
      * @var array
      */
     private static $wireTypeMap = [
-        Field::TYPE_INT32    => WireFormat::WIRE_VARINT,
-        Field::TYPE_INT64    => WireFormat::WIRE_VARINT,
-        Field::TYPE_UINT32   => WireFormat::WIRE_VARINT,
-        Field::TYPE_UINT64   => WireFormat::WIRE_VARINT,
-        Field::TYPE_SINT32   => WireFormat::WIRE_VARINT,
-        Field::TYPE_SINT64   => WireFormat::WIRE_VARINT,
-        Field::TYPE_BOOL     => WireFormat::WIRE_VARINT,
-        Field::TYPE_ENUM     => WireFormat::WIRE_VARINT,
-        Field::TYPE_FIXED64  => WireFormat::WIRE_FIXED64,
+        Field::TYPE_INT32 => WireFormat::WIRE_VARINT,
+        Field::TYPE_INT64 => WireFormat::WIRE_VARINT,
+        Field::TYPE_UINT32 => WireFormat::WIRE_VARINT,
+        Field::TYPE_UINT64 => WireFormat::WIRE_VARINT,
+        Field::TYPE_SINT32 => WireFormat::WIRE_VARINT,
+        Field::TYPE_SINT64 => WireFormat::WIRE_VARINT,
+        Field::TYPE_BOOL => WireFormat::WIRE_VARINT,
+        Field::TYPE_ENUM => WireFormat::WIRE_VARINT,
+        Field::TYPE_FIXED64 => WireFormat::WIRE_FIXED64,
         Field::TYPE_SFIXED64 => WireFormat::WIRE_FIXED64,
-        Field::TYPE_DOUBLE   => WireFormat::WIRE_FIXED64,
-        Field::TYPE_STRING   => WireFormat::WIRE_LENGTH,
-        Field::TYPE_BYTES    => WireFormat::WIRE_LENGTH,
-        Field::TYPE_MESSAGE  => WireFormat::WIRE_LENGTH,
-        Field::TYPE_FIXED32  => WireFormat::WIRE_FIXED32,
+        Field::TYPE_DOUBLE => WireFormat::WIRE_FIXED64,
+        Field::TYPE_STRING => WireFormat::WIRE_LENGTH,
+        Field::TYPE_BYTES => WireFormat::WIRE_LENGTH,
+        Field::TYPE_MESSAGE => WireFormat::WIRE_LENGTH,
+        Field::TYPE_FIXED32 => WireFormat::WIRE_FIXED32,
         Field::TYPE_SFIXED32 => WireFormat::WIRE_FIXED32,
-        Field::TYPE_FLOAT    => WireFormat::WIRE_FIXED32,
+        Field::TYPE_FLOAT => WireFormat::WIRE_FIXED32,
     ];
 
     /**

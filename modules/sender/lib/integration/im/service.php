@@ -18,62 +18,56 @@ use Bitrix\ImConnector;
  */
 class Service
 {
-	/**
-	 * Can use.
-	 *
-	 * @return bool|null
-	 */
-	public static function canUse()
-	{
-		if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines') || !Loader::includeModule('imconnector'))
-		{
-			return false;
-		}
-		else
-		{
-			return true;
-		}
-	}
+    /**
+     * Can use.
+     *
+     * @return bool|null
+     */
+    public static function canUse()
+    {
+        if (!Loader::includeModule('im') || !Loader::includeModule('imopenlines') || !Loader::includeModule('imconnector')) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
-	/**
-	 * Get excluded channel codes.
-	 *
-	 * @return array
-	 */
-	public static function getExcludedChannelCodes()
-	{
-		if (!static::canUse())
-		{
-			return array();
-		}
+    /**
+     * Get excluded channel codes.
+     *
+     * @return array
+     */
+    public static function getExcludedChannelCodes()
+    {
+        if (!static::canUse()) {
+            return array();
+        }
 
-		static $codes = null;
-		if ($codes === null)
-		{
-			$codes = ImConnector\Connector::getListConnectorNotNewsletter();
-		}
+        static $codes = null;
+        if ($codes === null) {
+            $codes = ImConnector\Connector::getListConnectorNotNewsletter();
+        }
 
-		return $codes;
-	}
+        return $codes;
+    }
 
-	/**
-	 * Send.
-	 *
-	 * @param string $to To number. Like: livechat|12323|213123, without imol|.
-	 * @param string $text Text.
-	 * @return bool
-	 */
-	public static function send($to, $text)
-	{
-		if (!static::canUse())
-		{
-			return false;
-		}
+    /**
+     * Send.
+     *
+     * @param string $to To number. Like: livechat|12323|213123, without imol|.
+     * @param string $text Text.
+     * @return bool
+     */
+    public static function send($to, $text)
+    {
+        if (!static::canUse()) {
+            return false;
+        }
 
-		$result = ImOpenLines\Im::addMessagesNewsletter(array(
-			$to => array('MESSAGE' => $text,	'SYSTEM' => 'Y')
-		));
+        $result = ImOpenLines\Im::addMessagesNewsletter(array(
+            $to => array('MESSAGE' => $text, 'SYSTEM' => 'Y')
+        ));
 
-		return isset($result[$to]) ? (bool) $result[$to] : false;
-	}
+        return isset($result[$to]) ? (bool)$result[$to] : false;
+    }
 }

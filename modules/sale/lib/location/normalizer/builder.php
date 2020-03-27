@@ -9,16 +9,16 @@ namespace Bitrix\Sale\Location\Normalizer;
  */
 class Builder implements IBuilder
 {
-	/**
-	 * @param string $lang Language identifier
-	 * @return INormalizer
-	 */
-	public static function build($lang)
-	{
-		return new Normalizer([
-			new CommonNormalizer(),
-			new LanguageNormalizer($lang),
-			new SpaceNormalizer()
-		]);
-	}
+    /**
+     * @param string $lang Language identifier
+     * @return INormalizer
+     */
+    public static function build($lang)
+    {
+        return new Normalizer([
+            new CommonNormalizer(),
+            new LanguageNormalizer($lang),
+            new SpaceNormalizer()
+        ]);
+    }
 }

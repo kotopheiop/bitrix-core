@@ -4,6 +4,6 @@ namespace Bitrix\Pull;
 
 class ServerMode
 {
-	const Shared = 'shared';
-	const Personal = 'personal';
+    const Shared = 'shared';
+    const Personal = 'personal';
 }

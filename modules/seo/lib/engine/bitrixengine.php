@@ -5,6 +5,7 @@
  * @subpackage seo
  * @copyright 2001-2013 Bitrix
  */
+
 namespace Bitrix\Seo\Engine;
 
 use Bitrix\Main\Text;
@@ -14,26 +15,25 @@ use Bitrix\Seo\Service;
 
 class BitrixEngine extends Engine
 {
-	protected $engineId = 'bitrix_generic';
+    protected $engineId = 'bitrix_generic';
 
-	public function __construct()
-	{
-		parent::__construct();
-	}
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-	public function getProxy()
-	{
-		return Service::getEngine();
-	}
+    public function getProxy()
+    {
+        return Service::getEngine();
+    }
 
-	public function getAuthSettings()
-	{
-		$proxy = $this->getProxy();
-		if($proxy && $proxy->getAuthSettings())
-		{
-			return parent::getAuthSettings();
-		}
+    public function getAuthSettings()
+    {
+        $proxy = $this->getProxy();
+        if ($proxy && $proxy->getAuthSettings()) {
+            return parent::getAuthSettings();
+        }
 
-		return null;
-	}
+        return null;
+    }
 }

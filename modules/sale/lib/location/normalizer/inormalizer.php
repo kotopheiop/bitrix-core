@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Sale\Location\Normalizer;
 
 /**
@@ -8,9 +9,9 @@ namespace Bitrix\Sale\Location\Normalizer;
  */
 interface INormalizer
 {
-	/**
-	 * @param string $name Location name
-	 * @return string
-	 */
-	public function normalize($name);
+    /**
+     * @param string $name Location name
+     * @return string
+     */
+    public function normalize($name);
 }

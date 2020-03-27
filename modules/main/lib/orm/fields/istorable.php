@@ -12,4 +12,6 @@ namespace Bitrix\Main\ORM\Fields;
  * Interface for Entity Fields to be stored by DataManager.
  * @package Bitrix\Main\ORM
  */
-interface IStorable extends IReadable {}
+interface IStorable extends IReadable
+{
+}
