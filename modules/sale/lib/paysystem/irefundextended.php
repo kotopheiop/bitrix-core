@@ -8,8 +8,8 @@ namespace Bitrix\Sale\PaySystem;
  */
 interface IRefundExtended extends IRefund
 {
-    /**
-     * @return bool
-     */
-    public function isRefundableExtended();
+	/**
+	 * @return bool
+	 */
+	public function isRefundableExtended();
 }

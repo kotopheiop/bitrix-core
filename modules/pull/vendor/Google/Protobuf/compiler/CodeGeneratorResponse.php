@@ -117,7 +117,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
      */
     public function extensions()
     {
-        if ($this->extensions !== null) {
+        if ( $this->extensions !== null) {
             return $this->extensions;
         }
 
@@ -146,7 +146,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
     public static function fromArray(array $values)
     {
         $message = new self();
-        $values = array_merge([
+        $values  = array_merge([
             'error' => null,
             'file' => []
         ], $values);
@@ -166,8 +166,8 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
     public static function descriptor()
     {
         return \google\protobuf\DescriptorProto::fromArray([
-            'name' => 'CodeGeneratorResponse',
-            'field' => [
+            'name'      => 'CodeGeneratorResponse',
+            'field'     => [
                 \google\protobuf\FieldDescriptorProto::fromArray([
                     'number' => 1,
                     'name' => 'error',
@@ -190,9 +190,9 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
      */
     public function toStream(\Protobuf\Configuration $configuration = null)
     {
-        $config = $configuration ?: \Protobuf\Configuration::getInstance();
+        $config  = $configuration ?: \Protobuf\Configuration::getInstance();
         $context = $config->createWriteContext();
-        $stream = $context->getStream();
+        $stream  = $context->getStream();
 
         $this->writeTo($context);
         $stream->seek(0);
@@ -205,8 +205,8 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
      */
     public function writeTo(\Protobuf\WriteContext $context)
     {
-        $stream = $context->getStream();
-        $writer = $context->getWriter();
+        $stream      = $context->getStream();
+        $writer      = $context->getWriter();
         $sizeContext = $context->getComputeSizeContext();
 
         if ($this->error !== null) {
@@ -248,9 +248,9 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
                 break;
             }
 
-            $key = $reader->readVarint($stream);
+            $key  = $reader->readVarint($stream);
             $wire = \Protobuf\WireFormat::getTagWireType($key);
-            $tag = \Protobuf\WireFormat::getTagFieldNumber($key);
+            $tag  = \Protobuf\WireFormat::getTagFieldNumber($key);
 
             if ($stream->eof()) {
                 break;
@@ -267,7 +267,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
             if ($tag === 15) {
                 \Protobuf\WireFormat::assertWireType($wire, 11);
 
-                $innerSize = $reader->readVarint($stream);
+                $innerSize    = $reader->readVarint($stream);
                 $innerMessage = new \google\protobuf\compiler\CodeGeneratorResponse\File();
 
                 if ($this->file === null) {
@@ -284,7 +284,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
             }
 
             $extensions = $context->getExtensionRegistry();
-            $extension = $extensions ? $extensions->findByNumber(__CLASS__, $tag) : null;
+            $extension  = $extensions ? $extensions->findByNumber(__CLASS__, $tag) : null;
 
             if ($extension !== null) {
                 $this->extensions()->add($extension, $extension->readFrom($context, $wire));
@@ -296,7 +296,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
                 $this->unknownFieldSet = new \Protobuf\UnknownFieldSet();
             }
 
-            $data = $reader->readUnknown($stream, $wire);
+            $data    = $reader->readUnknown($stream, $wire);
             $unknown = new \Protobuf\Unknown($tag, $wire, $data);
 
             $this->unknownFieldSet->add($unknown);
@@ -310,7 +310,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
     public function serializedSize(\Protobuf\ComputeSizeContext $context)
     {
         $calculator = $context->getSizeCalculator();
-        $size = 0;
+        $size       = 0;
 
         if ($this->error !== null) {
             $size += 1;
@@ -348,7 +348,7 @@ class CodeGeneratorResponse extends \Protobuf\AbstractMessage
      */
     public function merge(\Protobuf\Message $message)
     {
-        if (!$message instanceof \google\protobuf\compiler\CodeGeneratorResponse) {
+        if ( ! $message instanceof \google\protobuf\compiler\CodeGeneratorResponse) {
             throw new \InvalidArgumentException(sprintf('Argument 1 passed to %s must be a %s, %s given', __METHOD__, __CLASS__, get_class($message)));
         }
 

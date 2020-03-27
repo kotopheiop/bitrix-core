@@ -10,5 +10,5 @@ namespace Bitrix\Rest\Dictionary;
 
 class Method extends RemoteDictionary
 {
-    const ID = 'methods';
+	const ID = 'methods';
 }

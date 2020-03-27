@@ -1,5 +1,4 @@
 <?
-
 namespace Bitrix\Iblock\Update;
 
 use Bitrix\Main\Update\AdminFilterOption as BaseAdminFilterOption;
@@ -12,5 +11,5 @@ use Bitrix\Main\Update\AdminFilterOption as BaseAdminFilterOption;
  */
 class AdminFilterOption extends BaseAdminFilterOption
 {
-    protected static $moduleId = "iblock";
+	protected static $moduleId = "iblock";
 }

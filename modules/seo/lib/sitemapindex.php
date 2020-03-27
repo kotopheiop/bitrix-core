@@ -5,7 +5,6 @@
  * @subpackage seo
  * @copyright 2001-2013 Bitrix
  */
-
 namespace Bitrix\Seo;
 
 use Bitrix\Main\Text\Converter;
@@ -16,58 +15,64 @@ use Bitrix\Main\Text\Converter;
  * @package Bitrix\Seo
  */
 class SitemapIndex
-    extends SitemapFile
+	extends SitemapFile
 {
-    const FILE_HEADER = '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
-    const FILE_FOOTER = '</sitemapindex>';
+	const FILE_HEADER = '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+	const FILE_FOOTER = '</sitemapindex>';
 
-    const ENTRY_TPL = '<sitemap><loc>%s</loc><lastmod>%s</lastmod></sitemap>';
+	const ENTRY_TPL = '<sitemap><loc>%s</loc><lastmod>%s</lastmod></sitemap>';
 
-    public function createIndex($arIndex)
-    {
-        $str = self::XML_HEADER . self::FILE_HEADER;
+	public function createIndex($arIndex)
+	{
+		$str = self::XML_HEADER.self::FILE_HEADER;
 
-        foreach ($arIndex as $file) {
-            if (!$file->isSystem() && $file->isExists()) {
-                $str .= sprintf(
-                    self::ENTRY_TPL,
-                    Converter::getXmlConverter()->encode($this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII($this->settings['DOMAIN'], $e = null) . $this->getFileUrl($file)),
-                    date('c', $file->getModificationTime())
-                );
-            }
-        }
+		foreach ($arIndex as $file)
+		{
+			if(!$file->isSystem() && $file->isExists())
+			{
+				$str .= sprintf(
+					self::ENTRY_TPL,
+					Converter::getXmlConverter()->encode($this->settings['PROTOCOL'].'://'.\CBXPunycode::toASCII($this->settings['DOMAIN'], $e = null).$this->getFileUrl($file)),
+					date('c', $file->getModificationTime())
+				);
+			}
+		}
 
-        $str .= self::FILE_FOOTER;
+		$str .= self::FILE_FOOTER;
 
-        $this->putContents($str);
-    }
+		$this->putContents($str);
+	}
 
-    public function appendIndexEntry($file)
-    {
-        if ($this->isExists() && $file->isExists()) {
-            $fileUrlEnc = Converter::getXmlConverter()->encode($this->settings['PROTOCOL'] . '://' . \CBXPunycode::toASCII($this->settings['DOMAIN'], $e = null) . $this->getFileUrl($file));
+	public function appendIndexEntry($file)
+	{
+		if($this->isExists() && $file->isExists())
+		{
+			$fileUrlEnc = Converter::getXmlConverter()->encode($this->settings['PROTOCOL'].'://'.\CBXPunycode::toASCII($this->settings['DOMAIN'], $e = null).$this->getFileUrl($file));
 
-            $contents = $this->getContents();
+			$contents = $this->getContents();
 
-            $reg = "/" . sprintf(preg_quote(self::ENTRY_TPL, "/"), preg_quote($fileUrlEnc, "/"), "[^<]*") . "/";
+			$reg = "/".sprintf(preg_quote(self::ENTRY_TPL, "/"), preg_quote($fileUrlEnc, "/"), "[^<]*")."/";
 
-            $newEntry = sprintf(
-                self::ENTRY_TPL,
-                $fileUrlEnc,
-                date('c', $file->getModificationTime($file))
-            );
+			$newEntry = sprintf(
+				self::ENTRY_TPL,
+				$fileUrlEnc,
+				date('c', $file->getModificationTime($file))
+			);
 
-            $count = 0;
-            $contents = preg_replace($reg, $newEntry, $contents, 1, $count);
+			$count = 0;
+			$contents = preg_replace($reg, $newEntry, $contents, 1, $count);
 
-            if ($count <= 0) {
-                $contents = substr($contents, 0, -strlen(self::FILE_FOOTER))
-                    . $newEntry . self::FILE_FOOTER;
-            }
+			if($count <= 0)
+			{
+				$contents = substr($contents, 0, -strlen(self::FILE_FOOTER))
+					.$newEntry.self::FILE_FOOTER;
+			}
 
-            $this->putContents($contents);
-        } else {
-            $this->createIndex(array($file));
-        }
-    }
+			$this->putContents($contents);
+		}
+		else
+		{
+			$this->createIndex(array($file));
+		}
+	}
 }

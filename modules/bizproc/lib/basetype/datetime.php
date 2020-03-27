@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Bizproc\BaseType;
 
 use Bitrix\Main\Localization\Loc;
@@ -13,11 +12,11 @@ Loc::loadMessages(__FILE__);
  */
 class Datetime extends Date
 {
-    /**
-     * @return string
-     */
-    public static function getType()
-    {
-        return FieldType::DATETIME;
-    }
+	/**
+	 * @return string
+	 */
+	public static function getType()
+	{
+		return FieldType::DATETIME;
+	}
 }

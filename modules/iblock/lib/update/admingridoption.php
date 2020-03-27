@@ -1,5 +1,4 @@
 <?
-
 namespace Bitrix\Iblock\Update;
 
 use Bitrix\Main\Update\AdminGridOption as BaseAdminGridOption;
@@ -12,5 +11,5 @@ use Bitrix\Main\Update\AdminGridOption as BaseAdminGridOption;
  */
 class AdminGridOption extends BaseAdminGridOption
 {
-    protected static $moduleId = "iblock";
+	protected static $moduleId = "iblock";
 }

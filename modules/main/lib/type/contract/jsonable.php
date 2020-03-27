@@ -4,8 +4,8 @@ namespace Bitrix\Main\Type\Contract;
 
 interface Jsonable
 {
-    /**
-     * @return array
-     */
-    public function toJson($options = 0);
+	/**
+	 * @return array
+	 */
+	public function toJson($options = 0);
 }

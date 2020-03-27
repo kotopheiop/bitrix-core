@@ -40,7 +40,7 @@ class StreamReader
      */
     public function __construct(Configuration $config)
     {
-        $this->config = $config;
+        $this->config      = $config;
         $this->isBigEndian = BigEndian::isBigEndian();
     }
 
@@ -78,12 +78,12 @@ class StreamReader
         $length = $stream->getSize();
         $offset = $stream->tell();
         $result = $byte & 0x7f;
-        $shift = 7;
+        $shift  = 7;
 
         // fastpath 32bit varints (5bytes) by unrolling the loop
         if ($length - $offset >= 4) {
             // 2
-            $byte = $this->readByte($stream);
+            $byte    = $this->readByte($stream);
             $result |= ($byte & 0x7f) << 7;
 
             if ($byte < 0x80) {
@@ -91,7 +91,7 @@ class StreamReader
             }
 
             // 3
-            $byte = $this->readByte($stream);
+            $byte    = $this->readByte($stream);
             $result |= ($byte & 0x7f) << 14;
 
             if ($byte < 0x80) {
@@ -99,7 +99,7 @@ class StreamReader
             }
 
             // 4
-            $byte = $this->readByte($stream);
+            $byte    = $this->readByte($stream);
             $result |= ($byte & 0x7f) << 21;
 
             if ($byte < 0x80) {
@@ -107,7 +107,7 @@ class StreamReader
             }
 
             // 5
-            $byte = $this->readByte($stream);
+            $byte    = $this->readByte($stream);
             $result |= ($byte & 0x7f) << 28;
 
             if ($byte < 0x80) {
@@ -119,9 +119,9 @@ class StreamReader
 
         // If we're just at the end of the buffer or handling a 64bit varint
         do {
-            $byte = $this->readByte($stream);
+            $byte    = $this->readByte($stream);
             $result |= ($byte & 0x7f) << $shift;
-            $shift += 7;
+            $shift  += 7;
         } while ($byte > 0x7f);
 
         return $result;
@@ -261,7 +261,7 @@ class StreamReader
      */
     public function readBool(Stream $stream)
     {
-        return (bool)$this->readVarint($stream);
+        return (bool) $this->readVarint($stream);
     }
 
     /**
@@ -289,7 +289,7 @@ class StreamReader
     public function readByteStream(Stream $stream)
     {
         $length = $this->readVarint($stream);
-        $value = $stream->readStream($length);
+        $value  = $stream->readStream($length);
 
         return $value;
     }
@@ -298,7 +298,7 @@ class StreamReader
      * Read unknown scalar value.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $wire
+     * @param integer          $wire
      *
      * @return scalar
      */

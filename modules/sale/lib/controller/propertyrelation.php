@@ -12,148 +12,164 @@ use Bitrix\Sale\Result;
 
 class PropertyRelation extends Controller
 {
-    //region Actions
-    public function getFieldsAction()
-    {
-        $entity = new \Bitrix\Sale\Rest\Entity\PropertyRelation();
-        return ['PROPERTY_VARIANT' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
-    }
+	//region Actions
+	public function getFieldsAction()
+	{
+		$entity = new \Bitrix\Sale\Rest\Entity\PropertyRelation();
+		return ['PROPERTY_VARIANT'=>$entity->prepareFieldInfos(
+			$entity->getFields()
+		)];
+	}
 
-    public function addAction(array $fields)
-    {
-        $r = new Result();
-        $relationTable = new OrderPropsRelationTable();
+	public function addAction(array $fields)
+	{
+		$r = new Result();
+		$relationTable = new OrderPropsRelationTable();
 
-        $res = $this->existsByFilter([
-            'PROPERTY_ID' => $fields['PROPERTY_ID'],
-            'ENTITY_ID' => $fields['ENTITY_ID'],
-            'ENTITY_TYPE' => $fields['ENTITY_TYPE']
-        ]);
+		$res = $this->existsByFilter([
+			'PROPERTY_ID'=>$fields['PROPERTY_ID'],
+			'ENTITY_ID'=>$fields['ENTITY_ID'],
+			'ENTITY_TYPE'=>$fields['ENTITY_TYPE']
+		]);
 
-        if ($res->isSuccess() == false) {
-            $r = $this->existsProperty($fields['PROPERTY_ID']);
-            if ($r->isSuccess()) {
-                $r = $relationTable->add($fields);
-            }
-        } else {
-            $r->addError(new Error('Duplicate entry for key [propertyId, entityId, entityType]', 201650000001));
-        }
-
-
-        if (!$r->isSuccess()) {
-            $this->addErrors($r->getErrors());
-            return null;
-        } else {
-            return [
-                'PROPERTY_RELATION' =>
-                    OrderPropsRelationTable::getList([
-                        'filter' => [
-                            'PROPERTY_ID' => $fields['PROPERTY_ID'],
-                            'ENTITY_ID' => $fields['ENTITY_ID'],
-                            'ENTITY_TYPE' => $fields['ENTITY_TYPE']
-                        ]
-                    ])->fetchAll()[0]
-            ];
-        }
-    }
-
-    public function deleteByFilterAction($fields)
-    {
-        $r = $this->checkFields($fields);
-
-        if ($r->isSuccess()) {
-            $r = $this->existsByFilter($fields);
-            if ($r->isSuccess()) {
-                $relationTable = new OrderPropsRelationTable();
-                $r = $relationTable->delete($fields);
-            }
-        }
+		if($res->isSuccess() == false)
+		{
+			$r = $this->existsProperty($fields['PROPERTY_ID']);
+			if($r->isSuccess())
+			{
+				$r = $relationTable->add($fields);
+			}
+		}
+		else
+		{
+			$r->addError(new Error('Duplicate entry for key [propertyId, entityId, entityType]', 201650000001));
+		}
 
 
-        if ($r->isSuccess()) {
-            return true;
-        } else {
-            $this->addErrors($r->getErrors());
-            return null;
-        }
-    }
 
-    public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
-    {
-        $select = empty($select) ? ['*'] : $select;
-        $order = empty($order) ? ['PROPERTY_ID' => 'ASC'] : $order;
+		if(!$r->isSuccess())
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
+		else
+		{
+			return [
+				'PROPERTY_RELATION'=>
+					OrderPropsRelationTable::getList([
+						'filter'=>[
+							'PROPERTY_ID'=>$fields['PROPERTY_ID'],
+							'ENTITY_ID'=>$fields['ENTITY_ID'],
+							'ENTITY_TYPE'=>$fields['ENTITY_TYPE']
+						]
+					])->fetchAll()[0]
+			];
+		}
+	}
 
-        $items = OrderPropsRelationTable::getList(
-            [
-                'select' => $select,
-                'filter' => $filter,
-                'order' => $order,
-                'offset' => $pageNavigation->getOffset(),
-                'limit' => $pageNavigation->getLimit()
-            ]
-        )->fetchAll();
+	public function deleteByFilterAction($fields)
+	{
+		$r = $this->checkFields($fields);
 
-        return new Page('PROPERTY_RELATIONS', $items, function () use ($filter) {
-            return count(
-                OrderPropsRelationTable::getList(['filter' => $filter])->fetchAll()
-            );
-        });
-    }
+		if($r->isSuccess())
+		{
+			$r = $this->existsByFilter($fields);
+			if($r->isSuccess())
+			{
+				$relationTable = new OrderPropsRelationTable();
+				$r = $relationTable->delete($fields);
+			}
+		}
 
-    //endregion
 
-    protected function existsByFilter($filter)
-    {
-        $r = new Result();
+		if($r->isSuccess())
+		{
+			return true;
+		}
+		else
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
+	}
 
-        $row = OrderPropsRelationTable::getList(['filter' => ['PROPERTY_ID' => $filter['PROPERTY_ID'], 'ENTITY_ID' => $filter['ENTITY_ID'], 'ENTITY_TYPE' => $filter['ENTITY_TYPE']]])->fetchAll();
-        if (isset($row[0]['PROPERTY_ID']) == false)
-            $r->addError(new Error('property relation is not exists', 201640400004));
+	public function listAction($select=[], $filter=[], $order=[], PageNavigation $pageNavigation)
+	{
+		$select = empty($select)? ['*']:$select;
+		$order = empty($order)? ['PROPERTY_ID'=>'ASC']:$order;
 
-        return $r;
-    }
+		$items = OrderPropsRelationTable::getList(
+			[
+				'select'=>$select,
+				'filter'=>$filter,
+				'order'=>$order,
+				'offset' => $pageNavigation->getOffset(),
+				'limit' => $pageNavigation->getLimit()
+			]
+		)->fetchAll();
 
-    protected function checkFields($fields)
-    {
-        $r = new Result();
+		return new Page('PROPERTY_RELATIONS', $items, function() use ($filter)
+		{
+			return count(
+				OrderPropsRelationTable::getList(['filter'=>$filter])->fetchAll()
+			);
+		});
+	}
+	//endregion
 
-        if (isset($fields['PROPERTY_ID']) == false && $fields['PROPERTY_ID'] <> '')
-            $r->addError(new Error('propertyId - parametrs is empty', 201640400001));
+	protected function existsByFilter($filter)
+	{
+		$r = new Result();
 
-        if (isset($fields['ENTITY_ID']) == false && $fields['ENTITY_ID'] <> '')
-            $r->addError(new Error('propertyId - parametrs is empty', 201640400002));
+		$row = OrderPropsRelationTable::getList(['filter'=>['PROPERTY_ID'=>$filter['PROPERTY_ID'], 'ENTITY_ID'=>$filter['ENTITY_ID'], 'ENTITY_TYPE'=>$filter['ENTITY_TYPE']]])->fetchAll();
+		if(isset($row[0]['PROPERTY_ID']) == false)
+			$r->addError(new Error('property relation is not exists', 201640400004));
 
-        if (isset($fields['ENTITY_TYPE']) == false && $fields['ENTITY_TYPE'] <> '')
-            $r->addError(new Error('propertyId - parametrs is empty', 201640400003));
+		return $r;
+	}
 
-        return $r;
-    }
+	protected function checkFields($fields)
+	{
+		$r = new Result();
 
-    protected function checkPermissionEntity($name)
-    {
-        if ($name == 'deletebyfilter') {
-            $r = $this->checkReadPermissionEntity();
-        } else {
-            $r = parent::checkPermissionEntity($name);
-        }
-        return $r;
-    }
+		if(isset($fields['PROPERTY_ID']) == false && $fields['PROPERTY_ID'] <> '')
+			$r->addError(new Error('propertyId - parametrs is empty', 201640400001));
 
-    protected function existsProperty($id)
-    {
-        $r = new Result();
+		if(isset($fields['ENTITY_ID'])  == false && $fields['ENTITY_ID'] <> '')
+			$r->addError(new Error('propertyId - parametrs is empty', 201640400002));
 
-        $property = \Bitrix\Sale\Internals\OrderPropsTable::getRow([
-            'filter' => [
-                '=ID' => $id
-            ]
-        ]);
+		if(isset($fields['ENTITY_TYPE'])  == false && $fields['ENTITY_TYPE'] <> '')
+			$r->addError(new Error('propertyId - parametrs is empty', 201640400003));
 
-        if (is_null($property))
-            $r->addError(new Error('property id is not exists', 201650000002));
+		return $r;
+	}
 
-        return $r;
-    }
+	protected function checkPermissionEntity($name)
+	{
+		if($name == 'deletebyfilter')
+		{
+			$r = $this->checkReadPermissionEntity();
+		}
+		else
+		{
+			$r = parent::checkPermissionEntity($name);
+		}
+		return $r;
+	}
+
+	protected function existsProperty($id)
+	{
+		$r = new Result();
+
+		$property = \Bitrix\Sale\Internals\OrderPropsTable::getRow([
+			'filter' => [
+				'=ID' => $id
+			]
+		]);
+
+		if(is_null($property))
+			$r->addError(new Error('property id is not exists', 201650000002));
+
+		return $r;
+	}
 }

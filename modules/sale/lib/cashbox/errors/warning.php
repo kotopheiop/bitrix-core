@@ -6,6 +6,6 @@ use Bitrix\Main;
 
 class Warning extends Main\Error
 {
-    const TYPE = 'WARNING';
-    const LEVEL_TRACE = 2;
+	const TYPE = 'WARNING';
+	const LEVEL_TRACE = 2;
 }

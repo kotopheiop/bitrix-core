@@ -22,6 +22,8 @@ use Bitrix\UI\Toolbar\Manager;
  * @see \Bitrix\UI\Toolbar\Toolbar::getId
  * @method static getFilter();
  * @see \Bitrix\UI\Toolbar\Toolbar::getFilter
+ * @method static renderAfterTitleButtons();
+ * @see \Bitrix\UI\Toolbar\Toolbar::renderAfterTitleButtons
  * @method static renderRightButtons();
  * @see \Bitrix\UI\Toolbar\Toolbar::renderRightButtons
  * @method static renderAfterFilterButtons();
@@ -45,17 +47,18 @@ use Bitrix\UI\Toolbar\Manager;
  */
 final class Toolbar
 {
-    const DEFAULT_ID = 'default-toolbar';
+	const DEFAULT_ID = 'default-toolbar';
 
-    public static function __callStatic($name, $arguments)
-    {
-        $manager = Manager::getInstance();
-        $toolbar = $manager->getToolbarById(self::DEFAULT_ID) ?: $manager->createToolbar(self::DEFAULT_ID, []);
-        if (!$toolbar) {
-            //or exception?
-            return null;
-        }
+	public static function __callStatic($name, $arguments)
+	{
+		$manager = Manager::getInstance();
+		$toolbar = $manager->getToolbarById(self::DEFAULT_ID)?: $manager->createToolbar(self::DEFAULT_ID, []);
+		if (!$toolbar)
+		{
+			//or exception?
+			return null;
+		}
 
-        return call_user_func_array([$toolbar, $name], $arguments);
-    }
+		return call_user_func_array([$toolbar, $name], $arguments);
+	}
 }

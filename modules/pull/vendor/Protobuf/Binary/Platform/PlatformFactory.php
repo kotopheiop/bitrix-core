@@ -31,7 +31,7 @@ class PlatformFactory
             return $this->negativeEncoder = new GmpNegativeEncoder();
         }
 
-        if ($this->isExtensionLoaded('bcmath') && !$this->is32Bit()) {
+        if ($this->isExtensionLoaded('bcmath') && ! $this->is32Bit()) {
             return $this->negativeEncoder = new BcNegativeEncoder();
         }
 

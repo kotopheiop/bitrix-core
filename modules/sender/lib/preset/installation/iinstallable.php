@@ -14,33 +14,33 @@ namespace Bitrix\Sender\Preset\Installation;
  */
 interface iInstallable
 {
-    const EVENT_NAME = 'onSenderPresetList';
+	const EVENT_NAME = 'onSenderPresetList';
 
-    /**
-     * Get installable ID.
-     *
-     * @return string
-     */
-    public function getId();
+	/**
+	 * Get installable ID.
+	 *
+	 * @return string
+	 */
+	public function getId();
 
-    /**
-     * Return true if it is installed.
-     *
-     * @return bool
-     */
-    public function isInstalled();
+	/**
+	 * Return true if it is installed.
+	 *
+	 * @return bool
+	 */
+	public function isInstalled();
 
-    /**
-     * Install.
-     *
-     * @return bool
-     */
-    public function install();
+	/**
+	 * Install.
+	 *
+	 * @return bool
+	 */
+	public function install();
 
-    /**
-     * Uninstall.
-     *
-     * @return bool
-     */
-    public function uninstall();
+	/**
+	 * Uninstall.
+	 *
+	 * @return bool
+	 */
+	public function uninstall();
 }

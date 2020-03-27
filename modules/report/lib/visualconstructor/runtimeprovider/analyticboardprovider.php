@@ -14,36 +14,36 @@ use Bitrix\Report\VisualConstructor\IProvidable;
  */
 class AnalyticBoardProvider extends Base
 {
-    /**
-     * @return array
-     */
-    protected function availableFilterKeys()
-    {
-        return ['primary', 'boardKey', 'boardBatchKey'];
-    }
+	/**
+	 * @return array
+	 */
+	protected function availableFilterKeys()
+	{
+		return ['primary', 'boardKey', 'boardBatchKey'];
+	}
 
-    /**
-     * @return AnalyticBoardManager
-     */
-    protected function getManagerInstance()
-    {
-        return AnalyticBoardManager::getInstance();
-    }
+	/**
+	 * @return AnalyticBoardManager
+	 */
+	protected function getManagerInstance()
+	{
+		return AnalyticBoardManager::getInstance();
+	}
 
-    /**
-     * @return AnalyticBoard[]
-     */
-    protected function getEntitiesList()
-    {
-        return $this->getManagerInstance()->getAnalyticBoardsList();
-    }
+	/**
+	 * @return AnalyticBoard[]
+	 */
+	protected function getEntitiesList()
+	{
+		return $this->getManagerInstance()->getAnalyticBoardsList();
+	}
 
-    /**
-     * @return mixed
-     *
-     */
-    protected function getIndices()
-    {
-        return $this->getManagerInstance()->getIndices();
-    }
+	/**
+	 * @return mixed
+	 *
+	 */
+	protected function getIndices()
+	{
+		return $this->getManagerInstance()->getIndices();
+	}
 }

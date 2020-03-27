@@ -1,11 +1,11 @@
 <?php
 return [
-    '*' =>
-        [
-            'languages' =>
-                [
-                    'ru',
-                    'ua',
-                ],
-        ],
+	'*' =>
+		[
+			'languages' =>
+				[
+					'ru',
+					'ua',
+				],
+		],
 ];

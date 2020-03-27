@@ -16,40 +16,42 @@ Loc::loadMessages(__FILE__);
 
 class RegExpValidator extends Validator
 {
-    /**
-     * @var string
-     */
-    protected $pattern;
+	/**
+	 * @var string
+	 */
+	protected $pattern;
 
-    /**
-     * @var string
-     */
-    protected $errorPhraseCode = 'MAIN_ENTITY_VALIDATOR_REGEXP';
+	/**
+	 * @var string
+	 */
+	protected $errorPhraseCode = 'MAIN_ENTITY_VALIDATOR_REGEXP';
 
-    /**
-     * @param string $pattern
-     * @param null $errorPhrase
-     *
-     * @throws ArgumentTypeException
-     */
-    public function __construct($pattern, $errorPhrase = null)
-    {
-        if (!is_string($pattern)) {
-            throw new ArgumentTypeException('pattern', 'string');
-        }
+	/**
+	 * @param string $pattern
+	 * @param null   $errorPhrase
+	 *
+	 * @throws ArgumentTypeException
+	 */
+	public function __construct($pattern, $errorPhrase = null)
+	{
+		if (!is_string($pattern))
+		{
+			throw new ArgumentTypeException('pattern', 'string');
+		}
 
-        $this->pattern = $pattern;
+		$this->pattern = $pattern;
 
-        parent::__construct($errorPhrase);
-    }
+		parent::__construct($errorPhrase);
+	}
 
 
-    public function validate($value, $primary, array $row, ORM\Fields\Field $field)
-    {
-        if (preg_match($this->pattern, $value)) {
-            return true;
-        }
+	public function validate($value, $primary, array $row, ORM\Fields\Field $field)
+	{
+		if (preg_match($this->pattern, $value))
+		{
+			return true;
+		}
 
-        return $this->getErrorMessage($value, $field);
-    }
+		return $this->getErrorMessage($value, $field);
+	}
 }

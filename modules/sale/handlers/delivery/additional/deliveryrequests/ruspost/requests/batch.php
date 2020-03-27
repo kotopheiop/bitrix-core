@@ -1,5 +1,4 @@
 <?
-
 namespace Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Requests;
 
 use Bitrix\Main\Error;
@@ -17,78 +16,84 @@ Loc::loadMessages(__FILE__);
  */
 class Batch extends Base
 {
-    protected $path = "/1.0/batch/{name}";
-    protected $type = HttpClient::HTTP_GET;
-    protected $internalId = 0;
-    protected $externalId = '';
+	protected $path = "/1.0/batch/{name}";
+	protected $type = HttpClient::HTTP_GET;
+	protected $internalId = 0;
+	protected $externalId = '';
 
-    /**
-     * @param array $rawData
-     * @param array $requestData
-     * @return Requests\RequestResult
-     */
-    protected function convertResponse($rawData, $requestData)
-    {
-        $result = new Requests\RequestResult();
+	/**
+	 * @param array $rawData
+	 * @param array $requestData
+	 * @return Requests\RequestResult
+	 */
+	protected function convertResponse($rawData, $requestData)
+	{
+		$result = new Requests\RequestResult();
 
-        if (isset($rawData['batch-name'])) {
-            $result->setExternalId($rawData['batch-name']);
-            $result->setInternalId($this->internalId);
-            $result->setData($rawData);
-        } else {
-            $result->addError(
-                new Error(
-                    Loc::getMessage(
-                        'SALE_DLVRS_ADD_DREQ_RBATCH_01',
-                        array(
-                            '#INTERNAL_ID#' => $this->internalId,
-                            '#EXTERNAL_ID#' => $this->externalId
-                        )
-                    ),
-                    Requests\RequestResult::ERROR_NOT_FOUND
-                ));
-        }
+		if(isset($rawData['batch-name']))
+		{
+			$result->setExternalId($rawData['batch-name']);
+			$result->setInternalId($this->internalId);
+			$result->setData($rawData);
+		}
+		else
+		{
+			$result->addError(
+				new Error(
+					Loc::getMessage(
+						'SALE_DLVRS_ADD_DREQ_RBATCH_01',
+						array(
+							'#INTERNAL_ID#' => $this->internalId,
+							'#EXTERNAL_ID#' => $this->externalId
+						)
+					),
+					Requests\RequestResult::ERROR_NOT_FOUND
+			));
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    /**
-     * @param int[] $requestIds
-     * @param array $additional
-     * @return Requests\Result
-     */
-    public function process(array $requestIds, array $additional = array())
-    {
-        $result = new Requests\Result();
+	/**
+	 * @param int[] $requestIds
+	 * @param array $additional
+	 * @return Requests\Result
+	 */
+	public function process(array $requestIds, array $additional = array())
+	{
+		$result = new Requests\Result();
 
-        if (count($requestIds) !== 1) {
-            $result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCH_02')));
-            return $result;
-        }
+		if(count($requestIds) !== 1)
+		{
+			$result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCH_02')));
+			return $result;
+		}
 
-        $requestId = current($requestIds);
+		$requestId = current($requestIds);
 
-        if (intval($requestId) <= 0) {
-            $result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCH_03')));
-            return $result;
-        }
+		if(intval($requestId) <= 0)
+		{
+			$result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCH_03')));
+			return $result;
+		}
 
-        $res = Requests\RequestTable::getList(array(
-            'filter' => array(
-                '=ID' => $requestId
-            )
-        ));
+		$res =Requests\RequestTable::getList(array(
+			'filter' => array(
+				'=ID' => $requestId
+			)
+		));
 
-        $row = $res->fetch();
+		$row = $res->fetch();
 
-        if (!$row || strlen($row['EXTERNAL_ID']) <= 0) {
-            $result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCH_04')));
-            return $result;
-        }
+		if(!$row || strlen($row['EXTERNAL_ID']) <= 0)
+		{
+			$result->addError(new Error(Loc::getMessage('SALE_DLVRS_ADD_DREQ_RBATCH_04')));
+			return $result;
+		}
 
-        $this->externalId = $row['EXTERNAL_ID'];
-        $this->internalId = $row['INTERNAL_ID'];
-        $this->path = str_replace('{name}', $this->externalId, $this->path);
-        return $this->send(array(), $additional);
-    }
+		$this->externalId = $row['EXTERNAL_ID'];
+		$this->internalId= $row['INTERNAL_ID'];
+		$this->path = str_replace('{name}', $this->externalId, $this->path);
+		return $this->send(array(), $additional);
+	}
 }

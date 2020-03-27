@@ -20,297 +20,331 @@ Loc::loadMessages(__FILE__);
 
 final class Manager
 {
-    const DEFAULT_PRESET_DIRECTORY = '/bitrix/modules/sale/handlers/discountpreset/';
+	const DEFAULT_PRESET_DIRECTORY = '/bitrix/modules/sale/handlers/discountpreset/';
 
-    const CATEGORY_PRODUCTS = 4;
-    const CATEGORY_PAYMENT = 5;
-    const CATEGORY_DELIVERY = 6;
-    const CATEGORY_OTHER = 7;
+	const CATEGORY_PRODUCTS = 4;
+	const CATEGORY_PAYMENT  = 5;
+	const CATEGORY_DELIVERY = 6;
+	const CATEGORY_OTHER    = 7;
 
-    /** @var  ErrorCollection */
-    protected $errorCollection;
-    /** @var  Manager */
-    private static $instance;
-    /** @var  BasePreset[] */
-    private $presetList;
-    /** @var $restrictedGroupsMode bool */
-    private $restrictedGroupsMode = false;
+	/** @var  ErrorCollection */
+	protected $errorCollection;
+	/** @var  Manager */
+	private static $instance;
+	/** @var  BasePreset[] */
+	private $presetList;
+	/** @var $restrictedGroupsMode bool */
+	private $restrictedGroupsMode = false;
 
-    /**
-     * Returns Singleton of Manager
-     * @return Manager
-     */
-    public static function getInstance()
-    {
-        if (!isset(self::$instance)) {
-            self::$instance = new self;
-        }
+	/**
+	 * Returns Singleton of Manager
+	 * @return Manager
+	 */
+	public static function getInstance()
+	{
+		if (!isset(self::$instance))
+		{
+			self::$instance = new self;
+		}
 
-        return self::$instance;
-    }
+		return self::$instance;
+	}
 
-    /**
-     * Registers autoloader for presets.
-     * @return void
-     */
-    public function registerAutoLoader()
-    {
-        if (!$this->isAlreadyRegisteredAutoLoader()) {
-            \spl_autoload_register(array($this, 'autoLoad'), true);
-        }
-    }
+	/**
+	 * Registers autoloader for presets.
+	 * @return void
+	 */
+	public function registerAutoLoader()
+	{
+		if (!$this->isAlreadyRegisteredAutoLoader())
+		{
+			\spl_autoload_register(array($this, 'autoLoad'), true);
+		}
+	}
 
-    private function isAlreadyRegisteredAutoLoader()
-    {
-        $autoLoaders = spl_autoload_functions();
-        if (!$autoLoaders) {
-            return false;
-        }
+	private function isAlreadyRegisteredAutoLoader()
+	{
+		$autoLoaders = spl_autoload_functions();
+		if(!$autoLoaders)
+		{
+			return false;
+		}
 
-        foreach ($autoLoaders as $autoLoader) {
-            if (!is_array($autoLoader)) {
-                continue;
-            }
+		foreach ($autoLoaders as $autoLoader)
+		{
+			if(!is_array($autoLoader))
+			{
+				continue;
+			}
 
-            list($object, $method) = $autoLoader;
+			list($object, $method) = $autoLoader;
 
-            if ($object instanceof $this) {
-                return true;
-            }
-        }
+			if ($object instanceof $this)
+			{
+				return true;
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    private function __construct()
-    {
-        $this->errorCollection = new ErrorCollection;
+	private function __construct()
+	{
+		$this->errorCollection = new ErrorCollection;
 
-        $this->registerAutoLoader();
-    }
+		$this->registerAutoLoader();
+	}
 
-    private function __clone()
-    {
-    }
+	private function __clone()
+	{}
 
-    public function enableRestrictedGroupsMode($state)
-    {
-        $this->restrictedGroupsMode = $state === true;
-    }
+	public function enableRestrictedGroupsMode($state)
+	{
+		$this->restrictedGroupsMode = $state === true;
+	}
 
-    public function isRestrictedGroupsModeEnabled()
-    {
-        return $this->restrictedGroupsMode;
-    }
+	public function isRestrictedGroupsModeEnabled()
+	{
+		return $this->restrictedGroupsMode;
+	}
 
-    public function autoLoad($className)
-    {
-        $file = ltrim($className, "\\");    // fix web env
-        $file = strtr($file, Loader::ALPHA_UPPER, Loader::ALPHA_LOWER);
+	public function autoLoad($className)
+	{
+		$file = ltrim($className, "\\");    // fix web env
+		$file = strtr($file, Loader::ALPHA_UPPER, Loader::ALPHA_LOWER);
 
-        $documentRoot = $documentRoot = rtrim($_SERVER["DOCUMENT_ROOT"], "/\\");
+		$documentRoot = $documentRoot = rtrim($_SERVER["DOCUMENT_ROOT"], "/\\");
 
-        if (preg_match("#[^\\\\/a-zA-Z0-9_]#", $file)) {
-            return;
-        }
+		if(preg_match("#[^\\\\/a-zA-Z0-9_]#", $file))
+		{
+			return;
+		}
 
-        $file = str_replace('\\', '/', $file);
-        $fileParts = explode("/", $file);
+		$file = str_replace('\\', '/', $file);
+		$fileParts = explode("/", $file);
 
-        if ($fileParts[0] !== "sale" || $fileParts[1] !== "handlers" || $fileParts[2] !== 'discountpreset') {
-            return;
-        }
-        array_shift($fileParts);
+		if($fileParts[0] !== "sale" || $fileParts[1] !== "handlers" || $fileParts[2] !== 'discountpreset')
+		{
+			return;
+		}
+		array_shift($fileParts);
 
-        $filePath = $documentRoot . "/bitrix/modules/sale/" . implode("/", $fileParts) . ".php";
+		$filePath = $documentRoot . "/bitrix/modules/sale/" . implode("/", $fileParts) . ".php";
 
-        if (file_exists($filePath)) {
-            require_once($filePath);
-        }
-    }
+		if(file_exists($filePath))
+		{
+			require_once($filePath);
+		}
+	}
 
-    private function buildPresets()
-    {
-        if ($this->presetList === null) {
-            $this->presetList = array_filter(
-                array_merge(
-                    $this->buildDefaultPresets(),
-                    $this->buildCustomPresets()
-                ),
-                function (BasePreset $preset) {
-                    return $preset->isAvailable();
-                }
-            );
-        }
+	private function buildPresets()
+	{
+		if($this->presetList === null)
+		{
+			$this->presetList = array_filter(
+				array_merge(
+					$this->buildDefaultPresets(),
+					$this->buildCustomPresets()
+				),
+				function(BasePreset $preset)
+				{
+					return $preset->isAvailable();
+				}
+			);
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
-    private function buildCustomPresets()
-    {
-        $presetList = array();
+	private function buildCustomPresets()
+	{
+		$presetList = array();
 
-        $event = new Event('sale', 'OnSaleDiscountPresetBuildList');
-        $event->send();
+		$event = new Event('sale', 'OnSaleDiscountPresetBuildList');
+		$event->send();
 
-        foreach ($event->getResults() as $evenResult) {
-            if ($evenResult->getType() != EventResult::SUCCESS) {
-                continue;
-            }
+		foreach($event->getResults() as $evenResult)
+		{
+			if($evenResult->getType() != EventResult::SUCCESS)
+			{
+				continue;
+			}
 
-            $result = $evenResult->getParameters();
-            if (!is_array($result)) {
-                throw new SystemException('Wrong event result by building preset list. Must be array.');
-            }
+			$result = $evenResult->getParameters();
+			if(!is_array($result))
+			{
+				throw new SystemException('Wrong event result by building preset list. Must be array.');
+			}
 
-            foreach ($result as $preset) {
-                if (empty($preset['CLASS'])) {
-                    throw new SystemException('Wrong event result by building preset list. Could not find CLASS.');
-                }
+			foreach($result as $preset)
+			{
+				if(empty($preset['CLASS']))
+				{
+					throw new SystemException('Wrong event result by building preset list. Could not find CLASS.');
+				}
 
-                if (is_string($preset['CLASS']) && class_exists($preset['CLASS'])) {
-                    $preset = $this->createPresetInstance($preset['CLASS']);
-                    if ($preset) {
-                        $presetList[] = $preset;
-                    }
-                } else {
-                    throw new SystemException("Wrong event result by building preset list. Could not find class by CLASS {$preset['CLASS']}");
-                }
-            }
-        }
+				if(is_string($preset['CLASS']) && class_exists($preset['CLASS']))
+				{
+					$preset = $this->createPresetInstance($preset['CLASS']);
+					if($preset)
+					{
+						$presetList[] = $preset;
+					}
+				}
+				else
+				{
+					throw new SystemException("Wrong event result by building preset list. Could not find class by CLASS {$preset['CLASS']}");
+				}
+			}
+		}
 
-        return $presetList;
-    }
+		return $presetList;
+	}
 
-    private function buildDefaultPresets()
-    {
-        $documentRoot = Application::getDocumentRoot();
+	private function buildDefaultPresets()
+	{
+		$documentRoot = Application::getDocumentRoot();
+		
+		if(!Directory::isDirectoryExists($documentRoot . self::DEFAULT_PRESET_DIRECTORY))
+		{
+			throw new SystemException('Could not find folder with default presets. ' . self::DEFAULT_PRESET_DIRECTORY);
+		}
 
-        if (!Directory::isDirectoryExists($documentRoot . self::DEFAULT_PRESET_DIRECTORY)) {
-            throw new SystemException('Could not find folder with default presets. ' . self::DEFAULT_PRESET_DIRECTORY);
-        }
+		$defaultList = array();
+		$directory = new Directory($documentRoot . self::DEFAULT_PRESET_DIRECTORY);
+		foreach($directory->getChildren() as $presetFile)
+		{
+			if(!$presetFile->isFile() || !$presetFile->getName())
+			{
+				continue;
+			}
 
-        $defaultList = array();
-        $directory = new Directory($documentRoot . self::DEFAULT_PRESET_DIRECTORY);
-        foreach ($directory->getChildren() as $presetFile) {
-            if (!$presetFile->isFile() || !$presetFile->getName()) {
-                continue;
-            }
+			$className = $this->getClassNameFromPath($presetFile->getPath());
+			if($className)
+			{
+				$preset = $this->createPresetInstance($className);
+				if($preset)
+				{
+					$defaultList[] = $preset;
+				}
+			}
+		}
 
-            $className = $this->getClassNameFromPath($presetFile->getPath());
-            if ($className) {
-                $preset = $this->createPresetInstance($className);
-                if ($preset) {
-                    $defaultList[] = $preset;
-                }
-            }
-        }
+		return $defaultList;
+	}
 
-        return $defaultList;
-    }
+	/**
+	 * @param string $className
+	 * @return BasePreset
+	 */
+	private function createPresetInstance($className)
+	{
+		try
+		{
+			$class = new \ReflectionClass($className);
 
-    /**
-     * @param string $className
-     * @return BasePreset
-     */
-    private function createPresetInstance($className)
-    {
-        try {
-            $class = new \ReflectionClass($className);
+			/** @var BasePreset $instance */
+			$instance = $class->newInstanceArgs([]);
+			$instance->enableRestrictedGroupsMode($this->isRestrictedGroupsModeEnabled());
 
-            /** @var BasePreset $instance */
-            $instance = $class->newInstanceArgs([]);
-            $instance->enableRestrictedGroupsMode($this->isRestrictedGroupsModeEnabled());
+			return $instance;
+		}
+		catch (\ReflectionException $exception)
+		{
+		}
 
-            return $instance;
-        } catch (\ReflectionException $exception) {
-        }
+		return null;
+	}
+	
+	private function getClassNameFromPath($path)
+	{
+		return "Sale\\Handlers\\DiscountPreset\\" . getFileNameWithoutExtension($path);
+	}
+	
+	/**
+	 * Returns list of presets.
+	 *
+	 * @return BasePreset[]
+	 */
+	public function getPresets()
+	{
+		return $this->buildPresets()->presetList;
+	}
 
-        return null;
-    }
+	/**
+	 * Returns preset by id. Id is full class name.
+	 *
+	 * @param string $id Class name of preset
+	 * @return BasePreset
+	 */
+	public function getPresetById($id)
+	{
+		if(class_exists($id))
+		{
+			return $this->createPresetInstance($id);
+		}
+		else
+		{
+			foreach($this->buildPresets()->presetList as $preset)
+			{
+				if($preset::className() === $id)
+				{
+					return $preset;
+				}
+			}
+		}
 
-    private function getClassNameFromPath($path)
-    {
-        return "Sale\\Handlers\\DiscountPreset\\" . getFileNameWithoutExtension($path);
-    }
+		return null;
+	}
 
-    /**
-     * Returns list of presets.
-     *
-     * @return BasePreset[]
-     */
-    public function getPresets()
-    {
-        return $this->buildPresets()->presetList;
-    }
+	/**
+	 * @param $category
+	 * @return BasePreset[]
+	 */
+	public function getPresetsByCategory($category)
+	{
+		$presets = array();
+		foreach($this->getPresets() as $preset)
+		{
+			if($preset->getCategory() === $category)
+			{
+				$presets[] = $preset;
+			}
+		}
 
-    /**
-     * Returns preset by id. Id is full class name.
-     *
-     * @param string $id Class name of preset
-     * @return BasePreset
-     */
-    public function getPresetById($id)
-    {
-        if (class_exists($id)) {
-            return $this->createPresetInstance($id);
-        } else {
-            foreach ($this->buildPresets()->presetList as $preset) {
-                if ($preset::className() === $id) {
-                    return $preset;
-                }
-            }
-        }
+		uasort($presets, function(BasePreset $a, BasePreset $b){
+			return $a->getSort() > $b->getSort();
+		});
 
-        return null;
-    }
+		return $presets;
+	}
 
-    /**
-     * @param $category
-     * @return BasePreset[]
-     */
-    public function getPresetsByCategory($category)
-    {
-        $presets = array();
-        foreach ($this->getPresets() as $preset) {
-            if ($preset->getCategory() === $category) {
-                $presets[] = $preset;
-            }
-        }
+	public function getCategoryList()
+	{
+		return array(
+			self::CATEGORY_PRODUCTS => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_PRODUCTS'),
+			self::CATEGORY_PAYMENT => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_PAYMENT'),
+			self::CATEGORY_DELIVERY => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_DELIVERY'),
+			self::CATEGORY_OTHER => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_OTHER'),
+		);
+	}
 
-        uasort($presets, function (BasePreset $a, BasePreset $b) {
-            return $a->getSort() > $b->getSort();
-        });
+	public function getCategoryName($category)
+	{
+		$categoryList = $this->getCategoryList();
 
-        return $presets;
-    }
+		return isset($categoryList[$category])? $categoryList[$category] : '';
+	}
 
-    public function getCategoryList()
-    {
-        return array(
-            self::CATEGORY_PRODUCTS => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_PRODUCTS'),
-            self::CATEGORY_PAYMENT => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_PAYMENT'),
-            self::CATEGORY_DELIVERY => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_DELIVERY'),
-            self::CATEGORY_OTHER => Loc::getMessage('SALE_PRESET_DISCOUNT_MANAGER_CATEGORY_OTHER'),
-        );
-    }
+	public function hasCreatedDiscounts(BasePreset $preset)
+	{
+		$countQuery = new Query(DiscountTable::getEntity());
+		$countQuery->addSelect(new ExpressionField('CNT', 'COUNT(1)'));
+		$countQuery->setFilter(array(
+			'=PRESET_ID' => $preset::className(),
+		));
+		$totalCount = $countQuery->setLimit(null)->setOffset(null)->exec()->fetch();
 
-    public function getCategoryName($category)
-    {
-        $categoryList = $this->getCategoryList();
-
-        return isset($categoryList[$category]) ? $categoryList[$category] : '';
-    }
-
-    public function hasCreatedDiscounts(BasePreset $preset)
-    {
-        $countQuery = new Query(DiscountTable::getEntity());
-        $countQuery->addSelect(new ExpressionField('CNT', 'COUNT(1)'));
-        $countQuery->setFilter(array(
-            '=PRESET_ID' => $preset::className(),
-        ));
-        $totalCount = $countQuery->setLimit(null)->setOffset(null)->exec()->fetch();
-
-        return (bool)$totalCount['CNT'];
-    }
+		return (bool)$totalCount['CNT'];
+	}
 }

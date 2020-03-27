@@ -15,126 +15,130 @@ namespace Bitrix\Main\ORM\Fields;
  */
 class StringField extends ScalarField
 {
-    /**
-     * Shortcut for Regexp validator
-     * @var null|string
-     */
-    protected $format = null;
+	/**
+	 * Shortcut for Regexp validator
+	 * @var null|string
+	 */
+	protected $format = null;
 
-    /** @var int|null */
-    protected $size = null;
+	/** @var int|null  */
+	protected $size = null;
 
-    /**
-     * StringField constructor.
-     *
-     * @param       $name
-     * @param array $parameters deprecated, use configure* and add* methods instead
-     *
-     * @throws \Bitrix\Main\SystemException
-     */
-    function __construct($name, $parameters = array())
-    {
-        parent::__construct($name, $parameters);
+	/**
+	 * StringField constructor.
+	 *
+	 * @param       $name
+	 * @param array $parameters deprecated, use configure* and add* methods instead
+	 *
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	function __construct($name, $parameters = array())
+	{
+		parent::__construct($name, $parameters);
 
-        if (!empty($parameters['format'])) {
-            $this->format = $parameters['format'];
-        }
-        if (isset($parameters['size']) && intval($parameters['size']) > 0) {
-            $this->size = intval($parameters['size']);
-        }
-    }
+		if (!empty($parameters['format']))
+		{
+			$this->format = $parameters['format'];
+		}
+		if(isset($parameters['size']) && intval($parameters['size']) > 0)
+		{
+			$this->size = intval($parameters['size']);
+		}
+	}
 
-    /**
-     * @param $format
-     *
-     * @return $this
-     */
-    public function configureFormat($format)
-    {
-        $this->format = $format;
-        return $this;
-    }
+	/**
+	 * @param $format
+	 *
+	 * @return $this
+	 */
+	public function configureFormat($format)
+	{
+		$this->format = $format;
+		return $this;
+	}
 
-    /**
-     * Shortcut for Regexp validator
-     * @return null|string
-     */
-    public function getFormat()
-    {
-        return $this->format;
-    }
+	/**
+	 * Shortcut for Regexp validator
+	 * @return null|string
+	 */
+	public function getFormat()
+	{
+		return $this->format;
+	}
 
-    /**
-     * @return array|Validators\Validator[]|callback[]
-     * @throws \Bitrix\Main\ArgumentTypeException
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function getValidators()
-    {
-        $validators = parent::getValidators();
+	/**
+	 * @return array|Validators\Validator[]|callback[]
+	 * @throws \Bitrix\Main\ArgumentTypeException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getValidators()
+	{
+		$validators = parent::getValidators();
 
-        if ($this->format !== null) {
-            $validators[] = new Validators\RegExpValidator($this->format);
-        }
+		if ($this->format !== null)
+		{
+			$validators[] = new Validators\RegExpValidator($this->format);
+		}
 
-        return $validators;
-    }
+		return $validators;
+	}
 
-    /**
-     * @param $size
-     *
-     * @return $this
-     */
-    public function configureSize($size)
-    {
-        $this->size = $size;
-        return $this;
-    }
+	/**
+	 * @param $size
+	 *
+	 * @return $this
+	 */
+	public function configureSize($size)
+	{
+		$this->size = $size;
+		return $this;
+	}
 
-    /**
-     * Returns the size of the field in a database (in characters).
-     * @return int|null
-     */
-    public function getSize()
-    {
-        return $this->size;
-    }
+	/**
+	 * Returns the size of the field in a database (in characters).
+	 * @return int|null
+	 */
+	public function getSize()
+	{
+		return $this->size;
+	}
 
-    /**
-     * @param mixed $value
-     *
-     * @return string
-     */
-    public function cast($value)
-    {
-        $value = (string)$value;
+	/**
+	 * @param mixed $value
+	 *
+	 * @return string
+	 */
+	public function cast($value)
+	{
+		$value = (string) $value;
 
-        if ($this->size !== null) {
-            $value = substr($value, 0, $this->size);
-        }
+		if ($this->size !== null)
+		{
+			$value = substr($value, 0, $this->size);
+		}
 
-        return $value;
-    }
+		return $value;
+	}
 
-    /**
-     * @param mixed $value
-     *
-     * @return string
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function convertValueFromDb($value)
-    {
-        return $this->getConnection()->getSqlHelper()->convertFromDbString($value);
-    }
+	/**
+	 * @param mixed $value
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function convertValueFromDb($value)
+	{
+		return $this->getConnection()->getSqlHelper()->convertFromDbString($value);
+	}
 
-    /**
-     * @param string $value
-     *
-     * @return string
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function convertValueToDb($value)
-    {
-        return $this->getConnection()->getSqlHelper()->convertToDbString($value);
-    }
+	/**
+	 * @param string $value
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function convertValueToDb($value)
+	{
+		return $this->getConnection()->getSqlHelper()->convertToDbString($value);
+	}
 }

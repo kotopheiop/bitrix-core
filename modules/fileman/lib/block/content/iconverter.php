@@ -5,7 +5,6 @@
  * @subpackage sender
  * @copyright 2001-2012 Bitrix
  */
-
 namespace Bitrix\Fileman\Block\Content;
 
 use Bitrix\Main\Application;
@@ -18,19 +17,19 @@ Loc::loadMessages(__FILE__);
 
 interface IConverter
 {
-    /**
-     * Check string.
-     *
-     * @param string $string String.
-     * @return bool
-     */
-    public static function isValid($string);
+	/**
+	 * Check string.
+	 *
+	 * @param string $string String.
+	 * @return bool
+	 */
+	public static function isValid($string);
 
-    /**
-     * Parse string to an array of content blocks
-     *
-     * @param string $string String.
-     * @return BlockContent
-     */
-    public static function toArray($string);
+	/**
+	 * Parse string to an array of content blocks
+	 *
+	 * @param string $string String.
+	 * @return BlockContent
+	 */
+	public static function toArray($string);
 }

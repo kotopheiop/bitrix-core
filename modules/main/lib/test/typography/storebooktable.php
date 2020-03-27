@@ -19,36 +19,36 @@ use Bitrix\Main\ORM\Query\Join;
  */
 class StoreBookTable extends DataManager
 {
-    public static function getTableName()
-    {
-        return '(
+	public static function getTableName()
+	{
+		return '(
 			(SELECT 33 AS STORE_ID, 1 AS BOOK_ID, 4 AS QUANTITY)
 			UNION
 			(SELECT 33 AS STORE_ID, 2 AS BOOK_ID, 0 AS QUANTITY)
 			UNION
 			(SELECT 34 AS STORE_ID, 2 AS BOOK_ID, 9 AS QUANTITY)
 		)';
-    }
+	}
 
-    public static function getMap()
-    {
-        return [
-            (new IntegerField('STORE_ID'))
-                ->configurePrimary(),
+	public static function getMap()
+	{
+		return [
+			(new IntegerField('STORE_ID'))
+				->configurePrimary(),
 
-            (new Reference('STORE', StoreTable::class,
-                Join::on('this.STORE_ID', 'ref.ID')))
-                ->configureJoinType('inner'),
+			(new Reference('STORE', StoreTable::class,
+				Join::on('this.STORE_ID', 'ref.ID')))
+				->configureJoinType('inner'),
 
-            (new IntegerField('BOOK_ID'))
-                ->configurePrimary(),
+			(new IntegerField('BOOK_ID'))
+				->configurePrimary(),
 
-            (new Reference('BOOK', BookTable::class,
-                Join::on('this.BOOK_ID', 'ref.ID')))
-                ->configureJoinType('inner'),
+			(new Reference('BOOK', BookTable::class,
+				Join::on('this.BOOK_ID', 'ref.ID')))
+				->configureJoinType('inner'),
 
-            (new IntegerField('QUANTITY'))
-                ->configureDefaultValue(0)
-        ];
-    }
+			(new IntegerField('QUANTITY'))
+				->configureDefaultValue(0)
+		];
+	}
 }

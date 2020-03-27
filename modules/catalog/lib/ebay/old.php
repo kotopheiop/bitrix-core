@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Catalog;
 
 use Bitrix\Catalog\Ebay;
@@ -13,7 +12,7 @@ use Bitrix\Catalog\Ebay;
  */
 class EbayXMLer extends Ebay\EbayXMLer
 {
-
+	
 }
 
 /**
@@ -25,7 +24,7 @@ class EbayXMLer extends Ebay\EbayXMLer
  */
 class ExportOffer extends Ebay\ExportOffer
 {
-
+	
 }
 
 /**
@@ -37,7 +36,7 @@ class ExportOffer extends Ebay\ExportOffer
  */
 class ExportOfferCreator extends Ebay\ExportOfferCreator
 {
-
+	
 }
 
 /**
@@ -49,5 +48,5 @@ class ExportOfferCreator extends Ebay\ExportOfferCreator
  */
 class ExportOfferSKU extends Ebay\ExportOfferSKU
 {
-
+	
 }

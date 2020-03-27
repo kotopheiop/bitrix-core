@@ -12,20 +12,21 @@ use Bitrix\Main\ORM;
 
 class EnumValidator extends Validator
 {
-    /**
-     * @param $value
-     * @param $primary
-     * @param array $row
-     * @param \Bitrix\Main\ORM\Fields\Field | \Bitrix\Main\ORM\Fields\EnumField | \Bitrix\Main\ORM\Fields\BooleanField $field
-     *
-     * @return bool|string
-     */
-    public function validate($value, $primary, array $row, ORM\Fields\Field $field)
-    {
-        if (in_array($value, $field->getValues(), true) || $value == '') {
-            return true;
-        }
+	/**
+	 * @param $value
+	 * @param $primary
+	 * @param array $row
+	 * @param \Bitrix\Main\ORM\Fields\Field | \Bitrix\Main\ORM\Fields\EnumField | \Bitrix\Main\ORM\Fields\BooleanField $field
+	 *
+	 * @return bool|string
+	 */
+	public function validate($value, $primary, array $row, ORM\Fields\Field $field)
+	{
+		if (in_array($value, $field->getValues(), true) || $value == '')
+		{
+			return true;
+		}
 
-        return $this->getErrorMessage($value, $field);
-    }
+		return $this->getErrorMessage($value, $field);
+	}
 }

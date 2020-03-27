@@ -3,7 +3,7 @@
 namespace Bitrix\Sale;
 
 use Bitrix\Main;
-use    Bitrix\Sale\Internals\StatusTable;
+use	Bitrix\Sale\Internals\StatusTable;
 
 /**
  * Class DeliveryStatus
@@ -11,21 +11,21 @@ use    Bitrix\Sale\Internals\StatusTable;
  */
 class DeliveryStatus extends StatusBase
 {
-    const TYPE = 'D';
+	const TYPE = 'D';
 
-    /**
-     * @return mixed
-     */
-    public static function getInitialStatus()
-    {
-        return 'DN';
-    }
+	/**
+	 * @return mixed
+	 */
+	public static function getInitialStatus()
+	{
+		return 'DN';
+	}
 
-    /**
-     * @return mixed
-     */
-    public static function getFinalStatus()
-    {
-        return 'DF';
-    }
+	/**
+	 * @return mixed
+	 */
+	public static function getFinalStatus()
+	{
+		return 'DF';
+	}
 }

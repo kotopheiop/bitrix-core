@@ -13,23 +13,23 @@ Loc::loadMessages(__FILE__);
 
 class PaySystemExtra extends PaySystem
 {
-    public function getTitle()
-    {
-        return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEMEXTRA_NAME');
-    }
+	public function getTitle()
+	{
+		return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEMEXTRA_NAME');
+	}
 
-    protected function getLabelDiscountValue()
-    {
-        return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEMEXTRA_LABEL_DISCOUNT_VALUE');
-    }
+	protected function getLabelDiscountValue()
+	{
+		return Loc::getMessage('SALE_HANDLERS_DISCOUNTPRESET_PAYSYSTEMEXTRA_LABEL_DISCOUNT_VALUE');
+	}
 
-    protected function getTypeOfDiscount()
-    {
-        return static::ACTION_TYPE_EXTRA;
-    }
+	protected function getTypeOfDiscount()
+	{
+		return static::ACTION_TYPE_EXTRA;
+	}
 
-    public function getSort()
-    {
-        return 300;
-    }
+	public function getSort()
+	{
+		return 300;
+	}
 }

@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Services\Company\Restrictions;
 
 use Bitrix\Currency\CurrencyManager;
@@ -19,72 +18,75 @@ Loc::loadMessages(__FILE__);
  */
 class Currency extends Base\Restriction
 {
-    /**
-     * @param Internals\Entity $entity
-     * @return string
-     */
-    protected static function extractParams(Internals\Entity $entity)
-    {
-        if ($entity instanceof Internals\CollectableEntity) {
-            /** @var \Bitrix\Sale\ShipmentCollection $collection */
-            $collection = $entity->getCollection();
+	/**
+	 * @param Internals\Entity $entity
+	 * @return string
+	 */
+	protected static function extractParams(Internals\Entity $entity)
+	{
+		if ($entity instanceof Internals\CollectableEntity)
+		{
+			/** @var \Bitrix\Sale\ShipmentCollection $collection */
+			$collection = $entity->getCollection();
 
-            /** @var \Bitrix\Sale\Order $order */
-            $order = $collection->getOrder();
-        } elseif ($entity instanceof Sale\Order) {
-            /** @var \Bitrix\Sale\Order $order */
-            $order = $entity;
-        }
+			/** @var \Bitrix\Sale\Order $order */
+			$order = $collection->getOrder();
+		}
+		elseif ($entity instanceof Sale\Order)
+		{
+			/** @var \Bitrix\Sale\Order $order */
+			$order = $entity;
+		}
 
-        if (!$order)
-            return false;
+		if (!$order)
+			return false;
 
-        return $order->getCurrency();
-    }
+		return $order->getCurrency();
+	}
 
-    /**
-     * @return string
-     */
-    public static function getClassTitle()
-    {
-        return Loc::getMessage('SALE_COMPANY_RULES_BY_CURRENCY_TITLE');
-    }
+	/**
+	 * @return string
+	 */
+	public static function getClassTitle()
+	{
+		return Loc::getMessage('SALE_COMPANY_RULES_BY_CURRENCY_TITLE');
+	}
 
-    /**
-     * @return string
-     */
-    public static function getClassDescription()
-    {
-        return Loc::getMessage('SALE_COMPANY_RULES_BY_CURRENCY_DESC');
-    }
+	/**
+	 * @return string
+	 */
+	public static function getClassDescription()
+	{
+		return Loc::getMessage('SALE_COMPANY_RULES_BY_CURRENCY_DESC');
+	}
 
-    /**
-     * @param int $entityId
-     * @return array
-     */
-    public static function getParamsStructure($entityId = 0)
-    {
-        return array(
-            "CURRENCY" => array(
-                "TYPE" => "ENUM",
-                'MULTIPLE' => 'Y',
-                "LABEL" => Loc::getMessage("SALE_COMPANY_RULES_BY_CURRENCY"),
-                "OPTIONS" => CurrencyManager::getCurrencyList()
-            )
-        );
-    }
+	/**
+	 * @param int $entityId
+	 * @return array
+	 */
+	public static function getParamsStructure($entityId = 0)
+	{
+		return array(
+			"CURRENCY" => array(
+				"TYPE" => "ENUM",
+				'MULTIPLE' => 'Y',
+				"LABEL" => Loc::getMessage("SALE_COMPANY_RULES_BY_CURRENCY"),
+				"OPTIONS" => CurrencyManager::getCurrencyList()
+			)
+		);
+	}
 
-    /**
-     * @param $params
-     * @param array $restrictionParams
-     * @param int $serviceId
-     * @return bool
-     */
-    public static function check($params, array $restrictionParams, $serviceId = 0)
-    {
-        if (isset($restrictionParams) && is_array($restrictionParams['CURRENCY']))
-            return in_array($params, $restrictionParams['CURRENCY']);
+	/**
+	 * @param $params
+	 * @param array $restrictionParams
+	 * @param int $serviceId
+	 * @return bool
+	 */
+	public static function check($params, array $restrictionParams, $serviceId = 0)
+	{
+		if (isset($restrictionParams) && is_array($restrictionParams['CURRENCY']))
+			return in_array($params, $restrictionParams['CURRENCY']);
 
-        return true;
-    }
+		return true;
+	}
 }

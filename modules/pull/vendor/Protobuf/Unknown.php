@@ -28,12 +28,12 @@ class Unknown
     /**
      * @param integer $tag
      * @param integer $type
-     * @param mixed $value
+     * @param mixed   $value
      */
     public function __construct($tag = 0, $type = null, $value = null)
     {
-        $this->tag = $tag;
-        $this->type = $type;
+        $this->tag   = $tag;
+        $this->type  = $type;
         $this->value = $value;
     }
 }

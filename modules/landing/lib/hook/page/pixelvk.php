@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
@@ -10,57 +9,69 @@ Loc::loadMessages(__FILE__);
 
 class PixelVk extends \Bitrix\Landing\Hook\Page
 {
-    /**
-     * Map of the field.
-     * @return array
-     */
-    protected function getMap()
-    {
-        $helpUrl = \Bitrix\Landing\Help::getHelpUrl('PIXEL');
-        return array(
-            'USE' => new Field\Checkbox('USE', array(
-                'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_USE')
-            )),
-            'COUNTER' => new Field\Text('COUNTER', array(
-                'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_COUNTER'),
-                'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_PLACEHOLDER2'),
-                'help' => $helpUrl
-                    ? '<a href="' . $helpUrl . '" target="_blank">' .
-                    Loc::getMessage('LANDING_HOOK_PIXEL_FB_HELP') .
-                    '</a>'
-                    : ''
-            ))
-        );
-    }
+	/**
+	 * Map of the field.
+	 * @return array
+	 */
+	protected function getMap()
+	{
+		$helpUrl = \Bitrix\Landing\Help::getHelpUrl('PIXEL');
+		return array(
+			'USE' => new Field\Checkbox('USE', array(
+				'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_USE')
+			)),
+			'COUNTER' => new Field\Text('COUNTER', array(
+				'title' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_COUNTER'),
+				'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_VK_PLACEHOLDER2'),
+				'help' => $helpUrl
+					? '<a href="' . $helpUrl . '" target="_blank">' .
+				  			Loc::getMessage('LANDING_HOOK_PIXEL_VK_HELP') .
+				  		'</a>'
+					: ''
+			))
+		);
+	}
 
-    /**
-     * Enable or not the hook.
-     * @return boolean
-     */
-    public function enabled()
-    {
-        if ($this->issetCustomExec()) {
-            return true;
-        }
+	/**
+	 * Exec or not hook in edit mode.
+	 * @return bool
+	 */
+	public function enabledInEditMode()
+	{
+		return false;
+	}
 
-        return $this->fields['USE']->getValue() == 'Y';
-    }
+	/**
+	 * Enable or not the hook.
+	 * @return boolean
+	 */
+	public function enabled()
+	{
+		if ($this->issetCustomExec())
+		{
+			return true;
+		}
 
-    /**
-     * Exec hook.
-     * @return void
-     */
-    public function exec()
-    {
-        if ($this->execCustom()) {
-            return;
-        }
+		return $this->fields['USE']->getValue() == 'Y';
+	}
 
-        $counter = \htmlspecialcharsbx(trim($this->fields['COUNTER']));
-        $counter = \CUtil::jsEscape($counter);
-        if ($counter) {
-            Manager::setPageView('AfterHeadOpen',
-                '<script type="text/javascript" data-skip-moving="true">
+	/**
+	 * Exec hook.
+	 * @return void
+	 */
+	public function exec()
+	{
+		if ($this->execCustom())
+		{
+			return;
+		}
+
+		$counter = \htmlspecialcharsbx(trim($this->fields['COUNTER']));
+		$counter = \CUtil::jsEscape($counter);
+		if ($counter)
+		{
+			Manager::setPageView('AfterHeadOpen',
+				'<script type="text/javascript" data-skip-moving="true">
 					!function(){
 						var t=document.createElement("script");
 						t.type="text/javascript",
@@ -70,13 +81,13 @@ class PixelVk extends \Bitrix\Landing\Hook\Page
 						VK.Retargeting.Hit()},document.head.appendChild(t)
 					}();
 				</script>'
-            );
-            Manager::setPageView(
-                'AfterBodyOpen',
-                '<noscript>
+			);
+			Manager::setPageView(
+				'AfterBodyOpen',
+				'<noscript>
 					<img src="https://vk.com/rtrg?p=' . $counter . '" style="position:fixed; left:-999px;" alt=""/>
 				</noscript>'
-            );
-        }
-    }
+			);
+		}
+	}
 }

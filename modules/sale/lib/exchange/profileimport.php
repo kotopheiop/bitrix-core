@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Exchange;
 
 use Bitrix\Main;
@@ -32,35 +31,39 @@ class ProfileImport extends UserImportBase
         return EntityType::PROFILE;
     }
 
-    /**
-     * @param array $fields
-     * @return Sale\Result
-     * @throws Main\ArgumentException
-     */
+	/**
+	 * @param array $fields
+	 * @return Sale\Result
+	 * @throws Main\ArgumentException
+	 */
     public function load(array $fields)
     {
         $result = new Sale\Result();
 
-        $r = $this->checkFields($fields);
-        if (!$r->isSuccess()) {
+    	$r = $this->checkFields($fields);
+        if(!$r->isSuccess())
+        {
             throw new Main\ArgumentException('XML_ID is not defined');
         }
 
         $profileFields = $this->initFieldsProfile($fields, $arErrors);
 
-        if (count($arErrors) > 0) {
-            foreach ($arErrors as $error) {
-                $result->addError(new  Main\Error(str_replace('<br>', '', $error['TEXT'])));
-            }
-        }
+        if(count($arErrors)>0)
+		{
+			foreach($arErrors as $error)
+			{
+				$result->addError(new  Main\Error(str_replace('<br>','', $error['TEXT'])));
+			}
+		}
 
-        if (count($profileFields) > 0) {
-            $profile = new static();
+		if(count($profileFields)>0)
+		{
+			$profile = new static();
 
-            $profile->setFields($profileFields);
+			$profile->setFields($profileFields);
 
-            $this->setEntity($profile);
-        }
+			$this->setEntity($profile);
+		}
 
         return $result;
     }
@@ -102,7 +105,7 @@ class ProfileImport extends UserImportBase
     /**
      * @return bool
      */
-    public function isImportable()
+	public function isImportable()
     {
         return $this->settings->isImportableFor($this->getOwnerTypeId());
     }
@@ -123,13 +126,18 @@ class ProfileImport extends UserImportBase
 
         $propertyOrders = static::getPropertyOrdersByPersonalTypeId($profile->getPersonalTypeId());
 
-        if (is_array($propertyOrders)) {
-            foreach ($propertyOrders as $filedsProperty) {
+        if(is_array($propertyOrders))
+        {
+            foreach($propertyOrders as $filedsProperty)
+            {
                 $propertyId = $filedsProperty["ID"];
-                if (array_key_exists($propertyId, $property)) {
+                if(array_key_exists($propertyId, $property))
+                {
                     $propertyByConfigValue = $property[$propertyId];
-                    if ($profile->profileGetId() <= 0) {
-                        if (!empty($propertyByConfigValue)) {
+                    if($profile->profileGetId()<=0)
+                    {
+                        if(!empty($propertyByConfigValue))
+                        {
                             $profileId = \CSaleOrderUserProps::Add(array(
                                 "NAME" => $fields["AGENT_NAME"],
                                 "USER_ID" => $profile->getUserId(),
@@ -171,7 +179,8 @@ class ProfileImport extends UserImportBase
         $fields = $params["TRAITS"];
         $property = $params["ORDER_PROP"];
 
-        if ($criterion->equals($fields)) {
+        if($criterion->equals($fields))
+        {
             $fieldsProfileUpdate = array(
                 "VERSION_1C" => $fields["VERSION_1C"],
                 "NAME" => $fields["AGENT_NAME"],
@@ -182,16 +191,20 @@ class ProfileImport extends UserImportBase
 
 
             $profileFields = static::getFieldsUserProfile($profile->profileGetId());
-            foreach ($profileFields as $fieldsProfile) {
+            foreach($profileFields as $fieldsProfile)
+            {
                 $fieldsProfileByProperty[$fieldsProfile["ORDER_PROPS_ID"]] = array("ID" => $fieldsProfile["ID"], "VALUE" => $fieldsProfile["VALUE"]);
             }
 
             $propertyOrders = static::getPropertyOrdersByPersonalTypeId($profile->getPersonalTypeId());
-            foreach ($propertyOrders as $filedsProperty) {
+            foreach($propertyOrders as $filedsProperty)
+            {
                 $propertyId = $filedsProperty["ID"];
-                if (array_key_exists($propertyId, $property)) {
+                if(array_key_exists($propertyId, $property))
+                {
                     $propertyByConfigValue = $property[$propertyId];
-                    if (!empty($propertyByConfigValue)) {
+                    if(!empty($propertyByConfigValue))
+                    {
                         $fields = array(
                             "USER_PROPS_ID" => $profile->getField("USER_PROFILE_ID"),
                             "ORDER_PROPS_ID" => $propertyId,
@@ -199,9 +212,12 @@ class ProfileImport extends UserImportBase
                             "VALUE" => $propertyByConfigValue
                         );
 
-                        if (empty($fieldsProfileByProperty[$propertyId])) {
+                        if(empty($fieldsProfileByProperty[$propertyId]))
+                        {
                             \CSaleOrderUserPropsValue::Add($fields);
-                        } elseif ($fieldsProfileByProperty[$propertyId]["VALUE"] != $propertyByConfigValue) {
+                        }
+                        elseif($fieldsProfileByProperty[$propertyId]["VALUE"] != $propertyByConfigValue)
+                        {
                             \CSaleOrderUserPropsValue::Update($fieldsProfileByProperty[$propertyId]["ID"], $fields);
                         }
                     }
@@ -229,8 +245,9 @@ class ProfileImport extends UserImportBase
     {
         $result = new Sale\Result();
 
-        if (empty($fields['XML_ID'])) {
-            $result->addError(new Main\Error('XML_ID is not defined', ''));
+        if(empty($fields['XML_ID']))
+        {
+            $result->addError(new Main\Error('XML_ID is not defined',''));
         }
 
         return $result;
@@ -264,11 +281,12 @@ class ProfileImport extends UserImportBase
     {
         $result = array();
 
-        if (intval($profileId) <= 0)
+        if(intval($profileId) <= 0)
             return false;
 
         $r = \CSaleOrderUserPropsValue::GetList(array(), array("USER_PROPS_ID" => $profileId));
-        while ($ar = $r->Fetch()) {
+        while ($ar = $r->Fetch())
+        {
             //$result[$ar["ORDER_PROPS_ID"]] = $ar["VALUE"];
             $result[] = $ar;
         }
@@ -284,11 +302,13 @@ class ProfileImport extends UserImportBase
     {
         static $profiles = null;
 
-        if ($profiles[$fields['XML_ID']] === null) {
-            $result = array();
-            $profile = static::getUserProfile(array('XML_ID' => $fields['XML_ID']));
+        if($profiles[$fields['XML_ID']] === null)
+        {
+			$result = array();
+        	$profile = static::getUserProfile(array('XML_ID'=>$fields['XML_ID']));
 
-            if (!empty($profile)) {
+            if(!empty($profile))
+            {
                 $result['USER_ID'] = $profile['USER_ID'];
                 $result['PERSON_TYPE_ID'] = $profile['PERSON_TYPE_ID'];
 
@@ -296,16 +316,20 @@ class ProfileImport extends UserImportBase
                 $result['USER_PROFILE_VERSION'] = $profile['VERSION_1C'];
 
                 $profileFields = static::getFieldsUserProfile($profile['ID']);
-                if (!empty($profileFields)) {
-                    foreach ($profileFields as $profileField) {
+                if(!empty($profileFields))
+                {
+                    foreach($profileFields as $profileField)
+                    {
                         $result['USER_PROPS'][$profileField["ORDER_PROPS_ID"]] = $profileField["VALUE"];
                     }
                 }
-            } elseif ($this->isImportable()) {
+            }
+            elseif($this->isImportable())
+            {
                 $result['PERSON_TYPE_ID'] = $this->resolvePersonTypeId($fields);
 
                 $user = static::getUserByCode($fields['XML_ID']);
-                if (!empty($user))
+                if(!empty($user))
                     $result['USER_ID'] = $user['ID'];
                 else
                     $result['USER_ID'] = $this->registerUser($fields, $arErrors);
@@ -315,10 +339,10 @@ class ProfileImport extends UserImportBase
                 $result['USER_PROPS'] = null;
             }
 
-            if (count($arErrors) > 0)
-                return $result;
+            if(count($arErrors)>0)
+            	return $result;
             else
-                $profiles[$fields['XML_ID']] = $result;
+            	$profiles[$fields['XML_ID']] = $result;
         }
 
         return $profiles[$fields['XML_ID']];
@@ -327,7 +351,7 @@ class ProfileImport extends UserImportBase
     /**
      * @param $code
      * @return array
-     * @deprecated
+	 * @deprecated
      */
     public static function getUserByCode($code)
     {

@@ -6,7 +6,6 @@
  * @copyright 2001-2013 Bitrix
  * @since File available since 14.0.0
  */
-
 namespace Bitrix\Security\Filter\Auditor;
 
 /**
@@ -17,134 +16,143 @@ namespace Bitrix\Security\Filter\Auditor;
  */
 abstract class Base
 {
-    private $splittingChar = ' ';
-    private $filteredValue = '';
+	private $splittingChar = ' ';
+	private $filteredValue = '';
 
-    protected $filters = array();
-    protected $name = '';
-
-
-    function __construct($splittingChar = '')
-    {
-        $this->setSplittingChar($splittingChar);
-    }
-
-    /**
-     * Process and save filtered value
-     * Return true if value triggered auditor filtration
-     * For get filtered value use Base::getFilteredValue
-     *
-     * Simple example:
-     * <code>
-     * $ob = new Base();
-     * if ($ob->process($someValue))
-     *     $someValue = $ob->getFilteredValue();
-     * </code>
-     * @param string $value
-     * @return bool
-     */
-    public function process($value)
-    {
-        $this->initializeFilters();
-        $this->setFilteredValue('');
-        $found = false;
-
-        $str2 = '';
-        $strX = $value;
-        while ($str2 != $strX) {
-            $str2 = $strX;
-            $strX = preg_replace($this->filters['search'], $this->filters['replace'], $str2);
-        }
-
-        if ($str2 != $value) {
-            $this->setFilteredValue($str2);
-            $found = true;
-        }
-        return $found;
-    }
+	protected $filters = array();
+	protected $name = '';
 
 
-    /**
-     * Return filtered value after last value processing
-     *
-     * @return string
-     * @see Base::process
-     */
-    public function getFilteredValue()
-    {
-        return $this->filteredValue;
-    }
+	function __construct($splittingChar = '')
+	{
+		$this->setSplittingChar($splittingChar);
+	}
+
+	/**
+	 * Process and save filtered value
+	 * Return true if value triggered auditor filtration
+	 * For get filtered value use Base::getFilteredValue
+	 *
+	 * Simple example:
+	 * <code>
+	 * $ob = new Base();
+	 * if ($ob->process($someValue))
+	 *     $someValue = $ob->getFilteredValue();
+	 * </code>
+	 * @param string $value
+	 * @return bool
+	 */
+	public function process($value)
+	{
+		$this->initializeFilters();
+		$this->setFilteredValue('');
+		$found = false;
+
+		$str2 = '';
+		$strX = $value;
+		while ($str2 != $strX)
+		{
+				$str2 = $strX;
+				$strX = preg_replace($this->filters['search'], $this->filters['replace'], $str2);
+		}
+
+		if ($str2 != $value)
+		{
+			$this->setFilteredValue($str2);
+			$found = true;
+		} 
+		return $found;
+	}
 
 
-    /**
-     * Return auditor name
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
+	/**
+	 * Return filtered value after last value processing
+	 *
+	 * @see Base::process
+	 * @return string
+	 */
+	public function getFilteredValue()
+	{
+		return $this->filteredValue;
+	}
 
 
-    /**
-     * @param string $string
-     */
-    protected function setFilteredValue($string)
-    {
-        $this->filteredValue = $string;
-    }
+	/**
+	 * Return auditor name
+	 *
+	 * @return string
+	 */
+	public function getName()
+	{
+		return $this->name;
+	}
 
 
-    /**
-     * @param string $char
-     */
-    protected function setSplittingChar($char)
-    {
-        if (is_string($char) && $char != '') {
-            $this->splittingChar = $char;
-        }
-    }
+	/**
+	 * @param string $string
+	 */
+	protected function setFilteredValue($string)
+	{
+			$this->filteredValue = $string;
+	}
 
-    /**
-     * @param string $customChar
-     * @return string
-     */
-    protected function getSplittingChar($customChar = '')
-    {
-        if (is_string($customChar) && $customChar != '') {
-            return $customChar;
-        } elseif (is_string($this->splittingChar) && $this->splittingChar != '') {
-            return $this->splittingChar;
-        } else {
-            return ' ';
-        }
-    }
 
-    /**
-     * make string like '\\1 * \\2 * \\3 * \\4'
-     * @param int $splitItemsCount
-     * @param string $customSplitChar
-     * @return string
-     */
-    protected function getSplittingString($splitItemsCount = 2, $customSplitChar = '')
-    {
-        $glue = self::getSplittingChar($customSplitChar) . '\\';
-        $result = '\\';
-        $result .= join($glue, range(1, $splitItemsCount));
-        return $result;
-    }
+	/**
+	 * @param string $char
+	 */
+	protected function setSplittingChar($char)
+	{
+		if (is_string($char) && $char != '')
+		{
+			$this->splittingChar = $char;
+		}
+	}
 
-    protected function initializeFilters()
-    {
-        if (!$this->filters) {
-            $this->filters = $this->getFilters();
-        }
-    }
+	/**
+	 * @param string $customChar
+	 * @return string
+	 */
+	protected function getSplittingChar($customChar = '')
+	{
+		if (is_string($customChar) && $customChar != '')
+		{
+			return $customChar;
+		}
+		elseif (is_string($this->splittingChar) && $this->splittingChar != '')
+		{
+			return $this->splittingChar;
+		}
+		else
+		{
+			return ' ';
+		}
+	}
 
-    /**
-     * @return array
-     */
-    abstract protected function getFilters();
+	/**
+	 * make string like '\\1 * \\2 * \\3 * \\4'
+	 * @param int $splitItemsCount
+	 * @param string $customSplitChar
+	 * @return string
+	 */
+	protected function getSplittingString($splitItemsCount = 2, $customSplitChar = '')
+	{
+		$glue = self::getSplittingChar($customSplitChar).'\\';
+		$result = '\\';
+		$result .= join($glue, range(1, $splitItemsCount));
+		return $result;
+	}
+
+	protected function initializeFilters()
+	{
+		if (!$this->filters)
+		{
+			$this->filters = $this->getFilters();
+		}
+	}
+
+	/**
+	 * @return array
+	 */
+	abstract protected function getFilters();
 
 }

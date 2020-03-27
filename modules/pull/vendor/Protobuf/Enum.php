@@ -28,12 +28,12 @@ abstract class Enum
     protected $name;
 
     /**
-     * @param string $name
+     * @param string  $name
      * @param integer $value
      */
     public function __construct($name, $value)
     {
-        $this->name = $name;
+        $this->name  = $name;
         $this->value = $value;
     }
 
@@ -58,6 +58,6 @@ abstract class Enum
      */
     public function __toString()
     {
-        return (string)$this->name;
+        return (string) $this->name;
     }
 }

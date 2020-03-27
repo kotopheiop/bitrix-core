@@ -1,5 +1,4 @@
 <?
-
 namespace Bitrix\Sale\Location\Normalizer;
 
 /**
@@ -9,11 +8,11 @@ namespace Bitrix\Sale\Location\Normalizer;
  */
 class SpaceNormalizer implements INormalizer
 {
-    /**
-     * @inheritdoc
-     */
-    public function normalize($string)
-    {
-        return str_replace(' ', '', $string);
-    }
+	/**
+	 * @inheritdoc
+	 */
+	public function normalize($string)
+	{
+		return str_replace(' ', '', $string);
+	}
 }

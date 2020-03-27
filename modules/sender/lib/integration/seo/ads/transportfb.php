@@ -18,5 +18,5 @@ Loc::loadMessages(__FILE__);
  */
 class TransportFb extends TransportBase
 {
-    const CODE = self::CODE_ADS_FB;
+	const CODE = self::CODE_ADS_FB;
 }

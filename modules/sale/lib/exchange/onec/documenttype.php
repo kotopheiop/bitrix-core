@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Exchange\OneC;
 
 /**
@@ -27,7 +26,7 @@ class DocumentType
     const PAYMENT_CASH_LESS_NAME = 'PAYMENT_CASH_LESS';
     const PAYMENT_CARD_TRANSACTION_NAME = 'PAYMENT_CARD_TRANSACTION';
     const PROFILE_NAME = 'PROFILE';
-    const USER_PROFILE_NAME = 'USER_PROFILE';
+	const USER_PROFILE_NAME = 'USER_PROFILE';
 
     private static $ALL_DESCRIPTIONS = array();
 
@@ -37,7 +36,8 @@ class DocumentType
      */
     public static function isDefined($typeID)
     {
-        if (!is_int($typeID)) {
+        if(!is_int($typeID))
+        {
             $typeID = (int)$typeID;
         }
         return $typeID >= self::FIRST && $typeID <= self::LAST;
@@ -50,11 +50,13 @@ class DocumentType
     public static function resolveID($name)
     {
         $name = strtoupper(trim(strval($name)));
-        if ($name == '') {
+        if($name == '')
+        {
             return self::UNDEFINED;
         }
 
-        switch ($name) {
+        switch($name)
+        {
             case self::ORDER_NAME:
                 return self::ORDER;
 
@@ -73,8 +75,8 @@ class DocumentType
             case self::PROFILE_NAME:
                 return self::PROFILE;
 
-            case self::USER_PROFILE_NAME:
-                return self::USER_PROFILE;
+			case self::USER_PROFILE_NAME:
+				return self::USER_PROFILE;
 
             default:
                 return self::UNDEFINED;
@@ -87,16 +89,19 @@ class DocumentType
      */
     public static function resolveName($typeID)
     {
-        if (!is_numeric($typeID)) {
+        if(!is_numeric($typeID))
+        {
             return '';
         }
 
         $typeID = intval($typeID);
-        if ($typeID <= 0) {
+        if($typeID <= 0)
+        {
             return '';
         }
 
-        switch ($typeID) {
+        switch($typeID)
+        {
             case self::ORDER:
                 return self::ORDER_NAME;
 
@@ -115,8 +120,8 @@ class DocumentType
             case self::PROFILE:
                 return self::PROFILE_NAME;
 
-            case self::USER_PROFILE:
-                return self::USER_PROFILE_NAME;
+			case self::USER_PROFILE:
+				return self::USER_PROFILE_NAME;
 
             case self::UNDEFINED:
             default:
@@ -129,7 +134,8 @@ class DocumentType
      */
     public static function getAllDescriptions()
     {
-        if (!self::$ALL_DESCRIPTIONS[LANGUAGE_ID]) {
+        if(!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
+        {
             IncludeModuleLangFile(__FILE__);
             self::$ALL_DESCRIPTIONS[LANGUAGE_ID] = array(
                 self::ORDER => GetMessage('SALE_TYPE_ORDER'),
@@ -163,11 +169,14 @@ class DocumentType
     public static function getDescriptions($types)
     {
         $result = array();
-        if (is_array($types)) {
-            foreach ($types as $typeID) {
+        if(is_array($types))
+        {
+            foreach($types as $typeID)
+            {
                 $typeID = intval($typeID);
                 $descr = self::getDescription($typeID);
-                if ($descr !== '') {
+                if($descr !== '')
+                {
                     $result[$typeID] = $descr;
                 }
             }

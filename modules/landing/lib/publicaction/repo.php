@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Landing\PublicAction;
 
 use Bitrix\Landing\Manager;
@@ -15,453 +14,538 @@ Loc::loadMessages(__FILE__);
 
 class Repo
 {
-    /**
-     * Check content for bad substring.
-     * @param string $content
-     * @param string $splitter
-     * @return PublicActionResult
-     */
-    public static function checkContent($content, $splitter = '#SANITIZE#')
-    {
-        $result = new PublicActionResult();
-        $content = Manager::sanitize(
-            $content,
-            $bad,
-            $splitter
-        );
-        $result->setResult(array(
-            'is_bad' => $bad,
-            'content' => $content
-        ));
-        return $result;
-    }
+	/**
+	 * Check content for bad substring.
+	 * @param string $content
+	 * @param string $splitter
+	 * @return PublicActionResult
+	 */
+	public static function checkContent($content, $splitter = '#SANITIZE#')
+	{
+		$result = new PublicActionResult();
+		$content = Manager::sanitize(
+			$content,
+			$bad,
+			$splitter
+		);
+		$result->setResult(array(
+			'is_bad' => $bad,
+			'content' => $content
+		));
+		return $result;
+	}
 
-    /**
-     * Register new block.
-     * @param string $code Unique code of block (for one app context).
-     * @param array $fields Block data.
-     * @param array $manifest Manifest data.
-     * @return \Bitrix\Landing\PublicActionResult
-     */
-    public static function register($code, array $fields, array $manifest = array())
-    {
-        $result = new PublicActionResult();
-        $error = new \Bitrix\Landing\Error;
+	/**
+	 * Register new block.
+	 * @param string $code Unique code of block (for one app context).
+	 * @param array $fields Block data.
+	 * @param array $manifest Manifest data.
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function register($code, array $fields, array $manifest = array())
+	{
+		$result = new PublicActionResult();
+		$error = new \Bitrix\Landing\Error;
 
-        // unset not allowed keys
-        $notAllowed = array('callbacks');
-        foreach ($notAllowed as $key) {
-            if (isset($manifest[$key])) {
-                unset($manifest[$key]);
-            }
-        }
+		if (!is_string($code))
+		{
+			return $result;
+		}
 
-        if (!is_array($fields)) {
-            $fields = array();
-        }
+		// unset not allowed keys
+		$notAllowed = array('callbacks');
+		foreach ($notAllowed as $key)
+		{
+			if (isset($manifest[$key]))
+			{
+				unset($manifest[$key]);
+			}
+		}
 
-        $check = false;
-        $fields['XML_ID'] = trim($code);
+		if (!is_array($fields))
+		{
+			$fields = array();
+		}
 
-        if (isset($fields['CONTENT'])) {
-            // sanitize content
-            $fields['CONTENT'] = Manager::sanitize(
-                $fields['CONTENT'],
-                $bad
-            );
-            if ($bad) {
-                $error->addError(
-                    'CONTENT_IS_BAD',
-                    Loc::getMessage('LANDING_APP_CONTENT_IS_BAD')
-                );
-                $result->setError($error);
-                return $result;
-            }
-            // sanitize card's content
-            if (
-                isset($manifest['cards']) &&
-                is_array($manifest['cards'])
-            ) {
-                foreach ($manifest['cards'] as $cardCode => &$card) {
-                    if (
-                        isset($card['presets']) &&
-                        is_array($card['presets'])
-                    ) {
-                        foreach ($card['presets'] as $presetCode => &$preset) {
-                            foreach (['html', 'name', 'values'] as $code) {
-                                if (isset($preset[$code])) {
-                                    $preset[$code] = Manager::sanitize(
-                                        $preset[$code],
-                                        $bad
-                                    );
-                                    if ($bad) {
-                                        $error->addError(
-                                            'PRESET_CONTENT_IS_BAD',
-                                            Loc::getMessage(
-                                                'LANDING_APP_PRESET_CONTENT_IS_BAD',
-                                                array(
-                                                    '#preset#' => $presetCode,
-                                                    '#card#' => $cardCode
-                                                ))
-                                        );
-                                        $result->setError($error);
-                                        return $result;
-                                    }
-                                }
-                            }
-                        }
-                        unset($preset);
-                    }
-                }
-                unset($card);
-            }
-        }
+		$check = false;
+		$fields['XML_ID'] = trim($code);
 
-        $fields['MANIFEST'] = serialize((array)$manifest);
+		if (isset($fields['CONTENT']))
+		{
+			// sanitize content
+			$fields['CONTENT'] = Manager::sanitize(
+				$fields['CONTENT'],
+				$bad
+			);
+			if ($bad)
+			{
+				$error->addError(
+					'CONTENT_IS_BAD',
+					Loc::getMessage('LANDING_APP_CONTENT_IS_BAD')
+				);
+				$result->setError($error);
+				return $result;
+			}
+			// sanitize card's content
+			if (
+				isset($manifest['cards']) &&
+				is_array($manifest['cards'])
+			)
+			{
+				foreach ($manifest['cards'] as $cardCode => &$card)
+				{
+					if (
+						isset($card['presets']) &&
+						is_array($card['presets'])
+					)
+					{
+						foreach ($card['presets'] as $presetCode => &$preset)
+						{
+							foreach (['html', 'name', 'values'] as $code)
+							{
+								if (isset($preset[$code]))
+								{
+									$preset[$code] = Manager::sanitize(
+										$preset[$code],
+										$bad
+									);
+									if ($bad)
+									{
+										$error->addError(
+											'PRESET_CONTENT_IS_BAD',
+											Loc::getMessage(
+												'LANDING_APP_PRESET_CONTENT_IS_BAD',
+												array(
+													'#preset#' => $presetCode,
+													'#card#' => $cardCode
+												))
+										);
+										$result->setError($error);
+										return $result;
+									}
+								}
+							}
+						}
+						unset($preset);
+					}
+				}
+				unset($card);
+			}
+		}
 
-        // set app code
-        if (($app = \Bitrix\Landing\PublicAction::restApplication())) {
-            $fields['APP_CODE'] = $app['CODE'];
-        }
+		$fields['MANIFEST'] = serialize((array)$manifest);
 
-        // check unique
-        if ($fields['XML_ID']) {
-            $check = RepoCore::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' =>
-                    isset($fields['APP_CODE'])
-                        ? array(
-                        '=XML_ID' => $fields['XML_ID'],
-                        '=APP_CODE' => $fields['APP_CODE']
-                    )
-                        : array(
-                        '=XML_ID' => $fields['XML_ID']
-                    )
-            ))->fetch();
-        }
+		// set app code
+		if (($app = \Bitrix\Landing\PublicAction::restApplication()))
+		{
+			$fields['APP_CODE'] = $app['CODE'];
+		}
 
-        // register (add / update)
-        if ($check) {
-            $res = RepoCore::update($check['ID'], $fields);
-        } else {
-            $res = RepoCore::add($fields);
-        }
-        if ($res->isSuccess()) {
-            if (
-                isset($fields['RESET']) &&
-                $fields['RESET'] == 'Y'
-            ) {
-                \Bitrix\Landing\Update\Block::register(
-                    'repo_' . $res->getId()
-                );
-            }
-            $result->setResult($res->getId());
-        } else {
-            $error->addFromResult($res);
-            $result->setError($error);
-        }
+		// check unique
+		if ($fields['XML_ID'])
+		{
+			$check = RepoCore::getList(array(
+				'select' => array(
+					'ID'
+				),
+				'filter' =>
+					isset($fields['APP_CODE'])
+					? array(
+						'=XML_ID' => $fields['XML_ID'],
+						'=APP_CODE' => $fields['APP_CODE']
+					)
+					: array(
+						'=XML_ID' => $fields['XML_ID']
+					)
+			))->fetch();
+		}
 
-        return $result;
-    }
+		// register (add / update)
+		if ($check)
+		{
+			$res = RepoCore::update($check['ID'], $fields);
+		}
+		else
+		{
+			$res = RepoCore::add($fields);
+		}
+		if ($res->isSuccess())
+		{
+			if (
+				isset($fields['RESET']) &&
+				$fields['RESET'] == 'Y'
+			)
+			{
+				\Bitrix\Landing\Update\Block::register(
+					'repo_' . $res->getId()
+				);
+			}
+			$result->setResult($res->getId());
+		}
+		else
+		{
+			$error->addFromResult($res);
+			$result->setError($error);
+		}
 
-    /**
-     * Unregister block.
-     * @param string $code Code of block.
-     * @return \Bitrix\Landing\PublicActionResult
-     */
-    public static function unregister($code)
-    {
-        $result = new PublicActionResult();
-        $error = new \Bitrix\Landing\Error;
+		return $result;
+	}
 
-        $result->setResult(false);
+	/**
+	 * Unregister block.
+	 * @param string $code Code of block.
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function unregister($code)
+	{
+		$result = new PublicActionResult();
+		$error = new \Bitrix\Landing\Error;
 
-        // search and delete
-        if ($code) {
-            // set app code
-            $app = \Bitrix\Landing\PublicAction::restApplication();
+		$result->setResult(false);
 
-            $row = RepoCore::getList(array(
-                'select' => array(
-                    'ID'
-                ),
-                'filter' =>
-                    isset($app['CODE'])
-                        ? array(
-                        '=XML_ID' => $code,
-                        '=APP_CODE' => $app['CODE']
-                    )
-                        : array(
-                        '=XML_ID' => $code
-                    )
-            ))->fetch();
-            if ($row) {
-                // delete all sush blocks from landings
-                $codeToDelete = array();
-                $res = RepoCore::getList(array(
-                    'select' => array(
-                        'ID'
-                    ),
-                    'filter' =>
-                        isset($app['CODE'])
-                            ? array(
-                            '=XML_ID' => $code,
-                            '=APP_CODE' => $app['CODE']
-                        )
-                            : array(
-                            '=XML_ID' => $code
-                        )
-                ));
-                while ($rowRepo = $res->fetch()) {
-                    $codeToDelete[] = 'repo_' . $rowRepo['ID'];
-                }
-                if (!empty($codeToDelete)) {
-                    BlockCore::deleteByCode($codeToDelete);
-                }
-                // delete block from repo
-                $res = RepoCore::delete($row['ID']);
-                if ($res->isSuccess()) {
-                    $result->setResult(true);
-                } else {
-                    $error->addFromResult($res);
-                }
-            }
-        }
+		if (!is_string($code))
+		{
+			return $result;
+		}
 
-        $result->setError($error);
+		// search and delete
+		if ($code)
+		{
+			// set app code
+			$app = \Bitrix\Landing\PublicAction::restApplication();
 
-        return $result;
-    }
+			$row = RepoCore::getList(array(
+				'select' => array(
+					'ID'
+				),
+				'filter' =>
+					isset($app['CODE'])
+					? array(
+						'=XML_ID' => $code,
+						'=APP_CODE' => $app['CODE']
+					)
+					: array(
+						'=XML_ID' => $code
+					)
+			))->fetch();
+			if ($row)
+			{
+				// delete all sush blocks from landings
+				$codeToDelete = array();
+				$res = RepoCore::getList(array(
+					'select' => array(
+						'ID'
+					),
+					'filter' =>
+						isset($app['CODE'])
+						? array(
+							'=XML_ID' => $code,
+							'=APP_CODE' => $app['CODE']
+						)
+						: array(
+							'=XML_ID' => $code
+						)
+				));
+				while ($rowRepo = $res->fetch())
+				{
+					$codeToDelete[] = 'repo_' . $rowRepo['ID'];
+				}
+				if (!empty($codeToDelete))
+				{
+					BlockCore::deleteByCode($codeToDelete);
+				}
+				// delete block from repo
+				$res = RepoCore::delete($row['ID']);
+				if ($res->isSuccess())
+				{
+					$result->setResult(true);
+				}
+				else
+				{
+					$error->addFromResult($res);
+				}
+			}
+		}
 
-    /**
-     * Get info about app from Repo.
-     * @param string $code App code.
-     * @return \Bitrix\Landing\PublicActionResult
-     */
-    public static function getAppInfo($code)
-    {
-        $result = new PublicActionResult();
-        $error = new \Bitrix\Landing\Error;
-        $app = array();
+		$result->setError($error);
 
-        if ($appLocal = RepoCore::getAppByCode($code)) {
-            $app = array(
-                'CODE' => $appLocal['CODE'],
-                'NAME' => $appLocal['APP_NAME'],
-                'DATE_FINISH' => (string)$appLocal['DATE_FINISH'],
-                'PAYMENT_ALLOW' => $appLocal['PAYMENT_ALLOW'],
-                'ICON' => '',
-                'PRICE' => array(),
-                'UPDATES' => 0
-            );
-            if (\Bitrix\Main\Loader::includeModule('rest')) {
-                $appRemote = Client::getApp($code);
-                if (isset($appRemote['ITEMS'])) {
-                    $data = $appRemote['ITEMS'];
-                    if (isset($data['ICON'])) {
-                        $app['ICON'] = $data['ICON'];
-                    }
-                    if (isset($data['PRICE']) && !empty($data['PRICE'])) {
-                        $app['PRICE'] = $data['PRICE'];
-                    }
-                }
-                $updates = Client::getUpdates(array(
-                    $code => $appLocal['VERSION']
-                ));
-                if (
-                    isset($updates['ITEMS'][0]['VERSIONS']) &&
-                    is_array($updates['ITEMS'][0]['VERSIONS'])
-                ) {
-                    $app['UPDATES'] = count($updates['ITEMS'][0]['VERSIONS']);
-                }
-            }
-            $result->setResult($app);
-        }
+		return $result;
+	}
 
-        if (empty($app)) {
-            $error->addError(
-                'NOT_FOUND',
-                Loc::getMessage('LANDING_APP_NOT_FOUND')
-            );
-        }
+	/**
+	 * Get info about app from Repo.
+	 * @param string $code App code.
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function getAppInfo($code)
+	{
+		$result = new PublicActionResult();
+		$error = new \Bitrix\Landing\Error;
+		$app = array();
 
-        $result->setError($error);
+		if (!is_string($code))
+		{
+			return $result;
+		}
 
-        return $result;
-    }
+		if ($appLocal = RepoCore::getAppByCode($code))
+		{
+			$app = array(
+				'CODE' => $appLocal['CODE'],
+				'NAME' => $appLocal['APP_NAME'],
+				'DATE_FINISH' => (string)$appLocal['DATE_FINISH'],
+				'PAYMENT_ALLOW' => $appLocal['PAYMENT_ALLOW'],
+				'ICON' => '',
+				'PRICE' => array(),
+				'UPDATES' => 0
+			);
+			if (\Bitrix\Main\Loader::includeModule('rest'))
+			{
+				$appRemote = Client::getApp($code);
+				if (isset($appRemote['ITEMS']))
+				{
+					$data = $appRemote['ITEMS'];
+					if (isset($data['ICON']))
+					{
+						$app['ICON'] = $data['ICON'];
+					}
+					if (isset($data['PRICE']) && !empty($data['PRICE']))
+					{
+						$app['PRICE'] = $data['PRICE'];
+					}
+				}
+				$updates = Client::getUpdates(array(
+					$code => $appLocal['VERSION']
+				));
+				if (
+					isset($updates['ITEMS'][0]['VERSIONS']) &&
+					is_array($updates['ITEMS'][0]['VERSIONS'])
+				)
+				{
+					$app['UPDATES'] = count($updates['ITEMS'][0]['VERSIONS']);
+				}
+			}
+			$result->setResult($app);
+		}
 
-    /**
-     * Bind the placement.
-     * @param array $fields Fields array.
-     * @return \Bitrix\Landing\PublicActionResult
-     */
-    public static function bind(array $fields)
-    {
-        $result = new PublicActionResult();
-        $error = new \Bitrix\Landing\Error;
-        \trimArr($fields);
+		if (empty($app))
+		{
+			$error->addError(
+				'NOT_FOUND',
+				Loc::getMessage('LANDING_APP_NOT_FOUND')
+			);
+		}
 
-        if (($app = \Bitrix\Landing\PublicAction::restApplication())) {
-            $fields['APP_ID'] = $app['ID'];
-        }
+		$result->setError($error);
 
-        $res = Placement::getList(array(
-            'select' => array(
-                'ID'
-            ),
-            'filter' => array(
-                'APP_ID' => isset($fields['APP_ID'])
-                    ? $fields['APP_ID']
-                    : false,
-                'PLACEMENT' => isset($fields['PLACEMENT'])
-                    ? $fields['PLACEMENT']
-                    : false,
-                'PLACEMENT_HANDLER' => isset($fields['PLACEMENT_HANDLER'])
-                    ? $fields['PLACEMENT_HANDLER']
-                    : false
-            )
-        ));
-        // add, if not exist
-        if (!$res->fetch()) {
-            if (\Bitrix\Main\Loader::includeModule('rest')) {
-                // first try add in the local table
-                $resLocal = Placement::add($fields);
-                if ($resLocal->isSuccess()) {
-                    // then add in the rest table
-                    $resRest = PlacementTable::add(
-                        $fields
-                    );
-                    if ($resRest->isSuccess()) {
-                        $result->setResult(true);
-                    } else {
-                        $error->addFromResult($resRest);
-                        Placement::delete($resLocal->getId());
-                    }
-                } else {
-                    $error->addFromResult($resLocal);
-                }
-            }
-        } else {
-            $error->addError(
-                'PLACEMENT_EXIST',
-                Loc::getMessage('LANDING_APP_PLACEMENT_EXIST')
-            );
-        }
+		return $result;
+	}
 
-        $result->setError($error);
+	/**
+	 * Bind the placement.
+	 * @param array $fields Fields array.
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function bind(array $fields)
+	{
+		$result = new PublicActionResult();
+		$error = new \Bitrix\Landing\Error;
+		\trimArr($fields);
 
-        return $result;
-    }
+		if (($app = \Bitrix\Landing\PublicAction::restApplication()))
+		{
+			$fields['APP_ID'] = $app['ID'];
+		}
 
-    /**
-     * Unbind the placement.
-     * @param string $code Placement code.
-     * @param string $handler Handler path (if you want delete specific).
-     * @return \Bitrix\Landing\PublicActionResult
-     */
-    public static function unbind($code, $handler = null)
-    {
-        $result = new PublicActionResult();
-        $error = new \Bitrix\Landing\Error;
-        $code = trim($code);
-        $wasDeleted = false;
+		$res = Placement::getList(array(
+			'select' => array(
+				'ID'
+			),
+			'filter' => array(
+				'APP_ID' => isset($fields['APP_ID'])
+							? $fields['APP_ID']
+							: false,
+				'PLACEMENT' => isset($fields['PLACEMENT'])
+							? $fields['PLACEMENT']
+							: false,
+				'PLACEMENT_HANDLER' => isset($fields['PLACEMENT_HANDLER'])
+							? $fields['PLACEMENT_HANDLER']
+							: false
+			)
+		));
+		// add, if not exist
+		if (!$res->fetch())
+		{
+			if (\Bitrix\Main\Loader::includeModule('rest'))
+			{
+				// first try add in the local table
+				$resLocal = Placement::add($fields);
+				if ($resLocal->isSuccess())
+				{
+					// then add in the rest table
+					$resRest = PlacementTable::add(
+						$fields
+					);
+					if ($resRest->isSuccess())
+					{
+						$result->setResult(true);
+					}
+					else
+					{
+						$error->addFromResult($resRest);
+						Placement::delete($resLocal->getId());
+					}
+				}
+				else
+				{
+					$error->addFromResult($resLocal);
+				}
+			}
+		}
+		else
+		{
+			$error->addError(
+				'PLACEMENT_EXIST',
+				Loc::getMessage('LANDING_APP_PLACEMENT_EXIST')
+			);
+		}
 
-        if (($app = \Bitrix\Landing\PublicAction::restApplication())) {
-            $fields['APP_ID'] = $app['ID'];
-        }
-        if (
-            !isset($fields['APP_ID']) ||
-            !$fields['APP_ID']
-        ) {
-            return $result;
-        }
+		$result->setError($error);
 
-        // common ORM params
-        $params = [
-            'select' => [
-                'ID'
-            ],
-            'filter' => [
-                'APP_ID' => $fields['APP_ID'],
-                '=PLACEMENT' => $code
-            ]
-        ];
-        if ($handler) {
-            $params['filter']['=PLACEMENT_HANDLER'] = trim($handler);
-        }
+		return $result;
+	}
 
-        // at first, delete local binds
-        $res = Placement::getList($params);
-        while ($row = $res->fetch()) {
-            $wasDeleted = true;
-            Placement::delete($row['ID']);
-        }
-        unset($res, $row);
+	/**
+	 * Unbind the placement.
+	 * @param string $code Placement code.
+	 * @param string $handler Handler path (if you want delete specific).
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function unbind($code, $handler = null)
+	{
+		$result = new PublicActionResult();
+		$error = new \Bitrix\Landing\Error;
 
-        // then delete from rest placements
-        if (\Bitrix\Main\Loader::includeModule('rest')) {
-            $res = PlacementTable::getList($params);
-            while ($row = $res->fetch()) {
-                PlacementTable::delete($row['ID']);
-            }
-            unset($res, $row);
-        }
+		if (!is_string($code))
+		{
+			return $result;
+		}
 
-        // make answer
-        if ($wasDeleted) {
-            $result->setResult(true);
-        } else {
-            $error->addError(
-                'PLACEMENT_NO_EXIST',
-                Loc::getMessage('LANDING_APP_PLACEMENT_NO_EXIST')
-            );
-            $result->setError($error);
-        }
+		$code = trim($code);
+		$wasDeleted = false;
 
-        return $result;
-    }
+		if (($app = \Bitrix\Landing\PublicAction::restApplication()))
+		{
+			$fields['APP_ID'] = $app['ID'];
+		}
+		if (
+			!isset($fields['APP_ID']) ||
+			!$fields['APP_ID']
+		)
+		{
+			return $result;
+		}
 
-    /**
-     * Get items of current app.
-     * @param array $params Params ORM array.
-     * @return \Bitrix\Landing\PublicActionResult
-     */
-    public static function getList(array $params = array())
-    {
-        $result = new PublicActionResult();
+		// common ORM params
+		$params = [
+			'select' => [
+				'ID'
+			],
+			'filter' => [
+				'APP_ID' => $fields['APP_ID'],
+				'=PLACEMENT' => $code
+			]
+		];
+		if ($handler)
+		{
+			$params['filter']['=PLACEMENT_HANDLER'] = trim($handler);
+		}
 
-        if (!is_array($params)) {
-            $params = array();
-        }
-        if (
-            !isset($params['filter']) ||
-            !is_array($params['filter'])
-        ) {
-            $params['filter'] = array();
-        }
-        // set app code
-        if (($app = \Bitrix\Landing\PublicAction::restApplication())) {
-            $params['filter']['APP_CODE'] = $app['CODE'];
-        } else {
-            $params['filter']['APP_CODE'] = false;
-        }
+		// at first, delete local binds
+		$res = Placement::getList($params);
+		while ($row = $res->fetch())
+		{
+			$wasDeleted = true;
+			Placement::delete($row['ID']);
+		}
+		unset($res, $row);
 
-        $data = array();
-        $res = RepoCore::getList($params);
-        while ($row = $res->fetch()) {
-            if (isset($row['DATE_CREATE'])) {
-                $row['DATE_CREATE'] = (string)$row['DATE_CREATE'];
-            }
-            if (isset($row['DATE_MODIFY'])) {
-                $row['DATE_MODIFY'] = (string)$row['DATE_MODIFY'];
-            }
-            $row['MANIFEST'] = unserialize($row['MANIFEST']);
-            $data[] = $row;
-        }
-        $result->setResult($data);
+		// then delete from rest placements
+		if (\Bitrix\Main\Loader::includeModule('rest'))
+		{
+			$res = PlacementTable::getList($params);
+			while ($row = $res->fetch())
+			{
+				PlacementTable::delete($row['ID']);
+			}
+			unset($res, $row);
+		}
 
-        return $result;
-    }
+		// make answer
+		if ($wasDeleted)
+		{
+			$result->setResult(true);
+		}
+		else
+		{
+			$error->addError(
+				'PLACEMENT_NO_EXIST',
+				Loc::getMessage('LANDING_APP_PLACEMENT_NO_EXIST')
+			);
+			$result->setError($error);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get items of current app.
+	 * @param array $params Params ORM array.
+	 * @return \Bitrix\Landing\PublicActionResult
+	 */
+	public static function getList(array $params = array())
+	{
+		$result = new PublicActionResult();
+		$params = $result->sanitizeKeys($params);
+
+		if (!is_array($params))
+		{
+			$params = array();
+		}
+		if (
+			!isset($params['filter']) ||
+			!is_array($params['filter'])
+		)
+		{
+			$params['filter'] = array();
+		}
+		// set app code
+		if (($app = \Bitrix\Landing\PublicAction::restApplication()))
+		{
+			$params['filter']['APP_CODE'] = $app['CODE'];
+		}
+		else
+		{
+			$params['filter']['APP_CODE'] = false;
+		}
+
+		$data = array();
+		$res = RepoCore::getList($params);
+		while ($row = $res->fetch())
+		{
+			if (isset($row['DATE_CREATE']))
+			{
+				$row['DATE_CREATE'] = (string) $row['DATE_CREATE'];
+			}
+			if (isset($row['DATE_MODIFY']))
+			{
+				$row['DATE_MODIFY'] = (string) $row['DATE_MODIFY'];
+			}
+			$row['MANIFEST'] = unserialize($row['MANIFEST']);
+			$data[] = $row;
+		}
+		$result->setResult($data);
+
+		return $result;
+	}
 }

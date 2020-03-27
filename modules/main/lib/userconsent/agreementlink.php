@@ -5,7 +5,6 @@
  * @subpackage main
  * @copyright 2001-2017 Bitrix
  */
-
 namespace Bitrix\Main\UserConsent;
 
 use Bitrix\Main\Error;
@@ -22,110 +21,122 @@ Loc::loadLanguageFile(__FILE__);
  */
 class AgreementLink
 {
-    const SIGN_SALT = 'user_consent';
+	const SIGN_SALT = 'user_consent';
 
-    /** @var array $errors Errors. */
-    protected static $errors = array();
+	/** @var array $errors Errors. */
+	protected static $errors = array();
 
-    /**
-     * Return Uri parameters.
-     *
-     * @param integer $agreementId Agreement ID.
-     * @param array $replace Replace data.
-     * @param string $baseUri Base Uri.
-     * @return array
-     */
-    public static function getUri($agreementId, array $replace = array(), $baseUri = '')
-    {
-        self::clearErrors();
+	/**
+	 * Return Uri parameters.
+	 *
+	 * @param integer $agreementId Agreement ID.
+	 * @param array $replace Replace data.
+	 * @param string $baseUri Base Uri.
+	 * @return array
+	 */
+	public static function getUri($agreementId, array $replace = array(), $baseUri = '')
+	{
+		self::clearErrors();
 
-        $agreement = new Agreement($agreementId, $replace);
-        $signer = new Signer();
-        $data = array(
-            'id' => $agreement->getId(),
-            'replace' => $replace,
-        );
-        $data = Json::encode($data);
-        $parameters = array(
-            'data' => base64_encode($data),
-            'sec' => base64_encode($signer->getSignature($data, self::SIGN_SALT))
-        );
-        $uri = new Uri($baseUri);
-        $uri->addParams($parameters);
+		$agreement = new Agreement($agreementId, $replace);
+		$signer = new Signer();
+		$data = array(
+			'id' => $agreement->getId(),
+			'replace' => $replace,
+		);
+		$data = Json::encode($data);
+		$parameters = array(
+			'data' => base64_encode($data),
+			'sec' => base64_encode($signer->getSignature($data, self::SIGN_SALT))
+		);
+		$uri = new Uri($baseUri);
+		$uri->addParams($parameters);
 
-        return $uri->getLocator();
-    }
+		return $uri->getLocator();
+	}
 
-    /**
-     * Replace template by data.
-     *
-     * @param array $parameters Uri parameters.
-     * @return Agreement
-     */
-    public static function getAgreementFromUriParameters(array $parameters = array())
-    {
-        self::clearErrors();
+	/**
+	 * Replace template by data.
+	 *
+	 * @param array $parameters Uri parameters.
+	 * @return Agreement
+	 */
+	public static function getAgreementFromUriParameters(array $parameters = array())
+	{
+		self::clearErrors();
 
-        $data = $parameters['data'];
-        $sec = $parameters['sec'];
-        if (!$data || !$sec) {
-            self::$errors[] = new Error('Parameters not found', 1);
-            return null;
-        }
+		$data =$parameters['data'];
+		$sec = $parameters['sec'];
+		if (!$data || !$sec)
+		{
+			self::$errors[] = new Error('Parameters not found', 1);
+			return null;
+		}
 
-        $data = base64_decode($data);
-        $sec = base64_decode($sec);
-        if (!$data || !$sec) {
-            self::$errors[] = new Error('Can not decode parameters', 2);
-            return null;
-        }
+		$data = base64_decode($data);
+		$sec = base64_decode($sec);
+		if (!$data || !$sec)
+		{
+			self::$errors[] = new Error('Can not decode parameters', 2);
+			return null;
+		}
 
-        try {
-            $signer = new Signer();
-            if (!$signer->validate($data, $sec, self::SIGN_SALT)) {
-                self::$errors[] = new Error('Parameters signature is not valid', 3);
-                return null;
-            }
-        } catch (\Exception $exception) {
-            self::$errors[] = new Error('Parameters signature error: ' . $exception->getMessage(), 7);
-            return null;
-        }
+		try
+		{
+			$signer = new Signer();
+			if (!$signer->validate($data, $sec, self::SIGN_SALT))
+			{
+				self::$errors[] = new Error('Parameters signature is not valid', 3);
+				return null;
+			}
+		}
+		catch (\Exception $exception)
+		{
+			self::$errors[] = new Error('Parameters signature error: ' . $exception->getMessage(), 7);
+			return null;
+		}
 
-        try {
-            $data = Json::decode($data);
-        } catch (\Exception $exception) {
-            $data = null;
-        }
-        if (!$data || !isset($data['id']) || !isset($data['replace'])) {
-            self::$errors[] = new Error('Decode data parameters failed', 6);
-            return null;
-        }
+		try
+		{
+			$data = Json::decode($data);
+		}
+		catch (\Exception $exception)
+		{
+			$data = null;
+		}
+		if (!$data || !isset($data['id']) || !isset($data['replace']))
+		{
+			self::$errors[] = new Error('Decode data parameters failed', 6);
+			return null;
+		}
 
-        $agreement = new Agreement($data['id'], $data['replace']);
-        if (!$agreement->isExist()) {
-            self::$errors[] = new Error('Agreement is not exist', 4);
-            return null;
-        }
-        if (!$agreement->isActive()) {
-            self::$errors[] = new Error('Agreement is not active', 5);
-            return null;
-        }
+		$agreement = new Agreement($data['id'], $data['replace']);
+		if (!$agreement->isExist())
+		{
+			self::$errors[] = new Error('Agreement is not exist', 4);
+			return null;
+		}
+		if (!$agreement->isActive())
+		{
+			self::$errors[] = new Error('Agreement is not active', 5);
+			return null;
+		}
 
-        return $agreement;
-    }
+		return $agreement;
+	}
 
-    protected static function clearErrors()
-    {
-        self::$errors = array();
-    }
+	protected static function clearErrors()
+	{
+		self::$errors = array();
+	}
 
-    /**
-     * Get errors.
-     *
-     * @return array
-     */
-    public static function getErrors()
-    {
-        return self::$errors;
-    }
+	/**
+	 * Get errors.
+	 *
+	 * @return array
+	 */
+	public static function getErrors()
+	{
+		return self::$errors;
+	}
 }

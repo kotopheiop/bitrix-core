@@ -283,7 +283,5 @@ class CJSPopup
 
 class CJSPopupOnPage extends CJSPopup
 {
-    function InitSystem()
-    {
-    } // this SHOULD be empty!
+	function InitSystem() {} // this SHOULD be empty!
 }

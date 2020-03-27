@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Scale;
 
 use \Bitrix\Main\SystemException;
@@ -9,18 +8,18 @@ use \Bitrix\Main\SystemException;
  */
 class ServerBxInfoException extends SystemException
 {
-    protected $hostname;
+	protected $hostname;
 
-    public function __construct($message = "", $hostname = "", \Exception $previous = null)
-    {
-        parent::__construct($message, 0, '', 0, $previous);
-        $this->hostname = $hostname;
-    }
+	public function __construct($message = "", $hostname = "", \Exception $previous = null)
+	{
+		parent::__construct($message, 0, '', 0, $previous);
+		$this->hostname= $hostname;
+	}
 
-    public function getHostname()
-    {
-        return $this->hostname;
-    }
+	public function getHostname()
+	{
+		return $this->hostname;
+	}
 }
 
 /**
@@ -30,16 +29,16 @@ class ServerBxInfoException extends SystemException
  */
 class NeedMoreUserInfoException extends SystemException
 {
-    protected $actionParams;
+	protected $actionParams;
 
-    public function __construct($message = "", $actionParams = array(), \Exception $previous = null)
-    {
-        parent::__construct($message, 0, '', 0, $previous);
-        $this->actionParams = $actionParams;
-    }
+	public function __construct($message = "", $actionParams = array(), \Exception $previous = null)
+	{
+		parent::__construct($message, 0, '', 0, $previous);
+		$this->actionParams= $actionParams;
+	}
 
-    public function getActionParams()
-    {
-        return $this->actionParams;
-    }
+	public function getActionParams()
+	{
+		return $this->actionParams;
+	}
 }

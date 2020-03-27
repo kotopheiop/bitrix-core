@@ -45,7 +45,7 @@ class MessageSerializer implements Serializer
     /**
      * Deserializes the given data to the specified message.
      *
-     * @param string $class
+     * @param string                           $class
      * @param \Protobuf\Stream|resource|string $stream
      *
      * @return \Protobuf\Message

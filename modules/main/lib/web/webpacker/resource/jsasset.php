@@ -9,5 +9,5 @@ namespace Bitrix\Main\Web\WebPacker\Resource;
  */
 class JsAsset extends Asset
 {
-    protected $type = self::JS;
+	protected $type = self::JS;
 }

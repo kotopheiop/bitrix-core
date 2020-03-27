@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Exchange;
 
 
@@ -12,10 +11,10 @@ interface ICriterion
      */
     public function getEntity();
 
-    /**
-     * @param $entity
-     */
-    public function setEntity($entity = null);
+	/**
+	 * @param $entity
+	 */
+	public function setEntity($entity = null);
 
     /**
      * @param array $fields

@@ -13,197 +13,199 @@ use Bitrix\Sale\ShipmentItemStore;
 /**
  * Class ObjectNormalizer
  * @package Bitrix\Sale\Rest\Normalizer
- * пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ SNAKE_CASE
+ * нотация всех ключей в результате должна быть SNAKE_CASE
  */
 class ObjectNormalizer
 {
-    protected $externalFields;
-    protected $fields;
-    protected $order;
+	protected $externalFields;
+	protected $fields;
+	protected $order;
 
-    public function __construct(array $data = [])
-    {
-        $this->externalFields = $data;
-    }
+	public function __construct(array $data=[])
+	{
+		$this->externalFields = $data;
+	}
 
-    public function init(\Bitrix\Sale\Order $order)
-    {
-        $this->order = $order;
-        return $this;
-    }
+	public function init(\Bitrix\Sale\Order $order)
+	{
+		$this->order = $order;
+		return $this;
+	}
 
-    public function orderNormalize()
-    {
-        $externalFields = isset($this->externalFields['ORDER'][$this->getOrder()->getInternalId()]) ?
-            $this->externalFields['ORDER'][$this->getOrder()->getInternalId()] : [];
+	public function orderNormalize()
+	{
+		$externalFields = isset($this->externalFields['ORDER'][$this->getOrder()->getInternalId()])?
+			$this->externalFields['ORDER'][$this->getOrder()->getInternalId()]:[];
 
-        $this->fields['ORDER'] = array_merge(
-            $externalFields,
-            $this->getOrder()->getFieldValues()
-        );
-        return $this;
-    }
+		$this->fields['ORDER'] = array_merge(
+			$externalFields,
+			$this->getOrder()->getFieldValues()
+		);
+		return $this;
+	}
+	public function basketNormalize()
+	{
+		$r=[];
+		/** @var BasketItem $item */
+		foreach ($this->getOrder()->getBasket() as $item)
+		{
+			$fields = $item->getFieldValues();
+			$externalFields = isset($this->externalFields['BASKET']['ITEMS'][$item->getInternalIndex()])?
+				$this->externalFields['BASKET']['ITEMS'][$item->getInternalIndex()]:[];
 
-    public function basketNormalize()
-    {
-        $r = [];
-        /** @var BasketItem $item */
-        foreach ($this->getOrder()->getBasket() as $item) {
-            $fields = $item->getFieldValues();
-            $externalFields = isset($this->externalFields['BASKET']['ITEMS'][$item->getInternalIndex()]) ?
-                $this->externalFields['BASKET']['ITEMS'][$item->getInternalIndex()] : [];
+			$props = [];
+			foreach ($item->getPropertyCollection() as $property)
+			{
+				$props[] = array_merge(
+					$property->getFieldValues()
+				);
+			}
 
-            $props = [];
-            foreach ($item->getPropertyCollection() as $property) {
-                $props[] = array_merge(
-                    $property->getFieldValues()
-                );
-            }
+			$r[$item->getInternalIndex()] = array_merge(
+					$externalFields,
+					$fields,
+					['PROPERTIES'=>$props]
+			);
+		}
+		$this->fields['ORDER']['BASKET_ITEMS']=$r;
+		return $this;
+	}
+	public function propertiesValueNormalize()
+	{
+		$r=[];
+		$propertyCollection = $this->getOrder()->getPropertyCollection();
+		/** @var PropertyValue $property */
+		foreach ($propertyCollection as $property)
+		{
+			$externalFields = isset($this->externalFields['PROPERTIES'][$property->getInternalIndex()])?
+				$this->externalFields['PROPERTIES'][$property->getInternalIndex()]:[];
 
-            $r[$item->getInternalIndex()] = array_merge(
-                $externalFields,
-                $fields,
-                ['PROPERTIES' => $props]
-            );
-        }
-        $this->fields['ORDER']['BASKET_ITEMS'] = $r;
-        return $this;
-    }
+			$r[$property->getInternalIndex()] = array_merge(
+					$externalFields,
+					$property->getFieldValues()
+			);
+		}
+		$this->fields['ORDER']['PROPERTY_VALUES']=$r;
+		return $this;
+	}
+	public function paymentsNormalize()
+	{
+		$r=[];
+		/** @var Payment $payment */
+		foreach($this->getOrder()->getPaymentCollection() as $payment)
+		{
+			$externalFields = isset($this->externalFields['PAYMENTS'][$payment->getInternalIndex()])?
+				$this->externalFields['PAYMENTS'][$payment->getInternalIndex()]:[];
 
-    public function propertiesValueNormalize()
-    {
-        $r = [];
-        $propertyCollection = $this->getOrder()->getPropertyCollection();
-        /** @var PropertyValue $property */
-        foreach ($propertyCollection as $property) {
-            $externalFields = isset($this->externalFields['PROPERTIES'][$property->getInternalIndex()]) ?
-                $this->externalFields['PROPERTIES'][$property->getInternalIndex()] : [];
+			$r[$payment->getInternalIndex()] = array_merge(
+					$externalFields,
+					$payment->getFieldValues()
+			);
+		}
+		$this->fields['ORDER']['PAYMENTS']=$r;
+		return $this;
+	}
+	public function shipmentsNormalize()
+	{
+		$r=[];
+		/** @var Shipment $shipment */
+		foreach ($this->getOrder()->getShipmentCollection() as $shipment)
+		{
+			// рест магазина не оперирует системными отгрузками
+			if($shipment->isSystem())
+				continue;
 
-            $r[$property->getInternalIndex()] = array_merge(
-                $externalFields,
-                $property->getFieldValues()
-            );
-        }
-        $this->fields['ORDER']['PROPERTY_VALUES'] = $r;
-        return $this;
-    }
+			$basketItems = [];
+			/** @var ShipmentItem$shipmentItem */
+			foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
+			{
+				$stores=[];
+				/** @var ShipmentItemStore $shipmentItemStore */
+				foreach ($shipmentItem->getShipmentItemStoreCollection() as $shipmentItemStore)
+				{
+					$externalFieldsSIS = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]['STORE'][$shipmentItemStore->getInternalIndex()])?
+						$this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]['STORE'][$shipmentItemStore->getInternalIndex()]:[];
 
-    public function paymentsNormalize()
-    {
-        $r = [];
-        /** @var Payment $payment */
-        foreach ($this->getOrder()->getPaymentCollection() as $payment) {
-            $externalFields = isset($this->externalFields['PAYMENTS'][$payment->getInternalIndex()]) ?
-                $this->externalFields['PAYMENTS'][$payment->getInternalIndex()] : [];
+					$stores[] = array_merge(
+						$externalFieldsSIS,
+						$shipmentItemStore->getFieldValues()
+					);
+				}
 
-            $r[$payment->getInternalIndex()] = array_merge(
-                $externalFields,
-                $payment->getFieldValues()
-            );
-        }
-        $this->fields['ORDER']['PAYMENTS'] = $r;
-        return $this;
-    }
+				$externalFieldsSI = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()])?
+					$this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]:[];
 
-    public function shipmentsNormalize()
-    {
-        $r = [];
-        /** @var Shipment $shipment */
-        foreach ($this->getOrder()->getShipmentCollection() as $shipment) {
-            // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-            if ($shipment->isSystem())
-                continue;
+				$basketItems[] = array_merge(
+						$externalFieldsSI,
+						$shipmentItem->getFieldValues(),
+						['STORES'=>$stores]
+				);
 
-            $basketItems = [];
-            /** @var ShipmentItem $shipmentItem */
-            foreach ($shipment->getShipmentItemCollection() as $shipmentItem) {
-                $stores = [];
-                /** @var ShipmentItemStore $shipmentItemStore */
-                foreach ($shipmentItem->getShipmentItemStoreCollection() as $shipmentItemStore) {
-                    $externalFieldsSIS = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]['STORE'][$shipmentItemStore->getInternalIndex()]) ?
-                        $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]['STORE'][$shipmentItemStore->getInternalIndex()] : [];
+			}
 
-                    $stores[] = array_merge(
-                        $externalFieldsSIS,
-                        $shipmentItemStore->getFieldValues()
-                    );
-                }
+			$externalFields = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()])?
+				$this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]:[];
 
-                $externalFieldsSI = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()]) ?
-                    $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]['SHIPMENT_ITEMS'][$shipmentItem->getInternalIndex()] : [];
+			$r[$shipment->getInternalIndex()] = array_merge(
+					$externalFields,
+					$shipment->getFieldValues(),
+					['SHIPMENT_ITEMS'=>$basketItems]
+			);
+		}
+		$this->fields['ORDER']['SHIPMENTS']= $r;
+		return $this;
+	}
+	public function applyDiscountNormalize()
+	{
+		$list = $this->getOrder()
+			->getDiscount()
+			->getApplyResult(true);
+		if(is_array($list) && !empty($list))
+		{
+			$this->fields['ORDER']['DISCOUNTS'] = $list;
+		}
+		return $this;
+	}
+	public function taxNormalize()
+	{
+		$list = $this->getOrder()
+			->getTax()
+			->getTaxList();
+		if(is_array($list) && !empty($list))
+		{
+			foreach ($list as $tax)
+				$this->fields['ORDER']['TAXES'][] = $tax;
+		}
+		return $this;
+	}
+	public function tradeBindingsNormalize()
+	{
+		$r=[];
+		/** @var \Bitrix\Sale\TradeBindingEntity $item */
+		foreach($this->getOrder()->getTradeBindingCollection() as $item)
+		{
+			$externalFields = isset($this->externalFields['TRADE_BINDINGS'][$item->getInternalIndex()])?
+				$this->externalFields['TRADE_BINDINGS'][$item->getInternalIndex()]:[];
 
-                $basketItems[] = array_merge(
-                    $externalFieldsSI,
-                    $shipmentItem->getFieldValues(),
-                    ['STORES' => $stores]
-                );
+			$r[] = array_merge(
+				$externalFields,
+				$item->getFieldValues()
+			);
+		}
 
-            }
+		$this->fields['ORDER']['TRADE_BINDINGS']=$r;
+		return $this;
+	}
 
-            $externalFields = isset($this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()]) ?
-                $this->externalFields['SHIPMENTS'][$shipment->getInternalIndex()] : [];
-
-            $r[$shipment->getInternalIndex()] = array_merge(
-                $externalFields,
-                $shipment->getFieldValues(),
-                ['SHIPMENT_ITEMS' => $basketItems]
-            );
-        }
-        $this->fields['ORDER']['SHIPMENTS'] = $r;
-        return $this;
-    }
-
-    public function applyDiscountNormalize()
-    {
-        $list = $this->getOrder()
-            ->getDiscount()
-            ->getApplyResult(true);
-        if (is_array($list) && !empty($list)) {
-            $this->fields['ORDER']['DISCOUNTS'] = $list;
-        }
-        return $this;
-    }
-
-    public function taxNormalize()
-    {
-        $list = $this->getOrder()
-            ->getTax()
-            ->getTaxList();
-        if (is_array($list) && !empty($list)) {
-            foreach ($list as $tax)
-                $this->fields['ORDER']['TAXES'][] = $tax;
-        }
-        return $this;
-    }
-
-    public function tradeBindingsNormalize()
-    {
-        $r = [];
-        /** @var \Bitrix\Sale\TradeBindingEntity $item */
-        foreach ($this->getOrder()->getTradeBindingCollection() as $item) {
-            $externalFields = isset($this->externalFields['TRADE_BINDINGS'][$item->getInternalIndex()]) ?
-                $this->externalFields['TRADE_BINDINGS'][$item->getInternalIndex()] : [];
-
-            $r[] = array_merge(
-                $externalFields,
-                $item->getFieldValues()
-            );
-        }
-
-        $this->fields['ORDER']['TRADE_BINDINGS'] = $r;
-        return $this;
-    }
-
-    public function getFields()
-    {
-        return $this->fields;
-    }
-
-    /**
-     * @return \Bitrix\Sale\Order
-     */
-    protected function getOrder()
-    {
-        return $this->order;
-    }
+	public function getFields()
+	{
+		return $this->fields;
+	}
+	/**
+	 * @return \Bitrix\Sale\Order
+	 */
+	protected function getOrder()
+	{
+		return $this->order;
+	}
 }

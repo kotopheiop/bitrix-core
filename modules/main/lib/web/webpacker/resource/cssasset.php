@@ -9,5 +9,5 @@ namespace Bitrix\Main\Web\WebPacker\Resource;
  */
 class CssAsset extends Asset
 {
-    protected $type = self::CSS;
+	protected $type = self::CSS;
 }

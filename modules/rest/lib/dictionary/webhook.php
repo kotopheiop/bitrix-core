@@ -10,5 +10,5 @@ namespace Bitrix\Rest\Dictionary;
 
 class WebHook extends RemoteDictionary
 {
-    const ID = 'webhooks';
+	const ID = 'webhooks';
 }

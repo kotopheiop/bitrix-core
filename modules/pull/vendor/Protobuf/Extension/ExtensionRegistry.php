@@ -30,9 +30,9 @@ class ExtensionRegistry
     public function add(ExtensionField $extension)
     {
         $extendee = trim($extension->getExtendee(), '\\');
-        $number = $extension->getTag();
+        $number   = $extension->getTag();
 
-        if (!isset($this->extensions[$extendee])) {
+        if ( ! isset($this->extensions[$extendee])) {
             $this->extensions[$extendee] = [];
         }
 
@@ -42,7 +42,7 @@ class ExtensionRegistry
     /**
      * Find an extension by containing field number
      *
-     * @param string $className
+     * @param string  $className
      * @param integer $number
      *
      * @return \Protobuf\Extension\ExtensionField|null
@@ -51,7 +51,7 @@ class ExtensionRegistry
     {
         $extendee = trim($className, '\\');
 
-        if (!isset($this->extensions[$extendee][$number])) {
+        if ( ! isset($this->extensions[$extendee][$number])) {
             return null;
         }
 

@@ -16,196 +16,197 @@ use Bitrix\Main\Web\Json;
  */
 class ArrayField extends ScalarField
 {
-    /** @var string  json, serialize, custom */
-    protected $serializationType;
+	/** @var string  json, serialize, custom */
+	protected $serializationType;
 
-    /** @var callable */
-    protected $encodeFunction;
+	/** @var callable */
+	protected $encodeFunction;
 
-    /** @var callable */
-    protected $decodeFunction;
+	/** @var callable */
+	protected $decodeFunction;
 
-    public function __construct($name, $parameters = [])
-    {
-        $this->configureSerializationJson();
+	public function __construct($name, $parameters = [])
+	{
+		$this->configureSerializationJson();
 
-        $this->addSaveDataModifier([$this, 'encode']);
-        $this->addFetchDataModifier([$this, 'decode']);
+		$this->addSaveDataModifier([$this, 'encode']);
+		$this->addFetchDataModifier([$this, 'decode']);
 
-        parent::__construct($name, $parameters);
-    }
+		parent::__construct($name, $parameters);
+	}
 
-    /**
-     * Sets json serialization format
-     *
-     * @return $this
-     */
-    public function configureSerializationJson()
-    {
-        $this->serializationType = 'json';
-        $this->encodeFunction = [$this, 'encodeJson'];
-        $this->decodeFunction = [$this, 'decodeJson'];
+	/**
+	 * Sets json serialization format
+	 *
+	 * @return $this
+	 */
+	public function configureSerializationJson()
+	{
+		$this->serializationType = 'json';
+		$this->encodeFunction = [$this, 'encodeJson'];
+		$this->decodeFunction = [$this, 'decodeJson'];
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * Sets php serialization format
-     *
-     * @return $this
-     */
-    public function configureSerializationPhp()
-    {
-        $this->serializationType = 'php';
-        $this->encodeFunction = [$this, 'encodePhp'];
-        $this->decodeFunction = [$this, 'decodePhp'];
+	/**
+	 * Sets php serialization format
+	 *
+	 * @return $this
+	 */
+	public function configureSerializationPhp()
+	{
+		$this->serializationType = 'php';
+		$this->encodeFunction = [$this, 'encodePhp'];
+		$this->decodeFunction = [$this, 'decodePhp'];
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * Custom encode handler
-     *
-     * @param callable $callback
-     *
-     * @return $this
-     */
-    public function configureSerializeCallback($callback)
-    {
-        $this->encodeFunction = $callback;
-        $this->serializationType = 'custom';
+	/**
+	 * Custom encode handler
+	 *
+	 * @param callable $callback
+	 *
+	 * @return $this
+	 */
+	public function configureSerializeCallback($callback)
+	{
+		$this->encodeFunction = $callback;
+		$this->serializationType = 'custom';
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * Custom decode handler
-     *
-     * @param $callback
-     *
-     * @return $this
-     */
-    public function configureUnserializeCallback($callback)
-    {
-        $this->decodeFunction = $callback;
-        $this->serializationType = 'custom';
+	/**
+	 * Custom decode handler
+	 *
+	 * @param $callback
+	 *
+	 * @return $this
+	 */
+	public function configureUnserializeCallback($callback)
+	{
+		$this->decodeFunction = $callback;
+		$this->serializationType = 'custom';
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @param array $value
-     *
-     * @return string
-     */
-    public function encode($value)
-    {
-        $callback = $this->encodeFunction;
-        return $callback($value);
-    }
+	/**
+	 * @param array $value
+	 *
+	 * @return string
+	 */
+	public function encode($value)
+	{
+		$callback = $this->encodeFunction;
+		return $callback($value);
+	}
 
-    /**
-     * @param string $value
-     *
-     * @return array
-     */
-    public function decode($value)
-    {
-        if (strlen($value)) {
-            $callback = $this->decodeFunction;
-            return $callback($value);
-        }
+	/**
+	 * @param string $value
+	 *
+	 * @return array
+	 */
+	public function decode($value)
+	{
+		if (strlen($value))
+		{
+			$callback = $this->decodeFunction;
+			return $callback($value);
+		}
 
-        return [];
-    }
+		return [];
+	}
 
-    /**
-     * @param $value
-     *
-     * @return mixed
-     * @throws \Bitrix\Main\ArgumentException
-     */
-    public function encodeJson($value)
-    {
-        return Json::encode($value);
-    }
+	/**
+	 * @param $value
+	 *
+	 * @return mixed
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public function encodeJson($value)
+	{
+		return Json::encode($value);
+	}
 
-    /**
-     * @param $value
-     *
-     * @return mixed
-     * @throws \Bitrix\Main\ArgumentException
-     */
-    public function decodeJson($value)
-    {
-        return Json::decode($value);
-    }
+	/**
+	 * @param $value
+	 *
+	 * @return mixed
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public function decodeJson($value)
+	{
+		return Json::decode($value);
+	}
 
-    /**
-     * @param $value
-     *
-     * @return string
-     */
-    public function encodePhp($value)
-    {
-        return serialize($value);
-    }
+	/**
+	 * @param $value
+	 *
+	 * @return string
+	 */
+	public function encodePhp($value)
+	{
+		return serialize($value);
+	}
 
-    /**
-     * @param $value
-     *
-     * @return array
-     */
-    public function decodePhp($value)
-    {
-        return unserialize($value);
-    }
+	/**
+	 * @param $value
+	 *
+	 * @return array
+	 */
+	public function decodePhp($value)
+	{
+		return unserialize($value);
+	}
 
-    /**
-     * @param mixed $value
-     *
-     * @return array
-     */
-    public function cast($value)
-    {
-        return (array)$value;
-    }
+	/**
+	 * @param mixed $value
+	 *
+	 * @return array
+	 */
+	public function cast($value)
+	{
+		return (array) $value;
+	}
 
-    /**
-     * @param mixed $value
-     *
-     * @return mixed|string
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function convertValueFromDb($value)
-    {
-        return $this->getConnection()->getSqlHelper()->convertFromDbString($value);
-    }
+	/**
+	 * @param mixed $value
+	 *
+	 * @return mixed|string
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function convertValueFromDb($value)
+	{
+		return $this->getConnection()->getSqlHelper()->convertFromDbString($value);
+	}
 
-    /**
-     * @param mixed $value
-     *
-     * @return string
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function convertValueToDb($value)
-    {
-        return $this->getConnection()->getSqlHelper()->convertToDbString($value);
-    }
+	/**
+	 * @param mixed $value
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function convertValueToDb($value)
+	{
+		return $this->getConnection()->getSqlHelper()->convertToDbString($value);
+	}
 
-    /**
-     * @return string
-     */
-    public function getGetterTypeHint()
-    {
-        return 'array';
-    }
+	/**
+	 * @return string
+	 */
+	public function getGetterTypeHint()
+	{
+		return 'array';
+	}
 
-    /**
-     * @return string
-     */
-    public function getSetterTypeHint()
-    {
-        return 'array';
-    }
+	/**
+	 * @return string
+	 */
+	public function getSetterTypeHint()
+	{
+		return 'array';
+	}
 }

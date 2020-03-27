@@ -8,55 +8,62 @@ use Bitrix\Sale\BasketBase;
 
 class SingleRefreshStrategy extends RefreshStrategy
 {
-    public function __construct(array $data = null)
-    {
-        parent::__construct($data);
+	public function __construct(array $data = null)
+	{
+		parent::__construct($data);
 
-        if (empty($this->data['BASKET_ITEM']) && empty($this->data['BASKET_ITEM_CODE'])) {
-            throw new ArgumentNullException('Parameters "BASKET_ITEM" or "BASKET_ITEM_CODE" should not be empty.');
-        }
-    }
+		if (empty($this->data['BASKET_ITEM']) && empty($this->data['BASKET_ITEM_CODE']))
+		{
+			throw new ArgumentNullException('Parameters "BASKET_ITEM" or "BASKET_ITEM_CODE" should not be empty.');
+		}
+	}
 
-    protected function extractItem(BasketBase $basket)
-    {
-        $basketItem = null;
+	protected function extractItem(BasketBase $basket)
+	{
+		$basketItem = null;
 
-        if (isset($this->data['BASKET_ITEM']) && $this->data['BASKET_ITEM'] instanceof BasketItem) {
-            $basketItem = $this->data['BASKET_ITEM'];
-        } elseif (!empty($this->data['BASKET_ITEM_CODE'])) {
-            $basketItem = $basket->getItemByBasketCode($this->data['BASKET_ITEM_CODE']);
-        }
+		if (isset($this->data['BASKET_ITEM']) && $this->data['BASKET_ITEM'] instanceof BasketItem)
+		{
+			$basketItem = $this->data['BASKET_ITEM'];
+		}
+		elseif (!empty($this->data['BASKET_ITEM_CODE']))
+		{
+			$basketItem = $basket->getItemByBasketCode($this->data['BASKET_ITEM_CODE']);
+		}
 
-        return $basketItem;
-    }
+		return $basketItem;
+	}
 
-    protected function getItemToRefresh(BasketBase $basket)
-    {
-        $basketItem = $this->extractItem($basket);
-        if ($basketItem === null) {
-            throw new ObjectNotFoundException('Entity "BasketItem" not found');
-        }
+	protected function getItemToRefresh(BasketBase $basket)
+	{
+		$basketItem = $this->extractItem($basket);
+		if ($basketItem === null)
+		{
+			throw new ObjectNotFoundException('Entity "BasketItem" not found');
+		}
 
-        $basketRefreshStart = time();
-        $refreshGap = $this->getBasketRefreshGapTime();
+		$basketRefreshStart = time();
+		$refreshGap = $this->getBasketRefreshGapTime();
 
-        $basketItemLastRefresh = $this->getBasketItemRefreshTimestamp($basketItem);
-        if ($basketRefreshStart - $basketItemLastRefresh >= $refreshGap) {
-            return $basketItem;
-        }
+		$basketItemLastRefresh = $this->getBasketItemRefreshTimestamp($basketItem);
+		if ($basketRefreshStart - $basketItemLastRefresh >= $refreshGap)
+		{
+			return $basketItem;
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    protected function getProductData(BasketBase $basket)
-    {
-        $itemToRefresh = $this->getItemToRefresh($basket);
+	protected function getProductData(BasketBase $basket)
+	{
+		$itemToRefresh = $this->getItemToRefresh($basket);
 
-        $items = array();
-        if (!empty($itemToRefresh)) {
-            $items[] = $itemToRefresh;
-        }
+		$items = array();
+		if (!empty($itemToRefresh))
+		{
+			$items[] = $itemToRefresh;
+		}
 
-        return $this->getProviderResult($basket, $items);
-    }
+		return $this->getProviderResult($basket, $items);
+	}
 }

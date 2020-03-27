@@ -1,14 +1,14 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die(); ?><?
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();?><?
 ////////////////////////////////////////////////////////////////
-//              пїЅпїЅпїЅпїЅпїЅпїЅ Z-PAYMENT пїЅпїЅпїЅ 1C-Bitrix                //
+//              Модуль Z-PAYMENT для 1C-Bitrix                //
 ////////////////////////////////////////////////////////////////
-//      Z-PAYMENT, пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ        //
-//      All rights reserved пїЅ 2002-2007, TRANSACTOR LLC       //
+//      Z-PAYMENT, система приема и обработки платежей        //
+//      All rights reserved © 2002-2007, TRANSACTOR LLC       //
 ////////////////////////////////////////////////////////////////
 
 define("NO_KEEP_STATISTIC", true);
 define("NOT_CHECK_PERMISSIONS", true);
-require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
 $lmi_prerequest = $_REQUEST['LMI_PREREQUEST'];
 $lmi_payee_purse = $_REQUEST['LMI_PAYEE_PURSE'];
@@ -27,88 +27,96 @@ $lmi_hash = $_REQUEST['LMI_HASH'];
 $lmi_secret_key = $_REQUEST['LMI_SECRET_KEY'];
 
 
-if (CModule::IncludeModule("sale")) {
-    $bCorrectPayment = True;
+if (CModule::IncludeModule("sale"))
+{
+	$bCorrectPayment = True;
 
-    $err = 0;
-    $err_text = '';
+	$err=0;
+	$err_text= '';
 
-    if ($arOrder = CSaleOrder::GetByID(IntVal($lmi_payment_no))) {
-        $bCorrectPayment = False;
-        $err = 1;
-        $err_text = 'ERR: пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ';
-    }
+	if ($arOrder = CSaleOrder::GetByID(IntVal($lmi_payment_no)))	
+	{
+		$bCorrectPayment = False;
+		$err=1;
+		$err_text= 'ERR: НЕТ ТАКОГО ЗАКАЗА';
+	}
 
-    if ($bCorrectPayment)
-        CSalePaySystemAction::InitParamArrays($arOrder, $arOrder["ID"]);
+	if ($bCorrectPayment) 
+		CSalePaySystemAction::InitParamArrays($arOrder, $arOrder["ID"]);
 
-    $IdM = CSalePaySystemAction::GetParamValue("ZP_SHOP_ID");
-    $sk = CSalePaySystemAction::GetParamValue("ZP_MERCHANT_KEY");
-    $CruR = CSalePaySystemAction::GetParamValue("ZP_CODE_RUR");
+	$IdM = CSalePaySystemAction::GetParamValue("ZP_SHOP_ID");
+	$sk  = CSalePaySystemAction::GetParamValue("ZP_MERCHANT_KEY");
+	$CruR  = CSalePaySystemAction::GetParamValue("ZP_CODE_RUR");
 
-    if (strlen($sk) <= 0) {
-        $bCorrectPayment = False;
-        $err = 4;
-        $err_text = 'ERR: пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ';
-    }
+	if(strlen($sk) <=0)
+	{
+		$bCorrectPayment = False;
+		$err=4;
+		$err_text='ERR: ОШИБКА АВТОРИЗАЦИИ';
+	}
 
-    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ.
-    $order_amount = CCurrencyRates::ConvertCurrency($arOrder["PRICE"], $arOrder["CURRENCY"], $CruR);
+	// Проверяем, не произошла ли подмена суммы.
+	$order_amount =CCurrencyRates::ConvertCurrency($arOrder["PRICE"], $arOrder["CURRENCY"] , $CruR);
 
-    if ($order_amount != $lmi_payment_amount) {
-        $err = 2;
-        $err_text = 'ERR: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ : ' . htmlspecialcharsbx($lmi_payment_amount);
-    }
+	if ($order_amount != $lmi_payment_amount)
+	{
+		$err=2;
+		$err_text='ERR: НЕВЕРНАЯ СУММА : '.htmlspecialcharsbx($lmi_payment_amount);
+	}  
 
-    //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ ID пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-    if ($lmi_payee_purse != $IdM) {
-        $err = 3;
-        $err_text = 'ERR: пїЅпїЅпїЅпїЅпїЅпїЅпїЅ ID пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ : ' . htmlspecialcharsbx($lmi_payee_purse);
-    }
-
-
-    if ($lmi_prerequest == 1) //пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
-    {
-        if ($err != 0)
-            echo $err_text;
-        else
-            echo 'YES';
-    } else {
+	//проверяем ID магазина
+	if($lmi_payee_purse != $IdM) 
+	{
+		$err=3;
+		$err_text='ERR: НЕВЕРЕН ID МАГАЗИНА : '.htmlspecialcharsbx($lmi_payee_purse);
+	}
 
 
-        $common_string = $lmi_payee_purse . $lmi_payment_amount . $lmi_payment_no . $lmi_mode . $lmi_sys_invs_no . $lmi_sys_trans_no . $lmi_sys_trans_date . $sk . $lmi_payer_purse . $lmi_payer_wm;
-        $hash = ToUpper(md5($common_string));
+	if($lmi_prerequest == 1) //форма предварительного запроса
+	{ 
+		if ($err != 0) 
+			echo $err_text; 
+		else 
+			echo 'YES';
+	}
+	else 
+	{
 
-        if ($err == 0) {
-            if ($hash == $lmi_hash) {
-                $strPS_STATUS_DESCRIPTION = "";
-                $strPS_STATUS_DESCRIPTION .= "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ - " . $lmi_payee_purse . "; ";
-                $strPS_STATUS_DESCRIPTION .= "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ  пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ Z-PAYMENT - " . $lmi_sys_invs_no . "; ";
-                $strPS_STATUS_DESCRIPTION .= "пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ Z-PAYMENT - " . $lmi_sys_trans_no . "; ";
-                $strPS_STATUS_DESCRIPTION .= "пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ - " . $lmi_sys_trans_date . "";
 
-                $strPS_STATUS_MESSAGE = "";
-                $strPS_STATUS_MESSAGE .= "пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ e-mail  - " . $lmi_payer_purse . "; ";
+		$common_string = $lmi_payee_purse.$lmi_payment_amount.$lmi_payment_no.$lmi_mode.$lmi_sys_invs_no.$lmi_sys_trans_no.$lmi_sys_trans_date.$sk.$lmi_payer_purse.$lmi_payer_wm;
+				$hash =ToUpper(md5($common_string));
 
-                $arFields = array(
-                    "PS_STATUS" => "Y",
-                    "PS_STATUS_CODE" => "-",
-                    "PS_STATUS_DESCRIPTION" => $strPS_STATUS_DESCRIPTION,
-                    "PS_STATUS_MESSAGE" => $strPS_STATUS_MESSAGE,
-                    "PS_SUM" => $lmi_payment_amount,
-                    "PS_CURRENCY" => $arOrder["CURRENCY"],
-                    "PS_RESPONSE_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG))),
-                    "USER_ID" => $arOrder["USER_ID"]
-                );
+	if ($err==0)	{
+						if ($hash == $lmi_hash) 
+										{
+									$strPS_STATUS_DESCRIPTION = "";
+										$strPS_STATUS_DESCRIPTION .= "Идентификатор магазина - ".$lmi_payee_purse."; ";
+									$strPS_STATUS_DESCRIPTION .= "Внутренний номер платежа  в системе Z-PAYMENT - ".$lmi_sys_invs_no."; ";
+									$strPS_STATUS_DESCRIPTION .= "Внутренний номер счета в системе Z-PAYMENT - ".$lmi_sys_trans_no."; ";
+									$strPS_STATUS_DESCRIPTION .= "дата платежа - ".$lmi_sys_trans_date."";
 
-                // You can comment this code if you want PAYED flag not to be set automatically
+									$strPS_STATUS_MESSAGE = "";
+									$strPS_STATUS_MESSAGE .= "кошелек покупателя или его e-mail  - ".$lmi_payer_purse."; ";
 
-                CSaleOrder::PayOrder($arOrder["ID"], "Y");
-                CSaleOrder::Update($arOrder["ID"], $arFields);
-            }
-        }
-    }
+										$arFields = array(
+													"PS_STATUS" => "Y",
+													"PS_STATUS_CODE" => "-",
+												"PS_STATUS_DESCRIPTION" => $strPS_STATUS_DESCRIPTION,
+												"PS_STATUS_MESSAGE" => $strPS_STATUS_MESSAGE,
+													"PS_SUM" => $lmi_payment_amount,
+												"PS_CURRENCY" => $arOrder["CURRENCY"],
+												"PS_RESPONSE_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG))),
+													"USER_ID" => $arOrder["USER_ID"]
+													);
+
+			// You can comment this code if you want PAYED flag not to be set automatically
+			
+				CSaleOrder::PayOrder($arOrder["ID"], "Y");
+				CSaleOrder::Update($arOrder["ID"], $arFields);
+												}
+					}
+	}
 }
 
-require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_after.php");
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
 ?>

@@ -45,12 +45,12 @@ class GmpNegativeEncoder implements NegativeEncoder
      */
     public function __construct()
     {
-        $this->gmp_x00 = gmp_init(0x00);
-        $this->gmp_x7f = gmp_init(0x7f);
-        $this->gmp_x80 = gmp_init(0x80);
-        $this->gmp_xff = gmp_init(0xff);
+        $this->gmp_x00  = gmp_init(0x00);
+        $this->gmp_x7f  = gmp_init(0x7f);
+        $this->gmp_x80  = gmp_init(0x80);
+        $this->gmp_xff  = gmp_init(0xff);
         $this->gmp_x100 = gmp_init(0x100);
-        $this->is32Bit = BigEndian::is32Bit();
+        $this->is32Bit  = BigEndian::is32Bit();
     }
 
     /**
@@ -60,12 +60,12 @@ class GmpNegativeEncoder implements NegativeEncoder
     {
         $bytes = [];
         $value = $this->is32Bit
-            ? gmp_and($varint, '0x0ffffffffffffffff')
-            : sprintf('%u', $varint);
+           ? gmp_and($varint, '0x0ffffffffffffffff')
+           : sprintf('%u', $varint);
 
         while (gmp_cmp($value, $this->gmp_x00) > 0) {
             $bytes[] = gmp_intval(gmp_and($value, $this->gmp_x7f)) | 0x80;
-            $value = gmp_div_q($value, $this->gmp_x80);
+            $value   = gmp_div_q($value, $this->gmp_x80);
         }
 
         return $bytes;
@@ -84,7 +84,7 @@ class GmpNegativeEncoder implements NegativeEncoder
 
         for ($i = 0; $i < 8; ++$i) {
             $bytes .= chr(gmp_intval(gmp_and($value, $this->gmp_xff)));
-            $value = gmp_div_q($value, $this->gmp_x100);
+            $value  = gmp_div_q($value, $this->gmp_x100);
         }
 
         return $bytes;

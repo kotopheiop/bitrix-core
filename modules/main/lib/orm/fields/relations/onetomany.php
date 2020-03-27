@@ -21,44 +21,47 @@ use Bitrix\Main\SystemException;
  */
 class OneToMany extends Relation
 {
-    /** @var string */
-    protected $referenceName;
+	/** @var string */
+	protected $referenceName;
 
-    /** @var int */
-    protected $cascadeSavePolicy = CascadePolicy::FOLLOW;
+	/** @var int */
+	protected $cascadeSavePolicy = CascadePolicy::FOLLOW;
 
-    protected $cascadeDeletePolicy = CascadePolicy::SET_NULL; // follow | no_action | set_null
+	protected $cascadeDeletePolicy = CascadePolicy::SET_NULL; // follow | no_action | set_null
 
-    public function __construct($name, $referenceEntity, $referenceName)
-    {
-        $this->referenceName = $referenceName;
+	public function __construct($name, $referenceEntity, $referenceName)
+	{
+		$this->referenceName = $referenceName;
 
-        if ($referenceEntity instanceof Entity) {
-            $this->refEntity = $referenceEntity;
-            $this->refEntityName = $referenceEntity->getFullName();
-        } else {
-            // this one could be without leading backslash and/or with Table-postfix
-            $this->refEntityName = Entity::normalizeName($referenceEntity);
-        }
+		if ($referenceEntity instanceof Entity)
+		{
+			$this->refEntity = $referenceEntity;
+			$this->refEntityName = $referenceEntity->getFullName();
+		}
+		else
+		{
+			// this one could be without leading backslash and/or with Table-postfix
+			$this->refEntityName = Entity::normalizeName($referenceEntity);
+		}
 
-        parent::__construct($name);
-    }
+		parent::__construct($name);
+	}
 
-    public function getTypeMask()
-    {
-        return FieldTypeMask::ONE_TO_MANY;
-    }
+	public function getTypeMask()
+	{
+		return FieldTypeMask::ONE_TO_MANY;
+	}
 
-    public function getRefField()
-    {
-        return $this->getRefEntity()->getField($this->referenceName);
-    }
+	public function getRefField()
+	{
+		return $this->getRefEntity()->getField($this->referenceName);
+	}
 
-    /**
-     * @return string
-     */
-    public function getReferenceName()
-    {
-        return $this->referenceName;
-    }
+	/**
+	 * @return string
+	 */
+	public function getReferenceName()
+	{
+		return $this->referenceName;
+	}
 }

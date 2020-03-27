@@ -18,7 +18,7 @@ class BcNegativeEncoder implements NegativeEncoder
     public function encodeVarint($varint)
     {
         $values = [];
-        $value = sprintf('%u', $varint);
+        $value  = sprintf('%u', $varint);
 
         while (bccomp($value, 0, 0) > 0) {
             // Get the last 7bits of the number
@@ -27,13 +27,13 @@ class BcNegativeEncoder implements NegativeEncoder
 
             do {
                 $rest = bcmod($dec, 2);
-                $dec = bcdiv($dec, 2, 0);
-                $bin = $rest . $bin;
+                $dec  = bcdiv($dec, 2, 0);
+                $bin  = $rest . $bin;
             } while ($dec > 0 && mb_strlen($bin, '8bit') < 7);
 
             // Pack as a decimal and apply the flag
             $values[] = intval($bin, 2) | 0x80;
-            $value = bcdiv($value, 0x80, 0);
+            $value    = bcdiv($value, 0x80, 0);
         }
 
         return $values;
@@ -53,13 +53,13 @@ class BcNegativeEncoder implements NegativeEncoder
             $dec = $value;
 
             do {
-                $bin = bcmod($dec, 2) . $bin;
+                $bin = bcmod($dec, 2).$bin;
                 $dec = bcdiv($dec, 2, 0);
             } while (mb_strlen($bin, '8bit') < 8);
 
             // Pack the byte
             $bytes .= chr(intval($bin, 2));
-            $value = bcdiv($value, 0x100, 0);
+            $value  = bcdiv($value, 0x100, 0);
         }
 
         return $bytes;

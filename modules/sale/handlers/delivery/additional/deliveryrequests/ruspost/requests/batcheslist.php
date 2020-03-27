@@ -1,5 +1,4 @@
 <?
-
 namespace Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost\Requests;
 
 use Bitrix\Main\Web\HttpClient;
@@ -13,48 +12,51 @@ use Bitrix\Sale\Delivery\Requests;
  */
 class BatchesList extends Base
 {
-    protected $path = "/1.0/batch";
-    protected $type = HttpClient::HTTP_GET;
+	protected $path = "/1.0/batch";
+	protected $type = HttpClient::HTTP_GET;
 
-    /**
-     * @param array $rawData
-     * @param array $requestData
-     * @return Requests\Result
-     * @throws \Bitrix\Main\ArgumentException
-     */
-    protected function convertResponse($rawData, $requestData)
-    {
-        $result = new Requests\Result();
+	/**
+	 * @param array $rawData
+	 * @param array $requestData
+	 * @return Requests\Result
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	protected function convertResponse($rawData, $requestData)
+	{
+		$result = new Requests\Result();
 
-        /** @var Requests\RequestResult[] $batchesResults */
-        $batchesResults = array();
-        $externalIds = array();
+		/** @var Requests\RequestResult[] $batchesResults */
+		$batchesResults = array();
+		$externalIds = array();
 
-        if (is_array($rawData) && !empty($rawData)) {
-            foreach ($rawData as $batch) {
-                $externalId = $batch['batch-name'];
-                $externalIds[] = $externalId;
-                $batchesResults[$externalId] = new Requests\RequestResult();
-                $batchesResults[$externalId]->setExternalId($externalId);
-                $batchesResults[$externalId]->setData($batch);
-            }
-        }
+		if(is_array($rawData) && !empty($rawData))
+		{
+			foreach($rawData as $batch)
+			{
+				$externalId = $batch['batch-name'];
+				$externalIds[] = $externalId;
+				$batchesResults[$externalId] = new Requests\RequestResult();
+				$batchesResults[$externalId]->setExternalId($externalId);
+				$batchesResults[$externalId]->setData($batch);
+			}
+		}
 
-        if (!empty($externalIds)) {
-            $dbRes = Requests\RequestTable::getList(array(
-                'filter' => array(
-                    '=EXTERNAL_ID' => $externalIds
-                )
-            ));
+		if(!empty($externalIds))
+		{
+			$dbRes = Requests\RequestTable::getList(array(
+				'filter' => array(
+					'=EXTERNAL_ID' => $externalIds
+				)
+			));
 
-            while ($row = $dbRes->fetch())
-                if (isset($batchesResults[$row['EXTERNAL_ID']]))
-                    $batchesResults[$row['EXTERNAL_ID']]->setInternalId($row['ID']);
-        }
+			while($row = $dbRes->fetch())
+				if(isset($batchesResults[$row['EXTERNAL_ID']]))
+					$batchesResults[$row['EXTERNAL_ID']]->setInternalId($row['ID']);
+		}
 
-        if (!empty($batchesResults))
-            $result->setData($batchesResults);
+		if(!empty($batchesResults))
+			$result->setData($batchesResults);
 
-        return $result;
-    }
+		return $result;
+	}
 }

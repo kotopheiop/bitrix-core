@@ -40,7 +40,7 @@ class SizeCalculator
      */
     public function computeVarintSize($value)
     {
-        if (($value & (0xffffffff << 7)) === 0) {
+        if (($value & (0xffffffff <<  7)) === 0) {
             return 1;
         }
 
@@ -89,7 +89,7 @@ class SizeCalculator
     public function computeZigzag32Size($value)
     {
         $varint = ($value << 1) ^ ($value >> 32 - 1);
-        $size = $this->computeVarintSize($varint);
+        $size   = $this->computeVarintSize($varint);
 
         return $size;
     }
@@ -104,7 +104,7 @@ class SizeCalculator
     public function computeZigzag64Size($value)
     {
         $varint = ($value << 1) ^ ($value >> 64 - 1);
-        $size = $this->computeVarintSize($varint);
+        $size   = $this->computeVarintSize($varint);
 
         return $size;
     }
@@ -119,7 +119,7 @@ class SizeCalculator
     public function computeStringSize($value)
     {
         $length = mb_strlen($value, '8bit');
-        $size = $length + $this->computeVarintSize($length);
+        $size   = $length + $this->computeVarintSize($length);
 
         return $size;
     }
@@ -134,7 +134,7 @@ class SizeCalculator
     public function computeByteStreamSize(Stream $value)
     {
         $length = $value->getSize();
-        $size = $length + $this->computeVarintSize($length);
+        $size   = $length + $this->computeVarintSize($length);
 
         return $size;
     }

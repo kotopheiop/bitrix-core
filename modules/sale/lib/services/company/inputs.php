@@ -1,10 +1,10 @@
 <?php
 
 namespace Bitrix\Sale\Company\Inputs;
-require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/internals/input.php");
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/internals/input.php");
 
 use Bitrix\Sale\Internals\CompanyLocationTable;
-use    Bitrix\Sale\Internals\Input;
+use	Bitrix\Sale\Internals\Input;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Services\Company;
 
@@ -12,54 +12,54 @@ Loc::loadMessages(__FILE__);
 
 class LocationMulti extends Input\Base
 {
-    public static function getViewHtml(array $input, $value = null)
-    {
-        $result = "";
+	public static function getViewHtml(array $input, $value = null)
+	{
+		$result = "";
 
-        $res = CompanyLocationTable::getConnectedLocations(
-            $input["COMPANY_ID"],
-            array(
-                'select' => array('LNAME' => 'NAME.NAME'),
-                'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
-            )
-        );
+		$res = CompanyLocationTable::getConnectedLocations(
+			$input["COMPANY_ID"],
+			array(
+				'select' => array('LNAME' => 'NAME.NAME'),
+				'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
+			)
+		);
 
-        while ($loc = $res->fetch())
-            $result .= htmlspecialcharsbx($loc["LNAME"]) . "<br>\n";
+		while($loc = $res->fetch())
+			$result .= htmlspecialcharsbx($loc["LNAME"])."<br>\n";
 
-        $res = CompanyLocationTable::getConnectedGroups(
-            $input["COMPANY_ID"],
-            array(
-                'select' => array('LNAME' => 'NAME.NAME'),
-                'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
-            )
-        );
+		$res = CompanyLocationTable::getConnectedGroups(
+			$input["COMPANY_ID"],
+			array(
+				'select' => array('LNAME' => 'NAME.NAME'),
+				'filter' => array('NAME.LANGUAGE_ID' => LANGUAGE_ID)
+			)
+		);
 
-        while ($loc = $res->fetch())
-            $result .= htmlspecialcharsbx($loc["LNAME"]) . "<br>\n";
+		while($loc = $res->fetch())
+			$result .= htmlspecialcharsbx($loc["LNAME"])."<br>\n";
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public static function getEditHtml($name, array $input, $values = null)
-    {
-        global $APPLICATION;
+	public static function getEditHtml($name, array $input, $values = null)
+	{
+		global $APPLICATION;
 
-        ob_start();
+		ob_start();
 
-        $APPLICATION->IncludeComponent(
-            "bitrix:sale.location.selector.system",
-            "",
-            array(
-                "ENTITY_PRIMARY" => $input["COMPANY_ID"],
-                "LINK_ENTITY_NAME" => Company\Manager::getLocationConnectorEntityName(),
-                "INPUT_NAME" => $name
-            ),
-            false
-        );
+		$APPLICATION->IncludeComponent(
+			"bitrix:sale.location.selector.system",
+			"",
+			array(
+				"ENTITY_PRIMARY" => $input["COMPANY_ID"],
+				"LINK_ENTITY_NAME" => Company\Manager::getLocationConnectorEntityName(),
+				"INPUT_NAME" => $name
+			),
+			false
+		);
 
-        $result = ob_get_contents();
-        $result = '
+		$result = ob_get_contents();
+		$result = '
 			<script>
 
 				var bxInputcompanyLocMultiStep3 = function()
@@ -97,30 +97,30 @@ class LocationMulti extends Input\Base
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/admin.css">
 			<link rel="stylesheet" type="text/css" href="/bitrix/panel/main/admin-public.css">
 			<link rel="stylesheet" type="text/css" href="/bitrix/components/bitrix/sale.location.selector.system/templates/.default/style.css">
-		' .
-            $result;
-        ob_end_clean();
-        return $result;
-    }
+		'.
+		$result;
+		ob_end_clean();
+		return $result;
+	}
 
-    public static function getError(array $input, $values)
-    {
-        return array();
-    }
+	public static function getError(array $input, $values)
+	{
+		return array();
+	}
 
 
-    public static function getValueSingle(array $input, $userValue)
-    {
-        return $userValue;
-    }
+	public static function getValueSingle(array $input, $userValue)
+	{
+		return $userValue;
+	}
 
-    public static function getSettings(array $input, $reload)
-    {
-        return array();
-    }
+	public static function getSettings(array $input, $reload)
+	{
+		return array();
+	}
 }
 
 Input\Manager::register('COMPANY_LOCATION_MULTI', array(
-    'CLASS' => __NAMESPACE__ . '\\LocationMulti',
-    'NAME' => Loc::getMessage('INPUT_company_LOCATION_MULTI')
+	'CLASS' => __NAMESPACE__.'\\LocationMulti',
+	'NAME' => Loc::getMessage('INPUT_company_LOCATION_MULTI')
 ));

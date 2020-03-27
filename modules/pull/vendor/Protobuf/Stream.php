@@ -24,17 +24,17 @@ class Stream
 
     /**
      * @param resource $stream
-     * @param integer $size
+     * @param integer  $size
      *
      * @throws \InvalidArgumentException if the stream is not a stream resource
      */
     public function __construct($stream, $size = null)
     {
-        if (!is_resource($stream)) {
+        if ( ! is_resource($stream)) {
             throw new InvalidArgumentException('Stream must be a resource');
         }
 
-        $this->size = $size;
+        $this->size   = $size;
         $this->stream = $stream;
     }
 
@@ -65,7 +65,7 @@ class Stream
      */
     public function getContents()
     {
-        if (!$this->stream) {
+        if ( ! $this->stream) {
             return '';
         }
 
@@ -87,7 +87,7 @@ class Stream
             return $this->size;
         }
 
-        if (!$this->stream) {
+        if ( ! $this->stream) {
             return null;
         }
 
@@ -176,9 +176,9 @@ class Stream
      */
     public function readStream($length)
     {
-        $stream = self::fromString();
-        $target = $stream->stream;
-        $source = $this->stream;
+        $stream  = self::fromString();
+        $target  = $stream->stream;
+        $source  = $this->stream;
 
         if ($length < 1) {
             return $stream;
@@ -199,7 +199,7 @@ class Stream
      * Write data to the stream
      *
      * @param string $bytes
-     * @param int $length
+     * @param int    $length
      *
      * @return int
      *
@@ -210,7 +210,7 @@ class Stream
         $written = fwrite($this->stream, $bytes, $length);
 
         if ($written !== $length) {
-            throw new RuntimeException('Failed to write ' . $length . ' bytes');
+            throw new RuntimeException('Failed to write '.$length.' bytes');
         }
 
         $this->size = null;
@@ -222,7 +222,7 @@ class Stream
      * Write stream
      *
      * @param \Protobuf\Stream $stream
-     * @param int $length
+     * @param int              $length
      *
      * @return int
      *
@@ -230,8 +230,8 @@ class Stream
      */
     public function writeStream(Stream $stream, $length)
     {
-        $target = $this->stream;
-        $source = $stream->stream;
+        $target  = $this->stream;
+        $source  = $stream->stream;
         $written = stream_copy_to_stream($source, $target);
 
         if ($written !== $length) {
@@ -247,7 +247,7 @@ class Stream
      * Wrap the input resource in a stream object.
      *
      * @param \Protobuf\Stream|resource|string $resource
-     * @param integer $size
+     * @param integer                          $size
      *
      * @return \Protobuf\Stream
      *
@@ -285,7 +285,7 @@ class Stream
     /**
      * Create a new stream from a string.
      *
-     * @param string $resource
+     * @param string  $resource
      * @param integer $size
      *
      * @return \Protobuf\Stream

@@ -18,5 +18,5 @@ Loc::loadMessages(__FILE__);
  */
 class TransportGa extends TransportBase
 {
-    const CODE = self::CODE_ADS_GA;
+	const CODE = self::CODE_ADS_GA;
 }

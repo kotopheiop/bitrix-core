@@ -9,20 +9,19 @@ IncludeModuleLangFile(__FILE__);
 
 class CVoteNotifySchema
 {
-    public function __construct()
-    {
-    }
+	public function __construct()
+	{
+	}
 
-    public static function OnGetNotifySchema()
-    {
-        return array(
-            "vote" => array(
-                "voting" => Array(
-                    "NAME" => GetMessage('V_VOTING'),
-                )
-            )
-        );
-    }
+	public static function OnGetNotifySchema()
+	{
+		return array(
+			"vote" => array(
+				"voting" => Array(
+					"NAME" => GetMessage('V_VOTING'),
+				)
+			)
+		);
+	}
 }
-
 ?>

@@ -34,18 +34,18 @@ class ReadContext
     private $length;
 
     /**
-     * @param \Protobuf\Stream|resource|string $stream
-     * @param \Protobuf\Binary\StreamReader $reader
+     * @param \Protobuf\Stream|resource|string      $stream
+     * @param \Protobuf\Binary\StreamReader         $reader
      * @param \Protobuf\Extension\ExtensionRegistry $extensionRegistry
      */
     public function __construct($stream, StreamReader $reader, ExtensionRegistry $extensionRegistry = null)
     {
-        if (!$stream instanceof \Protobuf\Stream) {
+        if ( ! $stream instanceof \Protobuf\Stream) {
             $stream = Stream::wrap($stream);
         }
 
-        $this->stream = $stream;
-        $this->reader = $reader;
+        $this->stream            = $stream;
+        $this->reader            = $reader;
         $this->extensionRegistry = $extensionRegistry;
     }
 

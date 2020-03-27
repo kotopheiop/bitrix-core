@@ -88,14 +88,10 @@ class SenderType extends \Protobuf\Enum
     public static function valueOf($value)
     {
         switch ($value) {
-            case 0:
-                return self::UNKNOWN();
-            case 1:
-                return self::CLIENT();
-            case 2:
-                return self::BACKEND();
-            default:
-                return null;
+            case 0: return self::UNKNOWN();
+            case 1: return self::CLIENT();
+            case 2: return self::BACKEND();
+            default: return null;
         }
     }
 

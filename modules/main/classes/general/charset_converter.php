@@ -1,40 +1,40 @@
 <?
-
 /**
  * @deprecated Use \Bitrix\Main\Text\Encoding
  */
 class CharsetConverter
 {
-    private static $instance;
+	private static $instance;
 
-    /**
-     * @deprecated
-     */
-    public static function GetInstance()
-    {
-        if (!isset(self::$instance)) {
-            $c = __CLASS__;
-            self::$instance = new $c;
-        }
+	/**
+	 * @deprecated
+	 */
+	public static function GetInstance()
+	{
+		if (!isset(self::$instance))
+		{
+			$c = __CLASS__;
+			self::$instance = new $c;
+		}
 
-        return self::$instance;
-    }
+		return self::$instance;
+	}
 
-    /**
-     * @deprecated
-     */
-    public static function ConvertCharset($string, $charset_in, $charset_out, &$errorMessage = "", $ignoreErrors = false)
-    {
-        $string = strval($string);
+	/**
+	 * @deprecated
+	 */
+	public static function ConvertCharset($string, $charset_in, $charset_out, &$errorMessage = "", $ignoreErrors = false)
+	{
+		$string = strval($string);
 
-        return \Bitrix\Main\Text\Encoding::convertEncoding($string, $charset_in, $charset_out, $errorMessage);
-    }
+		return \Bitrix\Main\Text\Encoding::convertEncoding($string, $charset_in, $charset_out, $errorMessage);
+	}
 
-    /**
-     * @deprecated
-     */
-    public function Convert($sourceString, $charsetFrom, $charsetTo)
-    {
-        return self::ConvertCharset($sourceString, $charsetFrom, $charsetTo);
-    }
+	/**
+	 * @deprecated
+	 */
+	public function Convert($sourceString, $charsetFrom, $charsetTo)
+	{
+		return self::ConvertCharset($sourceString, $charsetFrom, $charsetTo);
+	}
 }

@@ -12,77 +12,85 @@ use Sale\Handlers\Delivery\Additional;
  */
 class Requester
 {
-    private $deliveryRequestsHandler = null;
+	private $deliveryRequestsHandler = null;
 
-    /**
-     * Requester constructor.
-     * @param Additional\DeliveryRequests\RusPost\Handler $deliveryRequestsHandler
-     */
-    public function __construct(Additional\DeliveryRequests\RusPost\Handler $deliveryRequestsHandler)
-    {
-        $this->deliveryRequestsHandler = $deliveryRequestsHandler;
-    }
+	/**
+	 * Requester constructor.
+	 * @param Additional\DeliveryRequests\RusPost\Handler $deliveryRequestsHandler
+	 */
+	public function __construct(Additional\DeliveryRequests\RusPost\Handler $deliveryRequestsHandler)
+	{
+		$this->deliveryRequestsHandler = $deliveryRequestsHandler;
+	}
 
-    /**
-     * @param ReliabilityCollection $collection
-     * @return bool|ReliabilityCollection
-     */
-    public function request(ReliabilityCollection $collection)
-    {
-        return $this->obtainDataFromRequestResult(
-            $this->deliveryRequestsHandler->send(
-                'UNRELIABLE_RECIPIENT',
-                $this->createRequestData($collection)
-            ),
-            $collection
-        );
-    }
+	/**
+	 * @param ReliabilityCollection $collection
+	 * @return bool|ReliabilityCollection
+	 */
+	public function request(ReliabilityCollection $collection)
+	{
+		return $this->obtainDataFromRequestResult(
+			$this->deliveryRequestsHandler->send(
+				'UNRELIABLE_RECIPIENT',
+				$this->createRequestData($collection)
+			),
+			$collection
+		);
+	}
 
-    private function obtainDataFromRequestResult(Requests\Result $result, ReliabilityCollection $collection)
-    {
-        if (!$result->isSuccess()) {
-            return false;
-        }
+	private function obtainDataFromRequestResult(Requests\Result $result, ReliabilityCollection $collection)
+	{
+		if(!$result->isSuccess())
+		{
+			return false;
+		}
 
-        foreach ($result->getData() as $resultItem) {
-            $reliability = Service::UNKNOWN;
+		foreach ($result->getData() as $resultItem)
+		{
+			$reliability = Service::UNKNOWN;
 
-            if (isset($resultItem['unreliability'])) {
-                if ($resultItem['unreliability'] === 'RELIABLE') {
-                    $reliability = Service::RELIABLE;
-                } elseif ($resultItem['unreliability'] === 'FRAUD') {
-                    $reliability = Service::FRAUD;
-                }
-            }
+			if (isset($resultItem['unreliability']))
+			{
+				if ($resultItem['unreliability'] === 'RELIABLE')
+				{
+					$reliability = Service::RELIABLE;
+				}
+				elseif ($resultItem['unreliability'] === 'FRAUD')
+				{
+					$reliability = Service::FRAUD;
+				}
+			}
 
-            $hash = Service::createHash($resultItem['raw-full-name'], $resultItem['raw-address'], $resultItem['raw-telephone']);
+			$hash = Service::createHash($resultItem['raw-full-name'], $resultItem['raw-address'], $resultItem['raw-telephone']);
 
-            /** @var Reliability $askedItem */
-            if ($askedItem = $collection->getByPrimary($hash)) {
-                $askedItem->setReliability($reliability);
-            }
-        }
+			/** @var Reliability $askedItem */
+			if($askedItem = $collection->getByPrimary($hash))
+			{
+				$askedItem->setReliability($reliability);
+			}
+		}
 
-        return $collection;
-    }
+		return $collection;
+	}
 
-    /**
-     * @param ReliabilityCollection $collection
-     * @return array
-     */
-    private function createRequestData(ReliabilityCollection $collection)
-    {
-        $result = [];
+	/**
+	 * @param ReliabilityCollection $collection
+	 * @return array
+	 */
+	private function createRequestData(ReliabilityCollection $collection)
+	{
+		$result = [];
 
-        /** @var Reliability $item */
-        foreach ($collection as $item) {
-            $result [] = [
-                'raw-address' => $item->getAddress(),
-                'raw-full-name' => $item->getFullName(),
-                'raw-telephone' => $item->getPhone()
-            ];
-        }
+		/** @var Reliability $item */
+		foreach ($collection as $item)
+		{
+			$result [] = [
+				'raw-address' => $item->getAddress(),
+				'raw-full-name' => $item->getFullName(),
+				'raw-telephone' => $item->getPhone()
+			];
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 }

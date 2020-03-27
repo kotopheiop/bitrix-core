@@ -14,36 +14,36 @@ Localization\Loc::loadMessages(__FILE__);
  */
 class ConturOfd extends Ofd
 {
-    const ACTIVE_URL = 'https://cash-ntt.kontur.ru/CashReceipt/View';
+	const ACTIVE_URL = 'https://cash-ntt.kontur.ru/CashReceipt/View';
 
-    /**
-     * @return string
-     */
-    protected function getUrl()
-    {
-        return static::ACTIVE_URL;
-    }
+	/**
+	 * @return string
+	 */
+	protected function getUrl()
+	{
+		return static::ACTIVE_URL;
+	}
 
-    /**
-     * @return string
-     * @throws Main\NotImplementedException
-     */
-    public static function getName()
-    {
-        return Localization\Loc::getMessage('SALE_CASHBOX_CONTUR_OFD_NAME');
-    }
+	/**
+	 * @throws Main\NotImplementedException
+	 * @return string
+	 */
+	public static function getName()
+	{
+		return Localization\Loc::getMessage('SALE_CASHBOX_CONTUR_OFD_NAME');
+	}
 
-    /**
-     * @param $data
-     * @return string
-     */
-    public function generateCheckLink($data)
-    {
-        $url = $this->getUrl();
-        $url .= '/FN/' . $data[Check::PARAM_FN_NUMBER];
-        $url .= '/FD/' . $data[Check::PARAM_FISCAL_DOC_NUMBER];
-        $url .= '/FP/' . $data[Check::PARAM_FISCAL_DOC_ATTR];
+	/**
+	 * @param $data
+	 * @return string
+	 */
+	public function generateCheckLink($data)
+	{
+		$url = $this->getUrl();
+		$url .= '/FN/'.$data[Check::PARAM_FN_NUMBER];
+		$url .= '/FD/'.$data[Check::PARAM_FISCAL_DOC_NUMBER];
+		$url .= '/FP/'.$data[Check::PARAM_FISCAL_DOC_ATTR];
 
-        return $url;
-    }
+		return $url;
+	}
 }

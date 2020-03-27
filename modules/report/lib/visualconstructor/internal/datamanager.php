@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Report\VisualConstructor\Internal;
 
 /**
@@ -8,11 +7,11 @@ namespace Bitrix\Report\VisualConstructor\Internal;
  */
 class DataManager extends \Bitrix\Main\Entity\DataManager
 {
-    /**
-     * @return string
-     */
-    public static function getClassName()
-    {
-        return get_called_class();
-    }
+	/**
+	 * @return string
+	 */
+	public static function getClassName()
+	{
+		return get_called_class();
+	}
 }

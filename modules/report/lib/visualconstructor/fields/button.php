@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Report\VisualConstructor\Fields;
 
 /**
@@ -8,28 +7,28 @@ namespace Bitrix\Report\VisualConstructor\Fields;
  */
 class Button extends Base
 {
-    const JS_EVENT_ON_CLICK = 'onClick';
+	const JS_EVENT_ON_CLICK = 'onClick';
 
-    /**
-     * Button constructor.
-     *
-     * @param string $id Unique id.
-     */
-    public function __construct($id)
-    {
-        $this->setId($id);
-    }
+	/**
+	 * Button constructor.
+	 *
+	 * @param string $id Unique id.
+	 */
+	public function __construct($id)
+	{
+		$this->setId($id);
+	}
 
 
-    /**
-     * Load field component with button template.
-     *
-     * @return void
-     */
-    public function printContent()
-    {
-        $this->includeFieldComponent('button');
-    }
+	/**
+	 * Load field component with button template.
+	 *
+	 * @return void
+	 */
+	public function printContent()
+	{
+		$this->includeFieldComponent('button');
+	}
 
 
 }

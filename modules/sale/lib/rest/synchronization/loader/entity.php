@@ -9,68 +9,70 @@ use Bitrix\Sale\Registry;
 
 class Entity
 {
-    protected $params;
-    protected $typeName;
+	protected $params;
+	protected $typeName;
 
-    public function __construct($typeName, $params = [])
-    {
-        $this->typeName = $typeName;
-        $this->params = $params;
-    }
+	public function __construct($typeName, $params=[])
+	{
+		$this->typeName = $typeName;
+		$this->params = $params;
+	}
 
-    protected function getAdditionalFilterFileds()
-    {
-        return [];
-    }
+	protected function getAdditionalFilterFileds()
+	{
+		return [];
+	}
 
-    protected function getExternalNameField()
-    {
-        return 'XML_ID';
-    }
+	protected function getExternalNameField()
+	{
+		return 'XML_ID';
+	}
 
-    protected function getFields()
-    {
-        return ['ID', $this->getExternalNameField()];
-    }
+	protected function getFields()
+	{
+		return ['ID', $this->getExternalNameField()];
+	}
 
-    public function getParams()
-    {
-        return $this->params;
-    }
+	public function getParams()
+	{
+		return $this->params;
+	}
 
-    public function getFieldsByExternalId($xmlId)
-    {
-        if ($xmlId === "") {
-            return null;
-        }
+	public function getFieldsByExternalId($xmlId)
+	{
+		if($xmlId === "")
+		{
+			return null;
+		}
 
-        $entity = $this->getEntityTable();
+		$entity = $this->getEntityTable();
 
-        if ($r = $entity::getList([
-            'select' => $this->getFields(),
-            'filter' => array_merge(
-                [
-                    $this->getExternalNameField() => $xmlId
-                ],
-                $this->getAdditionalFilterFileds()
-            ),
-            'order' => ['ID' => 'ASC']
-        ])->fetch()
-        ) {
-            return $r['ID'];
-        }
+		if($r = $entity::getList([
+			'select' => $this->getFields(),
+			'filter' => array_merge(
+				[
+					$this->getExternalNameField() => $xmlId
+				],
+				$this->getAdditionalFilterFileds()
+			),
+			'order' => ['ID' => 'ASC']
+			])->fetch()
+		)
+		{
+			return $r['ID'];
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    public function getRegistryType()
-    {
-        return Registry::REGISTRY_TYPE_ORDER;
-    }
+	public function getRegistryType()
+	{
+		return Registry::REGISTRY_TYPE_ORDER;
+	}
 
-    protected function getEntityTable()
-    {
-        $instance = Registry::getInstance($this->getRegistryType());
-        return $instance->get($this->typeName);
-    }
+	protected function getEntityTable()
+	{
+		$instance = Registry::getInstance($this->getRegistryType());
+		return $instance->get($this->typeName);
+	}
 }

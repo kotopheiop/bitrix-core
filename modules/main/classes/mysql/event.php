@@ -7,7 +7,7 @@
 # mailto:admin@bitrixsoft.com                #
 ##############################################
 */
-require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/classes/general/event.php");
+require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/event.php");
 
 class CEvent extends CAllEvent
 {
@@ -22,5 +22,4 @@ class CEventMessage extends CAllEventMessage
 {
 
 }
-
 ?>

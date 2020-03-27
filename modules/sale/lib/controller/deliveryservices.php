@@ -9,17 +9,16 @@ use Bitrix\Sale\Result;
 
 class DeliveryServices extends Controller
 {
-    //region Actions
-    public function getActiveListAction()
-    {
-        $deliveryServices = \Bitrix\Sale\Delivery\Services\Manager::getActiveList();
-        return new Page('DELIVERY_SERVICES', $deliveryServices, count($deliveryServices));
-    }
+	//region Actions
+	public function getActiveListAction()
+	{
+		$deliveryServices = \Bitrix\Sale\Delivery\Services\Manager::getActiveList();
+		return new Page('DELIVERY_SERVICES', $deliveryServices, count($deliveryServices));
+	}
+	//endregion
 
-    //endregion
-
-    protected function checkPermissionEntity($name)
-    {
-        return new Result();
-    }
+	protected function checkPermissionEntity($name)
+	{
+		return new Result();
+	}
 }

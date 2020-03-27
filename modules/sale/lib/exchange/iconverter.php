@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Exchange;
 
 /**
@@ -19,7 +18,7 @@ interface IConverter
      * @param null $entity
      * @param array $fields
      */
-    static public function sanitizeFields($entity = null, array &$fields, ISettings $settings);
+    static public function sanitizeFields($entity=null, array &$fields, ISettings $settings);
 
     public function externalize(array $fields);
 }

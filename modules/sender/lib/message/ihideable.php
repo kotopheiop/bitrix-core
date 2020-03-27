@@ -14,10 +14,10 @@ namespace Bitrix\Sender\Message;
  */
 interface iHideable
 {
-    /**
-     * Return true if is hidden.
-     *
-     * @return bool
-     */
-    public function isHidden();
+	/**
+	 * Return true if is hidden.
+	 *
+	 * @return bool
+	 */
+	public function isHidden();
 }

@@ -6,94 +6,96 @@ use Bitrix\Main\Page\Asset;
 
 class BoardButton
 {
-    private $html = '';
-    private $jsList = [];
-    private $cssList = [];
-    private $stringList = [];
+	private $html = '';
+	private $jsList = [];
+	private $cssList = [];
+	private $stringList = [];
 
 
-    public function __construct($html)
-    {
-        $this->setHtml($html);
-    }
+	public function __construct($html)
+	{
+		$this->setHtml($html);
+	}
 
-    public function getHtml()
-    {
-        return $this->html;
-    }
+	public function getHtml()
+	{
+		return $this->html;
+	}
 
-    public function setHtml($html)
-    {
-        $this->html = $html;
-    }
+	public function setHtml($html)
+	{
+		$this->html = $html;
+	}
 
-    public function getJsList()
-    {
-        return $this->jsList;
-    }
+	public function getJsList()
+	{
+		return $this->jsList;
+	}
 
-    public function setJsList(array $jsList)
-    {
-        $this->jsList = $jsList;
-    }
-
-
-    public function addJs($jsPath)
-    {
-        $this->jsList[] = $jsPath;
-    }
+	public function setJsList(array $jsList)
+	{
+		$this->jsList = $jsList;
+	}
 
 
-    public function getStringList()
-    {
-        return $this->stringList;
-    }
-
-    public function setStringList(array $stringList)
-    {
-        $this->stringList = $stringList;
-    }
+	public function addJs($jsPath)
+	{
+		$this->jsList[] = $jsPath;
+ 	}
 
 
-    public function addString($string)
-    {
-        $this->stringList[] = $string;
-    }
+	public function getStringList()
+	{
+		return $this->stringList;
+	}
+
+	public function setStringList(array $stringList)
+	{
+		$this->stringList = $stringList;
+	}
 
 
-    public function getCssList()
-    {
-        return $this->cssList;
-    }
+	public function addString($string)
+	{
+		$this->stringList[] = $string;
+	}
 
 
-    public function setCssList(array $cssList)
-    {
-        $this->cssList = $cssList;
-    }
+	public function getCssList()
+	{
+		return $this->cssList;
+	}
 
-    public function addCss($jsPath)
-    {
-        $this->jsList[] = $jsPath;
-    }
 
-    public function process()
-    {
-        return $this;
-    }
+	public function setCssList(array $cssList)
+	{
+		$this->cssList = $cssList;
+	}
 
-    public function flush()
-    {
-        foreach ($this->getJsList() as $jsPath) {
-            Asset::getInstance()->addJs($jsPath);
-        }
+	public function addCss($jsPath)
+	{
+		$this->jsList[] = $jsPath;
+	}
 
-        foreach ($this->getCssList() as $cssPath) {
-            Asset::getInstance()->addCss($cssPath);
-        }
+	public function process()
+	{
+		return $this;
+	}
 
-        echo implode('', $this->getStringList());
-        echo $this->getHtml();
+	public function flush()
+	{
+		foreach ($this->getJsList() as $jsPath)
+		{
+			Asset::getInstance()->addJs($jsPath);
+		}
 
-    }
+		foreach ($this->getCssList() as $cssPath)
+		{
+			Asset::getInstance()->addCss($cssPath);
+		}
+
+		echo implode('', $this->getStringList());
+		echo $this->getHtml();
+
+	}
 }

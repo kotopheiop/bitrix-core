@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Main;
 
 use Bitrix\Main\Entity;
@@ -18,54 +17,54 @@ use Bitrix\Main\Entity;
  * <li> ATTEMPTS int
  * </ul>
  **/
+
 class UserFieldConfirmTable extends Entity\DataManager
 {
-    const MAX_ATTEMPTS_COUNT = 3;
+	const MAX_ATTEMPTS_COUNT = 3;
+	public static function getTableName()
+	{
+		return 'b_user_field_confirm';
+	}
 
-    public static function getTableName()
-    {
-        return 'b_user_field_confirm';
-    }
+	public static function getMap()
+	{
+		return array(
+			'ID' => array(
+				'data_type' => 'integer',
+				'primary' => true,
+				'autocomplete' => true,
+			),
+			'USER_ID' => array(
+				'data_type' => 'integer',
+				'required' => true,
+			),
+			'DATE_CHANGE' => array(
+				'data_type' => 'datetime',
+			),
+			'FIELD' => array(
+				'data_type' => 'string',
+				'required' => true,
+			),
+			'FIELD_VALUE' => array(
+				'data_type' => 'string',
+				'required' => true,
+			),
+			'CONFIRM_CODE' => array(
+				'data_type' => 'string',
+				'required' => true,
+				'validation' => array(__CLASS__, 'validateConfirmCode'),
+			),
+			"ATTEMPTS" => array(
+				'data_type' => 'integer',
+				"default_value" => 0,
+			),
+		);
+	}
 
-    public static function getMap()
-    {
-        return array(
-            'ID' => array(
-                'data_type' => 'integer',
-                'primary' => true,
-                'autocomplete' => true,
-            ),
-            'USER_ID' => array(
-                'data_type' => 'integer',
-                'required' => true,
-            ),
-            'DATE_CHANGE' => array(
-                'data_type' => 'datetime',
-            ),
-            'FIELD' => array(
-                'data_type' => 'string',
-                'required' => true,
-            ),
-            'FIELD_VALUE' => array(
-                'data_type' => 'string',
-                'required' => true,
-            ),
-            'CONFIRM_CODE' => array(
-                'data_type' => 'string',
-                'required' => true,
-                'validation' => array(__CLASS__, 'validateConfirmCode'),
-            ),
-            "ATTEMPTS" => array(
-                'data_type' => 'integer',
-                "default_value" => 0,
-            ),
-        );
-    }
-
-    public static function validateConfirmCode()
-    {
-        return array(
-            new Entity\Validator\Length(null, 32),
-        );
-    }
+	public static function validateConfirmCode()
+	{
+		return array(
+			new Entity\Validator\Length(null, 32),
+		);
+	}
 }

@@ -4,79 +4,93 @@ namespace Bitrix\Sale\Controller;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale;
 
 Loc::loadMessages(__FILE__);
 
 class Barcode extends \Bitrix\Main\Engine\Controller
 {
-    const PERMISSION_READ = 'D';
+	const PERMISSION_READ = 'D';
 
-    public function isBarcodeExistAction(string $barcode, int $basketId, int $orderId, int $storeId)
-    {
-        if (!\Bitrix\Main\Loader::includeModule("sale")) {
-            throw new \Bitrix\Main\SystemException('Module Sale has not installed');
-        }
+	public function isBarcodeExistAction(string $barcode, int $basketId, int $orderId, int $storeId)
+	{
+		if(!\Bitrix\Main\Loader::includeModule("sale"))
+		{
+			throw new \Bitrix\Main\SystemException('Module Sale has not installed');
+		}
 
-        if (!$this->checkPermission(self::PERMISSION_READ)) {
-            $this->addError(new Error(Loc::getMessage('SALE_CONTROLLER_BARCODE_ACCESS_DENIED')));
-            return false;
-        }
+		if(!$this->checkPermission(self::PERMISSION_READ))
+		{
+			$this->addError(new Error(Loc::getMessage('SALE_CONTROLLER_BARCODE_ACCESS_DENIED')));
+			return false;
+		}
 
-        if (strlen($barcode) <= 0) {
-            return false;
-        }
+		if(strlen($barcode) <= 0)
+		{
+			return false;
+		}
 
-        if ((int)$basketId <= 0) {
-            $this->addError(new Error(Loc::getMessage('SALE_CONTROLLER_BARCODE_ERROR_BASKET_ID')));
-            return false;
-        }
+		if((int)$basketId <= 0)
+		{
+			$this->addError(new Error(Loc::getMessage('SALE_CONTROLLER_BARCODE_ERROR_BASKET_ID')));
+			return false;
+		}
 
-        if ((int)$orderId <= 0) {
-            $this->addError(new Error(Loc::getMessage('SALE_CONTROLLER_BARCODE_ERROR_ORDER_ID')));
-            return false;
-        }
+		if((int)$orderId <= 0)
+		{
+			$this->addError(new Error(Loc::getMessage('SALE_CONTROLLER_BARCODE_ERROR_ORDER_ID')));
+			return false;
+		}
 
-        $basketItem = null;
-        $result = false;
+		$basketItem = null;
+		$result = false;
 
-        $order = \Bitrix\Sale\Order::load($orderId);
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
 
-        if ($order) {
-            $basket = $order->getBasket();
+		$order = $orderClass::load($orderId);
 
-            if ($basket) {
-                $basketItem = $basket->getItemById($basketId);
-            }
-        }
+		if ($order)
+		{
+			$basket = $order->getBasket();
 
-        if ($basketItem) {
-            $result = \Bitrix\Sale\Provider::checkProductBarcode(
-                $basketItem,
-                [
-                    'BARCODE' => $barcode,
-                    'STORE_ID' => $storeId
-                ]);
-        }
+			if ($basket)
+			{
+				$basketItem = $basket->getItemById($basketId);
+			}
+		}
 
-        return ['RESULT' => $result];
-    }
+		if ($basketItem)
+		{
+			$result = \Bitrix\Sale\Provider::checkProductBarcode(
+				$basketItem,
+				[
+					'BARCODE' => $barcode,
+					'STORE_ID' => $storeId
+			]);
+		}
 
-    protected function checkPermission($permissionType)
-    {
-        $result = self::getApplication()->GetGroupRight("sale") >= $permissionType;
+		return ['RESULT' => $result];
+	}
 
-        if (!$result) {
-            $this->addError(new Error('Access denied'));
-        }
+	protected function checkPermission($permissionType)
+	{
+		$result =  self::getApplication()->GetGroupRight("sale") >= $permissionType;
 
-        return $result;
-    }
+		if(!$result)
+		{
+			$this->addError(new Error('Access denied'));
+		}
 
-    protected static function getApplication()
-    {
-        /** @global \CMain $APPLICATION */
-        global $APPLICATION;
+		return $result;
+	}
 
-        return $APPLICATION;
-    }
+	protected static function getApplication()
+	{
+		/** @global \CMain $APPLICATION */
+		global $APPLICATION;
+
+		return $APPLICATION;
+	}
 }

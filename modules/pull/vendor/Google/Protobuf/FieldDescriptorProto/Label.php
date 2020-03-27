@@ -87,14 +87,10 @@ class Label extends \Protobuf\Enum
     public static function valueOf($value)
     {
         switch ($value) {
-            case 1:
-                return self::LABEL_OPTIONAL();
-            case 2:
-                return self::LABEL_REQUIRED();
-            case 3:
-                return self::LABEL_REPEATED();
-            default:
-                return null;
+            case 1: return self::LABEL_OPTIONAL();
+            case 2: return self::LABEL_REQUIRED();
+            case 3: return self::LABEL_REPEATED();
+            default: return null;
         }
     }
 

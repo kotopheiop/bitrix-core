@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
@@ -10,57 +9,69 @@ Loc::loadMessages(__FILE__);
 
 class PixelFb extends \Bitrix\Landing\Hook\Page
 {
-    /**
-     * Map of the field.
-     * @return array
-     */
-    protected function getMap()
-    {
-        $helpUrl = \Bitrix\Landing\Help::getHelpUrl('PIXEL');
-        return array(
-            'USE' => new Field\Checkbox('USE', array(
-                'title' => Loc::getMessage('LANDING_HOOK_PIXEL_FB_USE')
-            )),
-            'COUNTER' => new Field\Text('COUNTER', array(
-                'title' => Loc::getMessage('LANDING_HOOK_PIXEL_FB_COUNTER'),
-                'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_FB_PLACEHOLDER2'),
-                'help' => $helpUrl
-                    ? '<a href="' . $helpUrl . '" target="_blank">' .
-                    Loc::getMessage('LANDING_HOOK_PIXEL_FB_HELP') .
-                    '</a>'
-                    : ''
-            ))
-        );
-    }
+	/**
+	 * Map of the field.
+	 * @return array
+	 */
+	protected function getMap()
+	{
+		$helpUrl = \Bitrix\Landing\Help::getHelpUrl('PIXEL');
+		return array(
+			'USE' => new Field\Checkbox('USE', array(
+				'title' => Loc::getMessage('LANDING_HOOK_PIXEL_FB_USE')
+			)),
+			'COUNTER' => new Field\Text('COUNTER', array(
+				'title' => Loc::getMessage('LANDING_HOOK_PIXEL_FB_COUNTER'),
+				'placeholder' => Loc::getMessage('LANDING_HOOK_PIXEL_FB_PLACEHOLDER2'),
+				'help' => $helpUrl
+					? '<a href="' . $helpUrl . '" target="_blank">' .
+					  		Loc::getMessage('LANDING_HOOK_PIXEL_FB_HELP') .
+				  		'</a>'
+					: ''
+			))
+		);
+	}
 
-    /**
-     * Enable or not the hook.
-     * @return boolean
-     */
-    public function enabled()
-    {
-        if ($this->issetCustomExec()) {
-            return true;
-        }
+	/**
+	 * Exec or not hook in edit mode.
+	 * @return bool
+	 */
+	public function enabledInEditMode()
+	{
+		return false;
+	}
 
-        return $this->fields['USE']->getValue() == 'Y';
-    }
+	/**
+	 * Enable or not the hook.
+	 * @return boolean
+	 */
+	public function enabled()
+	{
+		if ($this->issetCustomExec())
+		{
+			return true;
+		}
 
-    /**
-     * Exec hook.
-     * @return void
-     */
-    public function exec()
-    {
-        if ($this->execCustom()) {
-            return;
-        }
+		return $this->fields['USE']->getValue() == 'Y';
+	}
 
-        $counter = \htmlspecialcharsbx(trim($this->fields['COUNTER']));
-        $counter = \CUtil::jsEscape($counter);
-        if ($counter) {
-            Manager::setPageView('AfterHeadOpen',
-                '<!-- Facebook Pixel Code -->
+	/**
+	 * Exec hook.
+	 * @return void
+	 */
+	public function exec()
+	{
+		if ($this->execCustom())
+		{
+			return;
+		}
+
+		$counter = \htmlspecialcharsbx(trim($this->fields['COUNTER']));
+		$counter = \CUtil::jsEscape($counter);
+		if ($counter)
+		{
+			Manager::setPageView('AfterHeadOpen',
+'<!-- Facebook Pixel Code -->
 <script data-skip-moving="true">
   !function(f,b,e,v,n,t,s)
   {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -74,12 +85,12 @@ class PixelFb extends \Bitrix\Landing\Hook\Page
   fbq(\'track\', \'PageView\');
 </script>
 <!-- End Facebook Pixel Code -->'
-            );
-            Manager::setPageView(
-                'AfterBodyOpen',
-                '<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=' .
-                $counter . '&ev=PageView&noscript=1"/></noscript>'
-            );
-        }
-    }
+			);
+			Manager::setPageView(
+				'AfterBodyOpen',
+				'<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=' .
+				$counter . '&ev=PageView&noscript=1"/></noscript>'
+			);
+		}
+	}
 }

@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Exchange\Entity;
 
 use Bitrix\Sale;
@@ -24,7 +23,7 @@ class PaymentImport extends EntityImport
      */
     public function setEntity(Internals\Entity $entity)
     {
-        if (!($entity instanceof Payment))
+        if(!($entity instanceof Payment))
             throw new Main\ArgumentException("Entity must be instanceof Payment");
 
         $this->entity = $entity;
@@ -38,50 +37,56 @@ class PaymentImport extends EntityImport
     {
         $result = new Sale\Result();
 
-        if (intval($fields['ORDER_ID']) <= 0 && !$this->isLoadedParentEntity()) {
-            $result->addError(new Error('ORDER_ID is not defined', ''));
+        if(intval($fields['ORDER_ID'])<=0 && !$this->isLoadedParentEntity())
+        {
+            $result->addError(new Error('ORDER_ID is not defined',''));
         }
 
         return $result;
     }
 
-    /**
-     * @return Main\Entity\AddResult|Main\Entity\UpdateResult|Sale\Result|mixed
-     */
-    public function save()
+	/**
+	 * @return Main\Entity\AddResult|Main\Entity\UpdateResult|Sale\Result|mixed
+	 */
+	public function save()
     {
         /** @var Order $parentEntity */
         $parentEntity = $this->getParentEntity();
         return $parentEntity->save();
     }
 
-    /**
-     * @param array $params
-     * @return Sale\Result
-     */
-    public function add(array $params)
+	/**
+	 * @param array $params
+	 * @return Sale\Result
+	 */
+	public function add(array $params)
     {
-        $result = new Sale\Result();
+    	$result = new Sale\Result();
 
-        if (!$this->isLoadedParentEntity()) {
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'), 'ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'));
-            return $result;
+        if(!$this->isLoadedParentEntity())
+        {
+			$result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'),'ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'));
+			return $result;
         }
 
-        $fields = $params['TRAITS'];
+		$fields = $params['TRAITS'];
 
-        if (($paySystem = Sale\PaySystem\Manager::getObjectById($fields['PAY_SYSTEM_ID'])) == null) {
-            $result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'), 'PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'));
-        } else {
-            $parentEntity = $this->getParentEntity();
-            $paymentCollection = $parentEntity->getPaymentCollection();
-            $payment = $paymentCollection->createItem($paySystem);
-            $result = $payment->setFields($fields);
+        if(($paySystem = Sale\PaySystem\Manager::getObjectById($fields['PAY_SYSTEM_ID'])) == null)
+		{
+			$result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'),'PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'));
+		}
+		else
+		{
+			$parentEntity = $this->getParentEntity();
+			$paymentCollection = $parentEntity->getPaymentCollection();
+			$payment = $paymentCollection->createItem($paySystem);
+			$result = $payment->setFields($fields);
 
-            if ($result->isSuccess()) {
-                $this->setEntity($payment);
-            }
-        }
+			if($result->isSuccess())
+			{
+				$this->setEntity($payment);
+			}
+		}
 
         return $result;
     }
@@ -92,13 +97,14 @@ class PaymentImport extends EntityImport
      */
     public function update(array $params)
     {
-        /** @var Sale\Payment $payment */
+    	/** @var Sale\Payment $payment*/
         $payment = $this->getEntity();
 
         $criterion = $this->getCurrentCriterion($this->getEntity());
 
         $fields = $params['TRAITS'];
-        if (!$criterion->equals($fields)) {
+        if(!$criterion->equals($fields))
+        {
             unset(
                 $fields['SUM'],
                 $fields['COMMENTS'],
@@ -120,9 +126,12 @@ class PaymentImport extends EntityImport
         /** @var Payment $entity */
         $entity = $this->getEntity();
         $result = $entity->delete();
-        if ($result->isSuccess()) {
+        if($result->isSuccess())
+        {
             //$this->setCollisions(Exchange\EntityCollisionType::OrderPaymentDeleted, $this->getParentEntity());
-        } else {
+        }
+        else
+        {
             $this->setCollisions(Exchange\EntityCollisionType::OrderPaymentDeletedError, $this->getParentEntity(), implode(',', $result->getErrorMessages()));
         }
 
@@ -137,40 +146,47 @@ class PaymentImport extends EntityImport
         return 'EXTERNAL_PAYMENT';
     }
 
-    /**
-     * @param array $fields
-     * @return Sale\Result
-     * @throws Main\ArgumentException
-     */
-    public function load(array $fields)
+	/**
+	 * @param array $fields
+	 * @return Sale\Result
+	 * @throws Main\ArgumentException
+	 */
+	public function load(array $fields)
     {
         $r = $this->checkFields($fields);
-        if (!$r->isSuccess()) {
+        if(!$r->isSuccess())
+        {
             throw new Main\ArgumentException('ORDER_ID is not defined');
         }
 
-        if (!$this->isLoadedParentEntity() && !empty($fields['ORDER_ID'])) {
-            $this->setParentEntity(
-                $this->loadParentEntity(['ID' => $fields['ORDER_ID']])
-            );
-        }
+		if(!$this->isLoadedParentEntity() && !empty($fields['ORDER_ID']))
+		{
+			$this->setParentEntity(
+				$this->loadParentEntity(['ID'=>$fields['ORDER_ID']])
+			);
+		}
 
-        if ($this->isLoadedParentEntity()) {
+        if($this->isLoadedParentEntity())
+        {
             /** @var Order $parentEntity */
             $parentEntity = $this->getParentEntity();
 
-            if (!empty($fields['ID'])) {
+            if(!empty($fields['ID']))
+            {
                 $payment = $parentEntity->getPaymentCollection()->getItemById($fields['ID']);
             }
 
-            /** @var Payment $payment */
-            if (!empty($payment)) {
+            /** @var Payment $payment*/
+            if(!empty($payment))
+            {
                 $this->setEntity($payment);
-            } else {
+            }
+            else
+            {
                 $this->setExternal();
             }
         }
-        return new Sale\Result();
+		return new Sale\Result();
     }
 
     /**
@@ -180,8 +196,9 @@ class PaymentImport extends EntityImport
     {
         /** @var Sale\Payment $entity */
         $entity = $this->getEntity();
-        if (!empty($entity) && $entity->isPaid()) {
-            if ($fields['PAID'] == 'N')
+        if(!empty($entity) && $entity->isPaid())
+        {
+            if($fields['PAID'] == 'N')
                 $entity->setField('PAID', 'N');
         }
     }
@@ -191,9 +208,9 @@ class PaymentImport extends EntityImport
      * @return int
      * @throws Main\ArgumentException
      */
-    static public function resolveEntityTypeId(Internals\Entity $payment)
+	static public function resolveEntityTypeId(Internals\Entity $payment)
     {
-        if (!($payment instanceof Payment))
+        if(!($payment instanceof Payment))
             throw new Main\ArgumentException("Entity must be instanceof Payment");
 
         $paySystem = $payment->getPaySystem();
@@ -202,51 +219,52 @@ class PaymentImport extends EntityImport
         return static::resolveEntityTypeIdByCodeType($type);
     }
 
-    /**
-     * @param string $type
-     * @return int
-     */
-    static public function resolveEntityTypeIdByCodeType($type)
-    {
-        switch ($type) {
-            case 'Y':
-                $resolveType = EntityType::PAYMENT_CASH;
-                break;
-            case 'N':
-                $resolveType = EntityType::PAYMENT_CASH_LESS;
-                break;
-            case 'A':
-                $resolveType = EntityType::PAYMENT_CARD_TRANSACTION;
-                break;
-            default;
-                $resolveType = EntityType::UNDEFINED;
-        }
-        return $resolveType;
-    }
+	/**
+	 * @param string $type
+	 * @return int
+	 */
+	static public function resolveEntityTypeIdByCodeType($type)
+	{
+		switch($type)
+		{
+			case 'Y':
+				$resolveType = EntityType::PAYMENT_CASH;
+				break;
+			case 'N':
+				$resolveType = EntityType::PAYMENT_CASH_LESS;
+				break;
+			case 'A':
+				$resolveType = EntityType::PAYMENT_CARD_TRANSACTION;
+				break;
+			default;
+				$resolveType = EntityType::UNDEFINED;
+		}
+		return $resolveType;
+	}
 
-    public function initFields()
-    {
-        $this->setFields(
-            array(
-                'TRAITS' => $this->getFieldsTraits(),
-            )
-        );
-    }
+	public function initFields()
+	{
+		$this->setFields(
+			array(
+				'TRAITS'=>$this->getFieldsTraits(),
+			)
+		);
+	}
 
-    /**
-     * @param Sale\IBusinessValueProvider $entity
-     * @return Sale\Order
-     */
-    static protected function getBusinessValueOrderProvider(\Bitrix\Sale\IBusinessValueProvider $entity)
-    {
-        if (!($entity instanceof Payment))
-            throw new Main\ArgumentException("entity must be instanceof Payment");
+	/**
+	 * @param Sale\IBusinessValueProvider $entity
+	 * @return Sale\Order
+	 */
+	static protected function getBusinessValueOrderProvider(\Bitrix\Sale\IBusinessValueProvider $entity)
+	{
+		if(!($entity instanceof Payment))
+			throw new Main\ArgumentException("entity must be instanceof Payment");
 
-        /** @var Sale\PaymentCollection $collection */
-        $collection = $entity->getCollection();
+		/** @var Sale\PaymentCollection $collection */
+		$collection = $entity->getCollection();
 
-        return $collection->getOrder();
-    }
+		return $collection->getOrder();
+	}
 }
 
 class PaymentCashImport extends PaymentImport

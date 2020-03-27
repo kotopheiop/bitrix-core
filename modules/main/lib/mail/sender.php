@@ -9,340 +9,405 @@ use Bitrix\Main\Mail\Internal\SenderTable;
 class Sender
 {
 
-    public static function add(array $fields)
-    {
-        if (empty($fields['OPTIONS']) || !is_array($fields['OPTIONS'])) {
-            $fields['OPTIONS'] = array();
-        }
+	public static function add(array $fields)
+	{
+		if (empty($fields['OPTIONS']) || !is_array($fields['OPTIONS']))
+		{
+			$fields['OPTIONS'] = array();
+		}
 
-        if (empty($fields['IS_CONFIRMED'])) {
-            $fields['OPTIONS']['confirm_code'] = \Bitrix\Main\Security\Random::getStringByCharsets(5, '0123456789abcdefghjklmnpqrstuvwxyz');
-            $fields['OPTIONS']['confirm_time'] = time();
-        }
+		if (empty($fields['IS_CONFIRMED']) && !empty($fields['OPTIONS']['smtp']))
+		{
+			$smtpConfig = $fields['OPTIONS']['smtp'];
+			$smtpConfig = new Smtp\Config(array(
+				'from' => $fields['EMAIL'],
+				'host' => $smtpConfig['server'],
+				'port' => $smtpConfig['port'],
+				'protocol' => $smtpConfig['protocol'],
+				'login' => $smtpConfig['login'],
+				'password' => $smtpConfig['password'],
+			));
 
-        $senderId = 0;
-        $result = Internal\SenderTable::add($fields);
-        if ($result->isSuccess()) {
-            $senderId = $result->getId();
-        }
+			if ($smtpConfig->canCheck())
+			{
+				if ($smtpConfig->check($error, $errors))
+				{
+					$fields['IS_CONFIRMED'] = true;
+				}
+				else
+				{
+					return array('error' => $error, 'errors' => $errors);
+				}
+			}
+		}
 
-        if (empty($fields['IS_CONFIRMED'])) {
-            $mailEventFields = array(
-                'DEFAULT_EMAIL_FROM' => $fields['EMAIL'],
-                'EMAIL_TO' => $fields['EMAIL'],
-                'MESSAGE_SUBJECT' => getMessage('MAIN_MAIL_CONFIRM_MESSAGE_SUBJECT'),
-                'CONFIRM_CODE' => strtoupper($fields['OPTIONS']['confirm_code']),
-            );
+		if (empty($fields['IS_CONFIRMED']))
+		{
+			$fields['OPTIONS']['confirm_code'] = \Bitrix\Main\Security\Random::getStringByCharsets(5, '0123456789abcdefghjklmnpqrstuvwxyz');
+			$fields['OPTIONS']['confirm_time'] = time();
+		}
 
-            if (!empty($fields['OPTIONS']['smtp'])) {
-                \Bitrix\Main\EventManager::getInstance()->addEventHandlerCompatible(
-                    'main',
-                    'OnBeforeEventSend',
-                    function (&$eventFields, &$message, $context) use (&$fields) {
-                        $config = $fields['OPTIONS']['smtp'];
-                        $config = new Smtp\Config(array(
-                            'from' => $fields['EMAIL'],
-                            'host' => $config['server'],
-                            'port' => $config['port'],
-                            'login' => $config['login'],
-                            'password' => $config['password'],
-                        ));
+		$senderId = 0;
+		$result = Internal\SenderTable::add($fields);
+		if ($result->isSuccess())
+		{
+			$senderId = $result->getId();
+		}
 
-                        $context->setSmtp($config);
-                    }
-                );
-            }
+		if (empty($fields['IS_CONFIRMED']))
+		{
+			$mailEventFields = array(
+				'DEFAULT_EMAIL_FROM' => $fields['EMAIL'],
+				'EMAIL_TO' => $fields['EMAIL'],
+				'MESSAGE_SUBJECT' => getMessage('MAIN_MAIL_CONFIRM_MESSAGE_SUBJECT'),
+				'CONFIRM_CODE' => strtoupper($fields['OPTIONS']['confirm_code']),
+			);
 
-            \CEvent::sendImmediate('MAIN_MAIL_CONFIRM_CODE', SITE_ID, $mailEventFields);
-        } else {
-            if (isset($fields['OPTIONS']['__replaces']) && $fields['OPTIONS']['__replaces'] > 0) {
-                Internal\SenderTable::delete(
-                    (int)$fields['OPTIONS']['__replaces']
-                );
-            }
-        }
+			if (!empty($smtpConfig))
+			{
+				\Bitrix\Main\EventManager::getInstance()->addEventHandlerCompatible(
+					'main',
+					'OnBeforeEventSend',
+					function (&$eventFields, &$message, $context) use (&$smtpConfig)
+					{
+						$context->setSmtp($smtpConfig);
+					}
+				);
+			}
 
-        return ['senderId' => $senderId];
-    }
+			\CEvent::sendImmediate('MAIN_MAIL_CONFIRM_CODE', SITE_ID, $mailEventFields);
+		}
+		else
+		{
+			if (isset($fields['OPTIONS']['__replaces']) && $fields['OPTIONS']['__replaces'] > 0)
+			{
+				Internal\SenderTable::delete(
+					(int) $fields['OPTIONS']['__replaces']
+				);
+			}
+		}
 
-    public static function confirm($ids)
-    {
-        if (!empty($ids)) {
-            $res = Internal\SenderTable::getList(array(
-                'filter' => array(
-                    '@ID' => (array)$ids,
-                ),
-            ));
+		return ['senderId' => $senderId, 'confirmed' => !empty($fields['IS_CONFIRMED'])];
+	}
 
-            while ($item = $res->fetch()) {
-                Internal\SenderTable::update(
-                    (int)$item['ID'],
-                    array(
-                        'IS_CONFIRMED' => true,
-                    )
-                );
+	public static function confirm($ids)
+	{
+		if (!empty($ids))
+		{
+			$res = Internal\SenderTable::getList(array(
+				'filter' => array(
+					'@ID' => (array) $ids,
+				),
+			));
 
-                if (isset($item['OPTIONS']['__replaces']) && $item['OPTIONS']['__replaces'] > 0) {
-                    Internal\SenderTable::delete(
-                        (int)$item['OPTIONS']['__replaces']
-                    );
-                }
-            }
-        }
-    }
+			while ($item = $res->fetch())
+			{
+				Internal\SenderTable::update(
+					(int) $item['ID'],
+					array(
+						'IS_CONFIRMED' => true,
+					)
+				);
 
-    public static function delete($ids)
-    {
-        if (!is_array($ids)) {
-            $ids = [$ids];
-        }
-        if (empty($ids)) {
-            return;
-        }
-        $smtpConfigs = [];
+				if (isset($item['OPTIONS']['__replaces']) && $item['OPTIONS']['__replaces'] > 0)
+				{
+					Internal\SenderTable::delete(
+						(int) $item['OPTIONS']['__replaces']
+					);
+				}
+			}
+		}
+	}
 
-        $senders = SenderTable::getList([
-                'order' => [
-                    'ID' => 'desc',
-                ],
-                'filter' => [
-                    '=USER_ID' => CurrentUser::get()->getId(),
-                    '@ID' => $ids,
-                    'IS_CONFIRMED' => true]
-            ]
-        )->fetchAll();
-        foreach ($senders as $sender) {
-            if (!empty($sender['OPTIONS']['smtp']['server']) && empty($sender['OPTIONS']['smtp']['encrypted']) && !isset($smtpConfigs[$sender['EMAIL']])) {
-                $smtpConfigs[$sender['EMAIL']] = $sender['OPTIONS']['smtp'];
-            }
-        }
-        if (!empty($smtpConfigs)) {
-            $senders = SenderTable::getList([
-                'order' => [
-                    'ID' => 'desc',
-                ],
-                'filter' => [
-                    '@EMAIL' => array_keys($smtpConfigs),
-                    '!ID' => $ids
-                ]
-            ])->fetchAll();
-            foreach ($senders as $sender) {
-                if (isset($smtpConfigs[$sender['EMAIL']])) {
-                    $options = $sender['OPTIONS'];
-                    $options['smtp'] = $smtpConfigs[$sender['EMAIL']];
-                    $result = SenderTable::update($sender['ID'], [
-                        'OPTIONS' => $options,
-                    ]);
-                    if ($result->isSuccess()) {
-                        unset($smtpConfigs[$sender['EMAIL']]);
-                        static::clearCustomSmtpCache($sender['EMAIL']);
-                    }
-                    if (empty($smtpConfigs)) {
-                        break;
-                    }
-                }
-            }
-        }
-        foreach ((array)$ids as $id) {
-            Internal\SenderTable::delete(
-                (int)$id
-            );
-        }
-    }
+	public static function delete($ids)
+	{
+		if(!is_array($ids))
+		{
+			$ids = [$ids];
+		}
+		if(empty($ids))
+		{
+			return;
+		}
+		$smtpConfigs = [];
 
-    public static function clearCustomSmtpCache($email)
-    {
-        $cache = new \CPHPCache();
-        $cache->clean($email, '/main/mail/smtp');
-    }
+		$senders = SenderTable::getList([
+			'order' => [
+				'ID' => 'desc',
+			],
+			'filter' => [
+				'=USER_ID' => CurrentUser::get()->getId(),
+				'@ID' => $ids,
+				'IS_CONFIRMED' => true]
+			]
+		)->fetchAll();
+		foreach($senders as $sender)
+		{
+			if(!empty($sender['OPTIONS']['smtp']['server']) && empty($sender['OPTIONS']['smtp']['encrypted']) && !isset($smtpConfigs[$sender['EMAIL']]))
+			{
+				$smtpConfigs[$sender['EMAIL']] = $sender['OPTIONS']['smtp'];
+			}
+		}
+		if(!empty($smtpConfigs))
+		{
+			$senders = SenderTable::getList([
+				'order' => [
+					'ID' => 'desc',
+				],
+				'filter' => [
+					'@EMAIL' => array_keys($smtpConfigs),
+					'!ID' => $ids
+				]
+			])->fetchAll();
+			foreach($senders as $sender)
+			{
+				if(isset($smtpConfigs[$sender['EMAIL']]))
+				{
+					$options = $sender['OPTIONS'];
+					$options['smtp'] = $smtpConfigs[$sender['EMAIL']];
+					$result = SenderTable::update($sender['ID'], [
+						'OPTIONS' => $options,
+					]);
+					if($result->isSuccess())
+					{
+						unset($smtpConfigs[$sender['EMAIL']]);
+						static::clearCustomSmtpCache($sender['EMAIL']);
+					}
+					if(empty($smtpConfigs))
+					{
+						break;
+					}
+				}
+			}
+		}
+		foreach ((array) $ids as $id)
+		{
+			Internal\SenderTable::delete(
+				(int) $id
+			);
+		}
+	}
 
-    public static function getCustomSmtp($email)
-    {
-        static $smtp = array();
+	public static function clearCustomSmtpCache($email)
+	{
+		$cache = new \CPHPCache();
+		$cache->clean($email, '/main/mail/smtp');
+	}
 
-        if (!isset($smtp[$email])) {
-            $config = false;
+	public static function getCustomSmtp($email)
+	{
+		static $smtp = array();
 
-            $cache = new \CPHPCache();
+		if (!isset($smtp[$email]))
+		{
+			$config = false;
 
-            if ($cache->initCache(30 * 24 * 3600, $email, '/main/mail/smtp')) {
-                $config = $cache->getVars();
-            } else {
-                $res = Internal\SenderTable::getList(array(
-                    'filter' => array(
-                        'IS_CONFIRMED' => true,
-                        '=EMAIL' => $email,
-                    ),
-                    'order' => array(
-                        'ID' => 'DESC',
-                    ),
-                ));
-                while ($item = $res->fetch()) {
-                    if (!empty($item['OPTIONS']['smtp']['server']) && empty($item['OPTIONS']['smtp']['encrypted'])) {
-                        $config = $item['OPTIONS']['smtp'];
-                        break;
-                    }
-                }
+			$cache = new \CPHPCache();
 
-                $cache->startDataCache();
-                $cache->endDataCache($config);
-            }
+			if ($cache->initCache(30*24*3600, $email, '/main/mail/smtp'))
+			{
+				$config = $cache->getVars();
+			}
+			else
+			{
+				$res = Internal\SenderTable::getList(array(
+					'filter' => array(
+						'IS_CONFIRMED' => true,
+						'=EMAIL' => $email,
+					),
+					'order' => array(
+						'ID' => 'DESC',
+					),
+				));
+				while ($item = $res->fetch())
+				{
+					if (!empty($item['OPTIONS']['smtp']['server']) && empty($item['OPTIONS']['smtp']['encrypted']))
+					{
+						$config = $item['OPTIONS']['smtp'];
+						break;
+					}
+				}
 
-            if ($config) {
-                $config = new Smtp\Config(array(
-                    'from' => $email,
-                    'host' => $config['server'],
-                    'port' => $config['port'],
-                    'protocol' => $config['protocol'],
-                    'login' => $config['login'],
-                    'password' => $config['password'],
-                ));
-            }
+				$cache->startDataCache();
+				$cache->endDataCache($config);
+			}
 
-            $smtp[$email] = $config;
-        }
+			if ($config)
+			{
+				$config = new Smtp\Config(array(
+					'from' => $email,
+					'host' => $config['server'],
+					'port' => $config['port'],
+					'protocol' => $config['protocol'],
+					'login' => $config['login'],
+					'password' => $config['password'],
+				));
+			}
 
-        return $smtp[$email];
-    }
+			$smtp[$email] = $config;
+		}
 
-    public static function applyCustomSmtp($event)
-    {
-        $headers = $event->getParameter('arguments')->additional_headers;
-        $context = $event->getParameter('arguments')->context;
+		return $smtp[$email];
+	}
 
-        if (empty($context) || !($context instanceof Context)) {
-            return;
-        }
+	public static function applyCustomSmtp($event)
+	{
+		$headers = $event->getParameter('arguments')->additional_headers;
+		$context = $event->getParameter('arguments')->context;
 
-        if ($context->getSmtp() && $context->getSmtp()->getHost()) {
-            return;
-        }
+		if (empty($context) || !($context instanceof Context))
+		{
+			return;
+		}
 
-        if (preg_match('/X-Bitrix-Mail-SMTP-Host:/i', $headers)) {
-            return;
-        }
+		if ($context->getSmtp() && $context->getSmtp()->getHost())
+		{
+			return;
+		}
 
-        $eol = Mail::getMailEol();
-        $eolh = preg_replace('/([a-f0-9]{2})/i', '\x\1', bin2hex($eol));
+		if (preg_match('/X-Bitrix-Mail-SMTP-Host:/i', $headers))
+		{
+			return;
+		}
 
-        if (preg_match(sprintf('/(^|%1$s)From:(.+?)(%1$s([^\s]|$)|$)/is', $eolh), $headers, $matches)) {
-            $address = new Address(preg_replace(sprintf('/%s\s+/', $eolh), '', $matches[2]));
-            if ($address->validate()) {
-                if ($customSmtp = static::getCustomSmtp($address->getEmail())) {
-                    $context->setSmtp($customSmtp);
-                }
-            }
-        }
-    }
+		$eol = Mail::getMailEol();
+		$eolh = preg_replace('/([a-f0-9]{2})/i', '\x\1', bin2hex($eol));
 
-    public static function prepareUserMailboxes($userId = null)
-    {
-        global $USER;
+		if (preg_match(sprintf('/(^|%1$s)From:(.+?)(%1$s([^\s]|$)|$)/is', $eolh), $headers, $matches))
+		{
+			$address = new Address(preg_replace(sprintf('/%s\s+/', $eolh), '', $matches[2]));
+			if ($address->validate())
+			{
+				if ($customSmtp = static::getCustomSmtp($address->getEmail()))
+				{
+					$context->setSmtp($customSmtp);
+				}
+			}
+		}
+	}
 
-        static $mailboxes = array();
+	public static function prepareUserMailboxes($userId = null)
+	{
+		global $USER;
 
-        if (!($userId > 0)) {
-            if (is_object($USER) && $USER->isAuthorized()) {
-                $userId = $USER->getId();
-            }
-        }
+		static $mailboxes = array();
 
-        if (!($userId > 0)) {
-            return array();
-        }
+		if (!($userId > 0))
+		{
+			if (is_object($USER) && $USER->isAuthorized())
+			{
+				$userId = $USER->getId();
+			}
+		}
 
-        if (array_key_exists($userId, $mailboxes)) {
-            return $mailboxes[$userId];
-        }
+		if (!($userId > 0))
+		{
+			return array();
+		}
 
-        $mailboxes[$userId] = array();
+		if (array_key_exists($userId, $mailboxes))
+		{
+			return $mailboxes[$userId];
+		}
 
-        if (is_object($USER) && $USER->isAuthorized() && $USER->getId() == $userId) {
-            $userData = array(
-                'ID' => $USER->getId(),
-                'TITLE' => $USER->getParam("TITLE"),
-                'NAME' => $USER->getFirstName(),
-                'SECOND_NAME' => $USER->getSecondName(),
-                'LAST_NAME' => $USER->getLastName(),
-                'LOGIN' => $USER->getLogin(),
-                'EMAIL' => $USER->getEmail(),
-            );
+		$mailboxes[$userId] = array();
 
-            $isAdmin = in_array(1, $USER->getUserGroupArray());
-        } else {
-            $userData = Main\UserTable::getList(array(
-                'select' => array('ID', 'TITLE', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'EMAIL'),
-                'filter' => array('=ID' => $userId),
-            ))->fetch();
+		if (is_object($USER) && $USER->isAuthorized() && $USER->getId() == $userId)
+		{
+			$userData = array(
+				'ID' => $USER->getId(),
+				'TITLE' => $USER->getParam("TITLE"),
+				'NAME' => $USER->getFirstName(),
+				'SECOND_NAME' => $USER->getSecondName(),
+				'LAST_NAME' => $USER->getLastName(),
+				'LOGIN' => $USER->getLogin(),
+				'EMAIL' => $USER->getEmail(),
+			);
 
-            $isAdmin = in_array(1, \CUser::getUserGroup($userId));
-        }
+			$isAdmin = in_array(1, $USER->getUserGroupArray());
+		}
+		else
+		{
+			$userData = Main\UserTable::getList(array(
+				'select' => array('ID', 'TITLE', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'EMAIL'),
+				'filter' => array('=ID' => $userId),
+			))->fetch();
 
-        $userNameFormated = \CUser::formatName(\CSite::getNameFormat(), $userData, true, false);
+			$isAdmin = in_array(1, \CUser::getUserGroup($userId));
+		}
 
-        if (\CModule::includeModule('mail')) {
-            foreach (\Bitrix\Mail\MailboxTable::getUserMailboxes($userId) as $mailbox) {
-                if (!empty($mailbox['EMAIL'])) {
-                    $mailboxName = trim($mailbox['USERNAME']) ?: trim($mailbox['OPTIONS']['name']) ?: $userNameFormated;
+		$userNameFormated = \CUser::formatName(\CSite::getNameFormat(), $userData, true, false);
 
-                    $key = hash('crc32b', strtolower($mailboxName) . $mailbox['EMAIL']);
-                    $mailboxes[$userId][$key] = array(
-                        'name' => $mailboxName,
-                        'email' => $mailbox['EMAIL'],
-                    );
-                }
-            }
-        }
+		if (\CModule::includeModule('mail'))
+		{
+			foreach (\Bitrix\Mail\MailboxTable::getUserMailboxes($userId) as $mailbox)
+			{
+				if (!empty($mailbox['EMAIL']))
+				{
+					$mailboxName = trim($mailbox['USERNAME']) ?: trim($mailbox['OPTIONS']['name']) ?: $userNameFormated;
 
-        // @TODO: query
-        $crmAddress = new Address(Main\Config\Option::get('crm', 'mail', ''));
-        if ($crmAddress->validate()) {
-            $key = hash('crc32b', strtolower($userNameFormated) . $crmAddress->getEmail());
+					$key = hash('crc32b', strtolower($mailboxName) . $mailbox['EMAIL']);
+					$mailboxes[$userId][$key] = array(
+						'name'  => $mailboxName,
+						'email' => $mailbox['EMAIL'],
+					);
+				}
+			}
+		}
 
-            $mailboxes[$userId][$key] = array(
-                'name' => $crmAddress->getName() ?: $userNameFormated,
-                'email' => $crmAddress->getEmail(),
-            );
-        }
+		// @TODO: query
+		$crmAddress = new Address(Main\Config\Option::get('crm', 'mail', ''));
+		if ($crmAddress->validate())
+		{
+			$key = hash('crc32b', strtolower($userNameFormated) . $crmAddress->getEmail());
 
-        $res = SenderTable::getList(array(
-            'filter' => array(
-                'IS_CONFIRMED' => true,
-                array(
-                    'LOGIC' => 'OR',
-                    '=USER_ID' => $userId,
-                    'IS_PUBLIC' => true,
-                ),
-            ),
-            'order' => array(
-                'ID' => 'ASC',
-            ),
-        ));
-        while ($item = $res->fetch()) {
-            $item['NAME'] = trim($item['NAME']) ?: $userNameFormated;
-            $item['EMAIL'] = strtolower($item['EMAIL']);
-            $key = hash('crc32b', strtolower($item['NAME']) . $item['EMAIL']);
+			$mailboxes[$userId][$key] = array(
+				'name'  => $crmAddress->getName() ?: $userNameFormated,
+				'email' => $crmAddress->getEmail(),
+			);
+		}
 
-            if (!isset($mailboxes[$userId][$key])) {
-                $mailboxes[$userId][$key] = array(
-                    'id' => $item['ID'],
-                    'name' => $item['NAME'],
-                    'email' => $item['EMAIL'],
-                    'can_delete' => $userId == $item['USER_ID'] || $item['IS_PUBLIC'] && $isAdmin,
-                );
-            }
-        }
+		$res = SenderTable::getList(array(
+			'filter' => array(
+				'IS_CONFIRMED' => true,
+				array(
+					'LOGIC' => 'OR',
+					'=USER_ID' => $userId,
+					'IS_PUBLIC' => true,
+				),
+			),
+			'order' => array(
+				'ID' => 'ASC',
+			),
+		));
+		while ($item = $res->fetch())
+		{
+			$item['NAME']  = trim($item['NAME']) ?: $userNameFormated;
+			$item['EMAIL'] = strtolower($item['EMAIL']);
+			$key = hash('crc32b', strtolower($item['NAME']) . $item['EMAIL']);
 
-        foreach ($mailboxes[$userId] as $key => $item) {
-            $mailboxes[$userId][$key]['formated'] = sprintf(
-                $item['name'] ? '%s <%s>' : '%s%s',
-                $item['name'], $item['email']
-            );
-        }
+			if (!isset($mailboxes[$userId][$key]))
+			{
+				$mailboxes[$userId][$key] = array(
+					'id' => $item['ID'],
+					'name' => $item['NAME'],
+					'email' => $item['EMAIL'],
+					'can_delete' => $userId == $item['USER_ID'] || $item['IS_PUBLIC'] && $isAdmin,
+				);
+			}
+		}
 
-        $mailboxes[$userId] = array_values($mailboxes[$userId]);
+		foreach ($mailboxes[$userId] as $key => $item)
+		{
+			$mailboxes[$userId][$key]['formated'] = sprintf(
+				$item['name'] ? '%s <%s>' : '%s%s',
+				$item['name'], $item['email']
+			);
+		}
 
-        return $mailboxes[$userId];
-    }
+		$mailboxes[$userId] = array_values($mailboxes[$userId]);
+
+		return $mailboxes[$userId];
+	}
 
 }

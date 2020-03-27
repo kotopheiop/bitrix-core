@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Landing\Hook\Page;
 
 use \Bitrix\Landing\Field;
@@ -11,149 +10,175 @@ Loc::loadMessages(__FILE__);
 
 class HeadBlock extends \Bitrix\Landing\Hook\Page
 {
-    /**
-     * Map of the field.
-     * @return array
-     */
-    protected function getMap()
-    {
-        return array(
-            'USE' => new Field\Checkbox('USE', array(
-                'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_USE')
-            )),
-            'CODE' => new Field\Textarea('CODE', array(
-                'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CODE'),
-                'help' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CODE_HELP2'),
-                'placeholder' => '<script>
+	/**
+	 * Last inserted code to the site or to the page.
+	 * @var string
+	 */
+	protected static $lastInsertedCode = null;
+
+	/**
+	 * Map of the field.
+	 * @return array
+	 */
+	protected function getMap()
+	{
+		return array(
+			'USE' => new Field\Checkbox('USE', array(
+				'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_USE')
+			)),
+			'CODE' => new Field\Textarea('CODE', array(
+				'title' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CODE'),
+				'help' => Loc::getMessage('LANDING_HOOK_HEADBLOCK_CODE_HELP2'),
+				'placeholder' => '<script>
 	var googletag = googletag || {};
 	googletag.cmd = googletag.cmd || [];
 </script>'
-            ))
-        );
-    }
+			))
+		);
+	}
 
-    /**
-     * Enable only in high plan or not.
-     * @return boolean
-     */
-    public function isFree()
-    {
-        return false;
-    }
+	/**
+	 * Gets last inserted code.
+	 * @return string
+	 */
+	public static function getLastInsertedCode()
+	{
+		return self::$lastInsertedCode;
+	}
 
-    /**
-     * Locked or not current hook in free plan.
-     * @return bool
-     */
-    public function isLocked()
-    {
-        return $this->isLockedFeature();
-    }
+	/**
+	 * Enable only in high plan or not.
+	 * @return boolean
+	 */
+	public function isFree()
+	{
+		return false;
+	}
 
-    /**
-     * Locked or not current hook in free plan.
-     * @return bool
-     */
-    public static function isLockedFeature()
-    {
-        if (ModuleManager::isModuleInstalled('bitrix24')) {
-            $checkFeature = Manager::checkFeature(
-                Manager::FEATURE_ENABLE_ALL_HOOKS,
-                ['hook' => 'headblock']
-            );
-            if ($checkFeature) {
-                return false;
-            }
-            $dateCreate = \Bitrix\Main\Config\Option::get(
-                'main', '~controller_date_create'
-            );
-            // for all portals early than 01.07.2019, feature are available
-            if ($dateCreate < 1562000000) {
-                // this option will be set after downgrade in bitrix24
-                return Manager::getOption('html_disabled', 'N') == 'Y';
-            } else {
-                return true;
-            }
-        }
+	/**
+	 * Locked or not current hook in free plan.
+	 * @return bool
+	 */
+	public function isLocked()
+	{
+		return $this->isLockedFeature();
+	}
 
-        return false;
-    }
+	/**
+	 * Locked or not current hook in free plan.
+	 * @return bool
+	 */
+	public static function isLockedFeature()
+	{
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$checkFeature = Manager::checkFeature(
+				Manager::FEATURE_ENABLE_ALL_HOOKS,
+				['hook' => 'headblock']
+			);
+			if ($checkFeature)
+			{
+				return false;
+			}
+			$dateCreate = \Bitrix\Main\Config\Option::get(
+				'main', '~controller_date_create'
+			);
+			// for all portals early than 01.07.2019, feature are available
+			if ($dateCreate < 1562000000)
+			{
+				// this option will be set after downgrade in bitrix24
+				return Manager::getOption('html_disabled', 'N') == 'Y';
+			}
+			else
+			{
+				return true;
+			}
+		}
 
-    /**
-     * Gets message for locked state.
-     * @return string
-     */
-    public function getLockedMessage()
-    {
-        return Loc::getMessage('LANDING_HOOK_HEADBLOCK_LOCKED');
-    }
+		return false;
+	}
 
-    /**
-     * Title of Hook, if you want.
-     * @return string
-     */
-    public function getTitle()
-    {
-        return Loc::getMessage('LANDING_HOOK_HEADBLOCK_NAME2');
-    }
+	/**
+	 * Gets message for locked state.
+	 * @return string
+	 */
+	public function getLockedMessage()
+	{
+		return Loc::getMessage('LANDING_HOOK_HEADBLOCK_LOCKED');
+	}
 
-    /**
-     * Get sort of block (execute order).
-     * @return int
-     */
-    public function getSort()
-    {
-        return 500;
-    }
+	/**
+	 * Title of Hook, if you want.
+	 * @return string
+	 */
+	public function getTitle()
+	{
+		return Loc::getMessage('LANDING_HOOK_HEADBLOCK_NAME2');
+	}
 
-    /**
-     * Enable or not the hook.
-     * @return boolean
-     */
-    public function enabled()
-    {
-        if ($this->isLocked()) {
-            return false;
-        }
+	/**
+	 * Get sort of block (execute order).
+	 * @return int
+	 */
+	public function getSort()
+	{
+		return 500;
+	}
 
-        if ($this->issetCustomExec()) {
-            return true;
-        }
+	/**
+	 * Enable or not the hook.
+	 * @return boolean
+	 */
+	public function enabled()
+	{
+		if ($this->isLocked())
+		{
+			return false;
+		}
 
-        return $this->fields['USE']->getValue() == 'Y';
-    }
+		if ($this->issetCustomExec())
+		{
+			return true;
+		}
 
-    /**
-     * Exec or not hook in edit mode.
-     * @return boolean
-     */
-    public function enabledInEditMode()
-    {
-        return false;
-    }
+		return $this->fields['USE']->getValue() == 'Y';
+	}
 
-    /**
-     * Exec hook.
-     * @return void
-     */
-    public function exec()
-    {
-        if ($this->isLocked()) {
-            return;
-        }
+	/**
+	 * Exec or not hook in edit mode.
+	 * @return boolean
+	 */
+	public function enabledInEditMode()
+	{
+		return false;
+	}
 
-        if ($this->execCustom()) {
-            return;
-        }
+	/**
+	 * Exec hook.
+	 * @return void
+	 */
+	public function exec()
+	{
+		if ($this->isLocked())
+		{
+			return;
+		}
 
-        $code = trim($this->fields['CODE']);
+		if ($this->execCustom())
+		{
+			return;
+		}
 
-        if ($code != '') {
-            $code = str_replace(
-                '<script',
-                '<script data-skip-moving="true"', $code
-            );
-            \Bitrix\Main\Page\Asset::getInstance()->addString($code);
-        }
-    }
+		$code = trim($this->fields['CODE']);
+
+		if ($code != '')
+		{
+			self::$lastInsertedCode = $code;
+			$code = str_replace(
+				'<script',
+				'<script data-skip-moving="true"', $code
+			);
+			\Bitrix\Main\Page\Asset::getInstance()->addString($code);
+		}
+	}
 }

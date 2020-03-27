@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Archive\Recovery;
 
 use Bitrix\Sale\Archive;
@@ -9,10 +8,10 @@ use Bitrix\Sale\Archive;
  */
 interface Buildable
 {
-    /**
-     * @return Archive\Order
-     */
-    public function buildOrder();
+	/**
+	 * @return Archive\Order
+	 */
+	public function buildOrder();
 
-    public function setEntityFields($entityName, array $fields = null);
+	public function setEntityFields($entityName, array $fields = null);
 }

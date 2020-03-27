@@ -13,53 +13,53 @@ define("BX_SOAP_XSD_PREFIX", "xsd");
 define("BX_SOAP_INT", 1);
 define("BX_SOAP_STRING", 2);
 
-class CSOAPHeader
+class CSOAPHeader 
 {
-    var $Headers = array();
+	var $Headers = array ();
 
-    function CSOAPHeader()
-    {
+	function CSOAPHeader() 
+	{
 
-    }
+	}
 
-    function addHeader()
-    {
+	function addHeader() 
+	{
 
-    }
+	}
 }
 
-class CSOAPBody
+class CSOAPBody 
 {
-    function CSOAPBody()
-    {
+	function CSOAPBody() 
+	{
 
-    }
+	}
 }
 
-class CSOAPEnvelope
+class CSOAPEnvelope 
 {
-    var $Header;
-    var $Body;
+	var $Header;
+	var $Body;
 
-    function CSOAPEnvelope()
-    {
-        $this->Header = new CSOAPHeader();
-        $this->Body = new CSOAPBody();
-    }
+	function CSOAPEnvelope() 
+	{
+		$this->Header = new CSOAPHeader();
+		$this->Body = new CSOAPBody();
+	}
 }
 
 class CSOAPParameter
 {
     var $Name;
     var $Value;
-
-    function CSOAPParameter($name, $value)
+    
+    function CSOAPParameter( $name, $value)
     {
         $this->Name = $name;
         $this->Value = $value;
     }
 
-    function setName($name)
+    function setName( $name )
     {
         $this->Name = $name;
     }
@@ -69,44 +69,39 @@ class CSOAPParameter
         return $this->Name;
     }
 
-    function setValue($value)
+    function setValue( $value )
     {
 
     }
-
     function value()
     {
         return $this->Value;
     }
 }
 
-class CSOAPFault
+class CSOAPFault 
 {
-    var $FaultCode;
-    var $FaultString;
-    var $detail;
+	var $FaultCode;
+	var $FaultString;
+	var $detail;
+	
+	function CSOAPFault($faultCode = "", $faultString = "", $detail = '') {
+		$this->FaultCode = $faultCode;
+		$this->FaultString = $faultString;
+		$this->detail = $detail;
+	}
 
-    function CSOAPFault($faultCode = "", $faultString = "", $detail = '')
-    {
-        $this->FaultCode = $faultCode;
-        $this->FaultString = $faultString;
-        $this->detail = $detail;
-    }
+	function faultCode() {
+		return $this->FaultCode;
+	}
 
-    function faultCode()
-    {
-        return $this->FaultCode;
-    }
+	function faultString() {
+		return $this->FaultString;
+	}
 
-    function faultString()
-    {
-        return $this->FaultString;
-    }
-
-    function detail()
-    {
-        return $this->detail;
-    }
+	function detail() {
+		return $this->detail;
+	}
 }
 
 ?>

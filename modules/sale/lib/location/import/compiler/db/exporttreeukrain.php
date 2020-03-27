@@ -14,216 +14,230 @@ use Bitrix\Sale\Location;
 
 class ExportTreeUkrainTable extends ExportTreeTable
 {
-    public static function getFilePath()
-    {
-        return __FILE__;
-    }
+	public static function getFilePath()
+	{
+		return __FILE__;
+	}
 
-    public static function getTableName()
-    {
-        return 'b_tmp_export_tree_ukrain';
-    }
+	public static function getTableName()
+	{
+		return 'b_tmp_export_tree_ukrain';
+	}
 
-    protected $settlementParent = array();
-    protected $types = false;
+	protected $settlementParent = array();
+	protected $types = false;
 
-    protected $typeMap = array(
-        1 => 'CITY',        //| місто              | город                  |
-        2 => 'VILLAGE',    //| смт                | пгт                    |
-        3 => 'VILLAGE',    //| селище             | поселок                |
-        4 => 'VILLAGE',    //| село               | село                   |
-        5 => 'VILLAGE',    //| хутір              | хутор                  |
-        6 => 'VILLAGE',    //| ст.                | ст.                    |
-        7 => 'VILLAGE',    //| санат.             | санат.                 |
-        8 => 'VILLAGE',    //| радгосп            | совхоз                 |
-        9 => 'VILLAGE',    //| вокзал             | вокзал                 |
-        10 => 'VILLAGE',    //| лісництво          | лесничество            |
-        11 => 'VILLAGE',    //| док                | док                    |
-        12 => 'VILLAGE',    //| поселення          | поселение              |
-    );
+	protected $typeMap = array(
+		1 => 'CITY', 		//| місто              | город                  |
+		2 => 'VILLAGE', 	//| смт                | пгт                    |
+		3 => 'VILLAGE', 	//| селище             | поселок                |
+		4 => 'VILLAGE', 	//| село               | село                   |
+		5 => 'VILLAGE', 	//| хутір              | хутор                  |
+		6 => 'VILLAGE', 	//| ст.                | ст.                    |
+		7 => 'VILLAGE', 	//| санат.             | санат.                 |
+		8 => 'VILLAGE', 	//| радгосп            | совхоз                 |
+		9 => 'VILLAGE', 	//| вокзал             | вокзал                 |
+		10 => 'VILLAGE', 	//| лісництво          | лесничество            |
+		11 => 'VILLAGE', 	//| док                | док                    |
+		12 => 'VILLAGE', 	//| поселення          | поселение              |
+	);
 
-    public function getMappedType($typeId)
-    {
-        $dbConnection = Main\HttpApplication::getConnection();
+	public function getMappedType($typeId)
+	{
+		$dbConnection = Main\HttpApplication::getConnection();
 
-        if ($this->types == false) {
-            $res = $dbConnection->query('select ID, NAME, NAME_RU from b_tmp_ukrain_settlement_type');
-            while ($item = $res->fetch()) {
-                $this->types[$item['ID']] = array('NAME' => array(
-                    'ua' => array('NAME' => $item['NAME']),
-                    'ru' => array('NAME' => $item['NAME_RU'])
-                ));
-            }
-        }
+		if($this->types == false)
+		{
+			$res = $dbConnection->query('select ID, NAME, NAME_RU from b_tmp_ukrain_settlement_type');
+			while($item = $res->fetch())
+			{
+				$this->types[$item['ID']] = array('NAME' => array(
+					'ua' => array('NAME' => $item['NAME']),
+					'ru' => array('NAME' => $item['NAME_RU'])
+				));
+			}
+		}
 
-        return $this->typeMap[$typeId];
-    }
+		return $this->typeMap[$typeId];
+	}
 
-    public function addNode($data)
-    {
-        $data['LANGNAMES'] = serialize($data['NAME']);
-        $data['NAME'] = $data['NAME']['ru']['NAME'];
-        $data['CODE'] = $this->formatCode($this->exportOffset);
+	public function addNode($data)
+	{
+		$data['LANGNAMES'] = serialize($data['NAME']);
+		$data['NAME'] = $data['NAME']['ru']['NAME'];
+		$data['CODE'] = $this->formatCode($this->exportOffset);
 
-        $data['SYS_CODE'] = 'U_' . intval($data['ID']);
-        unset($data['ID']);
+		$data['SYS_CODE'] = 'U_'.intval($data['ID']);
+		unset($data['ID']);
 
-        if (isset($data['ZIP'])) {
-            $data['EXTERNALS'] = serialize(array(
-                'ZIP' => $data['ZIP']
-            ));
-        }
+		if(isset($data['ZIP']))
+		{
+			$data['EXTERNALS'] = serialize(array(
+				'ZIP' => $data['ZIP']
+			));
+		}
 
-        $res = self::add($data);
-        if ($res->isSuccess()) {
-            $this->exportOffset++;
-            return $data['CODE'];
-        }
+		$res = self::add($data);
+		if($res->isSuccess())
+		{
+			$this->exportOffset++;
+			return $data['CODE'];
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    public function addRegion($params)
-    {
-        $dbConnection = Main\HttpApplication::getConnection();
-        $item = $dbConnection->query("select NAME, NAME_RU from b_tmp_ukrain_region where ID = '" . intval($params['ID']) . "'")->fetch();
+	public function addRegion($params)
+	{
+		$dbConnection = Main\HttpApplication::getConnection();
+		$item = $dbConnection->query("select NAME, NAME_RU from b_tmp_ukrain_region where ID = '".intval($params['ID'])."'")->fetch();
 
-        return $this->addNode(array(
-            'ID' => $params['ID'],
-            'TYPE_CODE' => 'REGION',
-            'PARENT_CODE' => $params['PARENT_CODE'],
-            'NAME' => $this->getNames($params['ID'], 'REGION')
-        ));
-    }
+		return $this->addNode(array(
+			'ID' => $params['ID'],
+			'TYPE_CODE' => 'REGION',
+			'PARENT_CODE' => $params['PARENT_CODE'],
+			'NAME' => $this->getNames($params['ID'], 'REGION')
+		));
+	}
 
-    public function addArea($params)
-    {
-        $dbConnection = Main\HttpApplication::getConnection();
-        $item = $dbConnection->query("select NAME, NAME_RU from b_tmp_ukrain_area where ID = '" . intval($params['ID']) . "'")->fetch();
+	public function addArea($params)
+	{
+		$dbConnection = Main\HttpApplication::getConnection();
+		$item = $dbConnection->query("select NAME, NAME_RU from b_tmp_ukrain_area where ID = '".intval($params['ID'])."'")->fetch();
 
-        return $this->addNode(array(
-            'ID' => $params['ID'],
-            'TYPE_CODE' => 'AREA',
-            'PARENT_CODE' => $params['PARENT_CODE'],
-            'NAME' => $this->getNames($params['ID'], 'AREA')
-        ));
-    }
+		return $this->addNode(array(
+			'ID' => $params['ID'],
+			'TYPE_CODE' => 'AREA',
+			'PARENT_CODE' => $params['PARENT_CODE'],
+			'NAME' => $this->getNames($params['ID'], 'AREA')
+		));
+	}
 
-    public function getNames($id, $type)
-    {
-        $dbConnection = Main\HttpApplication::getConnection();
+	public function getNames($id, $type)
+	{
+		$dbConnection = Main\HttpApplication::getConnection();
 
-        switch ($type) {
-            case 'REGION':
-                $table = 'b_tmp_ukrain_region';
-                break;
-            case 'AREA':
-                $table = 'b_tmp_ukrain_area';
-                break;
-            case 'CITY':
-                $table = 'b_tmp_ukrain_city';
-                break;
-            case 'VILLAGE':
-                $table = 'b_tmp_ukrain_village';
-                break;
-        }
+		switch($type)
+		{
+			case 'REGION':
+				$table = 'b_tmp_ukrain_region';
+				break;
+			case 'AREA':
+				$table = 'b_tmp_ukrain_area';
+				break;
+			case 'CITY':
+				$table = 'b_tmp_ukrain_city';
+				break;
+			case 'VILLAGE':
+				$table = 'b_tmp_ukrain_village';
+				break;
+		}
 
-        $item = $dbConnection->query("select NAME, NAME_RU from " . $table . " where ID = '" . intval($id) . "'")->fetch();
+		$item = $dbConnection->query("select NAME, NAME_RU from ".$table." where ID = '".intval($id)."'")->fetch();
 
-        $replaceFrom = array('обл.', 'р-н');
-        $replaceTo = array('область', 'район');
+		$replaceFrom = 	array('обл.', 'р-н');
+		$replaceTo = 	array('область', 'район');
 
-        return array(
-            'ua' => array('NAME' => str_replace($replaceFrom, $replaceTo, $item['NAME'])),
-            'ru' => array('NAME' => str_replace($replaceFrom, $replaceTo, $item['NAME_RU']))
-        );
-    }
+		return array(
+			'ua' => array('NAME' => str_replace($replaceFrom, $replaceTo, $item['NAME'])),
+			'ru' => array('NAME' => str_replace($replaceFrom, $replaceTo, $item['NAME_RU']))
+		);
+	}
 
-    public function getSettlementParentCode($params)
-    {
-        $key = intval($params['AREA_ID']) ? $params['AREA_ID'] : $params['REGION_ID'];
+	public function getSettlementParentCode($params)
+	{
+		$key = intval($params['AREA_ID']) ? $params['AREA_ID'] : $params['REGION_ID'];
 
-        if (!isset($this->settlementParent[$key])) {
-            if (!isset($this->settlementParent[$params['REGION_ID']])) {
-                // new region!
-                $code = $this->addRegion(array(
-                    'ID' => $params['REGION_ID'],
-                    'PARENT_CODE' => '',
-                ));
+		if(!isset($this->settlementParent[$key]))
+		{
+			if(!isset($this->settlementParent[$params['REGION_ID']]))
+			{
+				// new region!
+				$code = $this->addRegion(array(
+					'ID' => $params['REGION_ID'],
+					'PARENT_CODE' => '',
+				));
 
-                $this->settlementParent[$params['REGION_ID']] = $code;
-            }
+				$this->settlementParent[$params['REGION_ID']] = $code;
+			}
 
-            if (intval($params['AREA_ID'])) {
-                if (!isset($this->settlementParent[$params['AREA_ID']])) {
-                    // new area!
-                    $code = $this->addArea(array(
-                        'ID' => $params['AREA_ID'],
-                        'PARENT_CODE' => $this->settlementParent[$params['REGION_ID']],
-                    ));
+			if(intval($params['AREA_ID']))
+			{
+				if(!isset($this->settlementParent[$params['AREA_ID']]))
+				{
+					// new area!
+					$code = $this->addArea(array(
+						'ID' => $params['AREA_ID'],
+						'PARENT_CODE' => $this->settlementParent[$params['REGION_ID']],
+					));
 
-                    $this->settlementParent[$key] = $code;
-                }
-            }
-        }
+					$this->settlementParent[$key] = $code;
+				}
+			}
+		}
 
-        return $this->settlementParent[$key];
-    }
+		return $this->settlementParent[$key];
+	}
 
-    public function buildFromUADB($options)
-    {
-        if (isset($options['NEXT_FREE_CODE']))
-            $this->exportOffset = intval($options['NEXT_FREE_CODE']);
+	public function buildFromUADB($options)
+	{
+		if(isset($options['NEXT_FREE_CODE']))
+			$this->exportOffset = intval($options['NEXT_FREE_CODE']);
 
-        $dbConnection = Main\HttpApplication::getConnection();
+		$dbConnection = Main\HttpApplication::getConnection();
 
-        // settlements
-        $res = $dbConnection->query('select ID, ZIP, ZIP_TO, TYPE_ID, CITY_ID, REGION_ID, AREA_ID, VILLAGE_ID from b_tmp_ukrain_settlement');
-        while ($item = $res->fetch()) {
-            $code = $this->getSettlementParentCode(array(
-                'REGION_ID' => $item['REGION_ID'],
-                'AREA_ID' => $item['AREA_ID']
-            ));
+		// settlements
+		$res = $dbConnection->query('select ID, ZIP, ZIP_TO, TYPE_ID, CITY_ID, REGION_ID, AREA_ID, VILLAGE_ID from b_tmp_ukrain_settlement');
+		while($item = $res->fetch())
+		{
+			$code = $this->getSettlementParentCode(array(
+				'REGION_ID' => $item['REGION_ID'],
+				'AREA_ID' => $item['AREA_ID']
+			));
 
-            // now there can be several situations
-            $type = $this->getMappedType($item['TYPE_ID']);
+			// now there can be several situations
+			$type = $this->getMappedType($item['TYPE_ID']);
 
-            // records where CITY_ID and VILLAGE_ID filled both
-            if (intval($item['CITY_ID']) && intval($item['VILLAGE_ID'])) {
-                $type = 'VILLAGE';
+			// records where CITY_ID and VILLAGE_ID filled both
+			if(intval($item['CITY_ID']) && intval($item['VILLAGE_ID']))
+			{
+				$type = 'VILLAGE';
 
-                // must be attached to CITY
-                $code = $this->settlementParent[$item['CITY_ID']];
-                $id = $item['VILLAGE_ID'];
+				// must be attached to CITY
+				$code = $this->settlementParent[$item['CITY_ID']];
+				$id = $item['VILLAGE_ID'];
 
-                //$item['VILLAGE_ID']
-            } elseif (intval($item['CITY_ID'])) {
-                $type = 'CITY';
-                $id = $item['CITY_ID'];
-            }
+				//$item['VILLAGE_ID']
+			}
+			elseif(intval($item['CITY_ID']))
+			{
+				$type = 'CITY';
+				$id = $item['CITY_ID'];
+			}
 
-            $this->settlementParent[$key] = $this->addNode(array(
-                'ID' => $item['ID'],
-                'TYPE_CODE' => $type,
-                'PARENT_CODE' => $code,
-                'NAME' => $this->getNames($id, $type),
-                'ZIP' => $item['ZIP'],
-                'ZIP_TO' => $item['ZIP_TO'],
-            ));
-        }
+			$this->settlementParent[$key] = $this->addNode(array(
+				'ID' => $item['ID'],
+				'TYPE_CODE' => $type,
+				'PARENT_CODE' => $code,
+				'NAME' => $this->getNames($id, $type),
+				'ZIP' => $item['ZIP'],
+				'ZIP_TO' => $item['ZIP_TO'],
+			));
+		}
 
-    }
+	}
 
-    public function create()
-    {
-        $dbConnection = Main\HttpApplication::getConnection();
+	public function create()
+	{
+		$dbConnection = Main\HttpApplication::getConnection();
 
-        $table = static::getTableName();
+		$table = static::getTableName();
 
-        global $DB;
+		global $DB;
 
-        if (!$DB->query('select * from ' . $table . ' where 1=0', true)) {
-            $dbConnection->query("create table " . $table . " (
+		if(!$DB->query('select * from '.$table.' where 1=0', true))
+		{
+			$dbConnection->query("create table ".$table." (
 
 				ID int not null auto_increment primary key,
 
@@ -252,69 +266,69 @@ class ExportTreeUkrainTable extends ExportTreeTable
 				SOURCE varchar(2) default 'U'
 			)");
 
-            // SYS_CODE will be U_ + settlement id
+			// SYS_CODE will be U_ + settlement id
 
-            $this->restoreIndexes();
-        }
-    }
+			$this->restoreIndexes();
+		}
+	}
 
-    /*
-    public function dropCodeIndex()
-    {
-        unset($this->codeIndex);
+	/*
+	public function dropCodeIndex()
+	{
+		unset($this->codeIndex);
 
-        if(!empty($this->regionCodeIndex))
-            $this->codeIndex = $this->regionCodeIndex;
-    }
+		if(!empty($this->regionCodeIndex))
+			$this->codeIndex = $this->regionCodeIndex;
+	}
 
-    public function insert($data)
-    {
-        if(isset($this->codeIndex[$data['SYS_CODE']])) // already in there
-            return;
+	public function insert($data)
+	{
+		if(isset($this->codeIndex[$data['SYS_CODE']])) // already in there
+			return;
 
-        if($data['TYPE_CODE'] == 'REGION')
-            $this->regionCodeIndex[$data['SYS_CODE']] = $this->formatCode($this->exportOffset);
+		if($data['TYPE_CODE'] == 'REGION')
+			$this->regionCodeIndex[$data['SYS_CODE']] = $this->formatCode($this->exportOffset);
 
-        $this->codeIndex[$data['SYS_CODE']] = $this->formatCode($this->exportOffset);
+		$this->codeIndex[$data['SYS_CODE']] = $this->formatCode($this->exportOffset);
 
-        $data['CODE'] = $this->codeIndex[$data['SYS_CODE']];
-        $data['PARENT_CODE'] = strlen($data['PARENT_SYS_CODE']) ? $this->codeIndex[$data['PARENT_SYS_CODE']] : '';
+		$data['CODE'] = $this->codeIndex[$data['SYS_CODE']];
+		$data['PARENT_CODE'] = strlen($data['PARENT_SYS_CODE']) ? $this->codeIndex[$data['PARENT_SYS_CODE']] : '';
 
-        unset($data['PARENT_SYS_CODE']);
+		unset($data['PARENT_SYS_CODE']);
 
-        if(is_array($data['LANGNAMES']))
-            $data['LANGNAMES'] = serialize($data['LANGNAMES']);
+		if(is_array($data['LANGNAMES']))
+			$data['LANGNAMES'] = serialize($data['LANGNAMES']);
 
-        if(is_array($data['EXTERNALS']))
-            $data['EXTERNALS'] = serialize($data['EXTERNALS']);
+		if(is_array($data['EXTERNALS']))
+			$data['EXTERNALS'] = serialize($data['EXTERNALS']);
 
-        $this->exportOffset++;
+		$this->exportOffset++;
 
-        $this->inserter->insert($data);
-    }
+		$this->inserter->insert($data);
+	}
 
-    public static function getMap()
-    {
-        $map = parent::getMap();
-        $map['ZIP'] = array(
-            'data_type' => 'string',
-        );
+	public static function getMap()
+	{
+		$map = parent::getMap();
+		$map['ZIP'] = array(
+			'data_type' => 'string',
+		);
 
-        return $map;
-    }
-    */
+		return $map;
+	}
+	*/
 
-    public static function getMap()
-    {
-        $map = parent::getMap();
+	public static function getMap()
+	{
+		$map = parent::getMap();
 
-        $map['ZIP'] = array(
-            'data_type' => 'string',
-        );
-        $map['ZIP_TO'] = array(
-            'data_type' => 'string',
-        );
+		$map['ZIP'] = array(
+			'data_type' => 'string',
+		);
+		$map['ZIP_TO'] = array(
+			'data_type' => 'string',
+		);
 
-        return $map;
-    }
+		return $map;
+	}
 }

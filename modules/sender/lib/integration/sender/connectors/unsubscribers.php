@@ -17,75 +17,77 @@ Loc::loadMessages(__FILE__);
 
 class UnSubscribers extends ConnectorBase
 {
-    /**
-     * Return name
-     * @return string
-     */
-    public function getName()
-    {
-        return Loc::getMessage('sender_connector_unsubscribers_name1');
-    }
+	/**
+	 * Return name
+	 * @return string
+	 */
+	public function getName()
+	{
+		return Loc::getMessage('sender_connector_unsubscribers_name1');
+	}
 
-    /**
-     * Return code
-     * @return string
-     */
-    public function getCode()
-    {
-        return "sender_unsubscribers";
-    }
+	/**
+	 * Return code
+	 * @return string
+	 */
+	public function getCode()
+	{
+		return "sender_unsubscribers";
+	}
 
-    /**
-     * Return email list
-     * @return \Bitrix\Main\DB\Result
-     */
-    public function getData()
-    {
-        $mailingId = $this->getFieldValue('MAILING_ID', 0);
-        $filter = array();
-        if ($mailingId) {
-            $filter['=MAILING_ID'] = $mailingId;
-        }
-        $mailingDb = MailingSubscriptionTable::getUnSubscriptionList(array(
-            'select' => array(
-                'SENDER_CONTACT_ID' => 'CONTACT.ID',
-                'EMAIL' => 'CONTACT.CODE'
-            ),
-            'filter' => $filter,
-            'group' => array('CONTACT.CODE'),
-        ));
+	/**
+	 * Return email list
+	 * @return \Bitrix\Main\DB\Result
+	 */
+	public function getData()
+	{
+		$mailingId = $this->getFieldValue('MAILING_ID', 0);
+		$filter = array();
+		if($mailingId)
+		{
+			$filter['=MAILING_ID'] = $mailingId;
+		}
+		$mailingDb = MailingSubscriptionTable::getUnSubscriptionList(array(
+			'select' => array(
+				'SENDER_CONTACT_ID' => 'CONTACT.ID',
+				'EMAIL' => 'CONTACT.CODE'
+			),
+			'filter' => $filter,
+			'group' => array('CONTACT.CODE'),
+		));
 
-        return $mailingDb;
-    }
+		return $mailingDb;
+	}
 
-    /**
-     * Return form layout
-     * @return string
-     */
-    public function getForm()
-    {
-        $mailingDb = MailingTable::getList(array(
-            'select' => array('ID', 'NAME',),
-            'order' => array('NAME' => 'ASC', 'ID' => 'DESC')
-        ));
-        $mailingList = $mailingDb->fetchAll();
-        $mailingList = array_merge(
-            array(
-                array('ID' => '', 'NAME' => Loc::getMessage('sender_connector_unsubscribers_all'))
-            ),
-            $mailingList
-        );
+	/**
+	 * Return form layout
+	 * @return string
+	 */
+	public function getForm()
+	{
+		$mailingDb = MailingTable::getList(array(
+			'select' => array('ID','NAME',),
+			'order' => array('NAME' => 'ASC', 'ID' => 'DESC')
+		));
+		$mailingList = $mailingDb->fetchAll();
+		$mailingList = array_merge(
+			array(
+				array('ID' => '', 'NAME' => Loc::getMessage('sender_connector_unsubscribers_all'))
+			),
+			$mailingList
+		);
 
-        $mailingInput = '<select name="' . $this->getFieldName('MAILING_ID') . '">';
-        foreach ($mailingList as $mailing) {
-            $inputSelected = ($mailing['ID'] == $this->getFieldValue('MAILING_ID') ? 'selected' : '');
-            $mailingInput .= '<option value="' . $mailing['ID'] . '" ' . $inputSelected . '>';
-            $mailingInput .= htmlspecialcharsbx($mailing['NAME']);
-            $mailingInput .= '</option>';
-        }
-        $mailingInput .= '</select>';
+		$mailingInput = '<select name="'.$this->getFieldName('MAILING_ID').'">';
+		foreach($mailingList as $mailing)
+		{
+			$inputSelected = ($mailing['ID'] == $this->getFieldValue('MAILING_ID') ? 'selected' : '');
+			$mailingInput .= '<option value="'.$mailing['ID'].'" '.$inputSelected.'>';
+			$mailingInput .= htmlspecialcharsbx($mailing['NAME']);
+			$mailingInput .= '</option>';
+		}
+		$mailingInput .= '</select>';
 
-        return '
+		return '
 			<table>
 				<tr>
 					<td>' . Loc::getMessage('sender_connector_unsubscribers_mailing') . '</td>
@@ -93,5 +95,5 @@ class UnSubscribers extends ConnectorBase
 				</tr>
 			</table>
 		';
-    }
+	}
 }

@@ -19,34 +19,34 @@ use Bitrix\Main\ORM\Fields\StringField;
  */
 class AuthorTable extends DataManager
 {
-    public static function getTableName()
-    {
-        return '(
+	public static function getTableName()
+	{
+		return '(
 			(SELECT 17 AS ID, "Name 17" AS NAME, "Last name 17" as LAST_NAME)
 			UNION
 			(SELECT 18 AS ID, "Name 18" AS NAME, "Last name 18" as LAST_NAME)
 		)';
-    }
+	}
 
-    public static function getMap()
-    {
-        return [
-            (new IntegerField('ID'))
-                ->configurePrimary()
-                ->configureAutocomplete(),
+	public static function getMap()
+	{
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
 
-            (new StringField('NAME')),
+			(new StringField('NAME')),
 
-            (new StringField('LAST_NAME')),
+			(new StringField('LAST_NAME')),
 
-            (new ManyToMany('BOOKS', BookTable::class))
-                ->configureMediatorTableName('(
+			(new ManyToMany('BOOKS', BookTable::class))
+				->configureMediatorTableName('(
 					(SELECT 1 AS BOOK_ID, 18 AS AUTHOR_ID)
 					UNION
 					(SELECT 2 AS BOOK_ID, 17 AS AUTHOR_ID)
 					UNION
 					(SELECT 2 AS BOOK_ID, 18 AS AUTHOR_ID)
 				)'),
-        ];
-    }
+		];
+	}
 }

@@ -7,7 +7,6 @@
  */
 
 namespace Bitrix\Main\ORM\Query;
-
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\Connection;
 
@@ -19,140 +18,149 @@ use Bitrix\Main\DB\Connection;
  */
 class Union
 {
-    /** @var UnionCondition[] */
-    protected $queries;
+	/** @var UnionCondition[] */
+	protected $queries;
 
-    /** @var array */
-    protected $order;
+	/** @var array */
+	protected $order;
 
-    /** @var int */
-    protected $limit;
+	/** @var int */
+	protected $limit;
 
-    /** @var int */
-    protected $offset;
+	/** @var int */
+	protected $offset;
 
-    /** @var Connection */
-    protected $connection;
+	/** @var Connection */
+	protected $connection;
 
-    public function __construct(Connection $connection)
-    {
-        $this->connection = $connection;
-    }
+	public function __construct(Connection $connection)
+	{
+		$this->connection = $connection;
+	}
 
-    /**
-     * @param UnionCondition $query
-     *
-     * @return $this
-     */
-    public function addQuery(UnionCondition $query)
-    {
-        $this->queries[] = $query;
-        return $this;
-    }
+	/**
+	 * @param UnionCondition $query
+	 *
+	 * @return $this
+	 */
+	public function addQuery(UnionCondition $query)
+	{
+		$this->queries[] = $query;
+		return $this;
+	}
 
-    /**
-     * @return UnionCondition[]
-     */
-    public function getQueries()
-    {
-        return $this->queries;
-    }
+	/**
+	 * @return UnionCondition[]
+	 */
+	public function getQueries()
+	{
+		return $this->queries;
+	}
 
-    /**
-     * @param mixed $order
-     *
-     * @return $this
-     */
-    public function setOrder($order)
-    {
-        $this->order = array();
+	/**
+	 * @param mixed $order
+	 *
+	 * @return $this
+	 */
+	public function setOrder($order)
+	{
+		$this->order = array();
 
-        if (!is_array($order)) {
-            $order = array($order);
-        }
+		if (!is_array($order))
+		{
+			$order = array($order);
+		}
 
-        foreach ($order as $k => $v) {
-            if (is_numeric($k)) {
-                $this->addOrder($v);
-            } else {
-                $this->addOrder($k, $v);
-            }
-        }
+		foreach ($order as $k => $v)
+		{
+			if (is_numeric($k))
+			{
+				$this->addOrder($v);
+			}
+			else
+			{
+				$this->addOrder($k, $v);
+			}
+		}
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @param string $definition
-     * @param string $order
-     *
-     * @return $this
-     * @throws ArgumentException
-     */
-    public function addOrder($definition, $order = 'ASC')
-    {
-        $order = strtoupper($order);
+	/**
+	 * @param string $definition
+	 * @param string $order
+	 *
+	 * @return $this
+	 * @throws ArgumentException
+	 */
+	public function addOrder($definition, $order = 'ASC')
+	{
+		$order = strtoupper($order);
 
-        if (!in_array($order, array('ASC', 'DESC'), true)) {
-            throw new ArgumentException(sprintf('Invalid order "%s"', $order));
-        }
+		if (!in_array($order, array('ASC', 'DESC'), true))
+		{
+			throw new ArgumentException(sprintf('Invalid order "%s"', $order));
+		}
 
-        $helper = $this->connection->getSqlHelper();
+		$helper = $this->connection->getSqlHelper();
 
-        if ($order == 'ASC') {
-            $order = $helper->getAscendingOrder();
-        } else {
-            $order = $helper->getDescendingOrder();
-        }
+		if ($order == 'ASC')
+		{
+			$order = $helper->getAscendingOrder();
+		}
+		else
+		{
+			$order = $helper->getDescendingOrder();
+		}
 
-        $this->order[$definition] = $order;
+		$this->order[$definition] = $order;
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * @return array
-     */
-    public function getOrder()
-    {
-        return $this->order;
-    }
+	/**
+	 * @return array
+	 */
+	public function getOrder()
+	{
+		return $this->order;
+	}
 
-    /**
-     * @param int $limit
-     *
-     * @return $this
-     */
-    public function setLimit($limit)
-    {
-        $this->limit = $limit;
-        return $this;
-    }
+	/**
+	 * @param int $limit
+	 *
+	 * @return $this
+	 */
+	public function setLimit($limit)
+	{
+		$this->limit = $limit;
+		return $this;
+	}
 
-    /**
-     * @return int
-     */
-    public function getLimit()
-    {
-        return $this->limit;
-    }
+	/**
+	 * @return int
+	 */
+	public function getLimit()
+	{
+		return $this->limit;
+	}
 
-    /**
-     * @param $offset
-     *
-     * @return $this
-     */
-    public function setOffset($offset)
-    {
-        $this->offset = $offset;
-        return $this;
-    }
+	/**
+	 * @param $offset
+	 *
+	 * @return $this
+	 */
+	public function setOffset($offset)
+	{
+		$this->offset = $offset;
+		return $this;
+	}
 
-    /**
-     * @return int
-     */
-    public function getOffset()
-    {
-        return $this->offset;
-    }
+	/**
+	 * @return int
+	 */
+	public function getOffset()
+	{
+		return $this->offset;
+	}
 }

@@ -12,7 +12,7 @@
  */
 class CSecurityCriticalLevel
 {
-    const LOW = "LOW";
-    const MIDDLE = "MIDDLE";
-    const HIGHT = "HIGHT";
+	const LOW = "LOW";
+	const MIDDLE = "MIDDLE";
+	const HIGHT = "HIGHT";
 }

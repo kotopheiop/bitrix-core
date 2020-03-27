@@ -1,6 +1,5 @@
 <?php
-
-namespace Bitrix\Sale\TradingPlatform\Ebay;
+	namespace Bitrix\Sale\TradingPlatform\Ebay;
 
 use Bitrix\Main\Entity;
 use \Bitrix\Main\Type\DateTime;
@@ -28,100 +27,106 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Sale\TradingPlatform\Ebay
  **/
+
 class CategoryTable extends Entity\DataManager
 {
-    public static function getFilePath()
-    {
-        return __FILE__;
-    }
+	public static function getFilePath()
+	{
+		return __FILE__;
+	}
 
-    public static function getTableName()
-    {
-        return 'b_sale_tp_ebay_cat';
-    }
+	public static function getTableName()
+	{
+		return 'b_sale_tp_ebay_cat';
+	}
 
-    public static function getMap()
-    {
-        return array(
-            'ID' => array(
-                'data_type' => 'integer',
-                'primary' => true,
-                'autocomplete' => true,
-                'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_ID_FIELD'),
-            ),
-            'NAME' => array(
-                'data_type' => 'string',
-                'validation' => array(__CLASS__, 'validateName'),
-                'required' => true,
-                'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_NAME_FIELD'),
-            ),
-            'CATEGORY_ID' => array(
-                'data_type' => 'integer',
-                'required' => true,
-                'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_CATEGORY_ID_FIELD'),
-            ),
-            'PARENT_ID' => array(
-                'data_type' => 'integer',
-                'required' => true,
-                'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_PARENT_ID_FIELD'),
-            ),
-            'LEVEL' => array(
-                'data_type' => 'integer',
-                'required' => true,
-                'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_LEVEL_FIELD'),
-            ),
-            'LAST_UPDATE' => array(
-                'data_type' => 'datetime',
-                'required' => false,
-                'default_value' => DateTime::createFromTimestamp(time()),
-                'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_LAST_UPDATE_FIELD'),
-            ),
-        );
-    }
+	public static function getMap()
+	{
+		return array(
+			'ID' => array(
+				'data_type' => 'integer',
+				'primary' => true,
+				'autocomplete' => true,
+				'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_ID_FIELD'),
+			),
+			'NAME' => array(
+				'data_type' => 'string',
+				'validation' => array(__CLASS__, 'validateName'),
+				'required' => true,
+				'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_NAME_FIELD'),
+			),
+			'CATEGORY_ID' => array(
+				'data_type' => 'integer',
+				'required' => true,
+				'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_CATEGORY_ID_FIELD'),
+			),
+			'PARENT_ID' => array(
+				'data_type' => 'integer',
+				'required' => true,
+				'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_PARENT_ID_FIELD'),
+			),
+			'LEVEL' => array(
+				'data_type' => 'integer',
+				'required' => true,
+				'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_LEVEL_FIELD'),
+			),
+			'LAST_UPDATE' => array(
+				'data_type' => 'datetime',
+				'required' => false,
+				'default_value' => DateTime::createFromTimestamp(time()),
+				'title' => Loc::getMessage('TRADING_PLATFORM_EBAY_GENERAL_METADATA_ENTITY_LAST_UPDATE_FIELD'),
+			),
+		);
+	}
 
-    /**
-     * @param string $ebayCategoryId Ebay category Id.
-     * @return array Ebay category parents chain till top level.
-     */
-    public static function getCategoryParents($ebayCategoryId)
-    {
-        $result = array();
+	/**
+	 * @param string $ebayCategoryId Ebay category Id.
+	 * @return array Ebay category parents chain till top level.
+	 */
+	public static function getCategoryParents($ebayCategoryId)
+	{
+		$result = array();
 
-        do {
-            $categoryRes = self::getList(array(
-                'select' => array('CATEGORY_ID', 'NAME', 'PARENT_ID', 'LEVEL'),
-                'filter' => array(
-                    'CATEGORY_ID' => $ebayCategoryId
-                ),
-            ));
+		do
+		{
+			$categoryRes = self::getList(array(
+				'select' =>array('CATEGORY_ID', 'NAME', 'PARENT_ID', 'LEVEL'),
+				'filter'=> array(
+					'CATEGORY_ID' => $ebayCategoryId
+				),
+			));
 
-            if ($category = $categoryRes->fetch()) {
-                $result[$category["LEVEL"]] = $category;
-                $ebayCategoryId = $category["PARENT_ID"];
-            } else {
-                break;
-            }
-        } while ($category["LEVEL"] > 1 || $category["PARENT_ID"] != $category["CATEGORY_ID"]);
+			if($category = $categoryRes->fetch())
+			{
+				$result[$category["LEVEL"]] = $category;
+				$ebayCategoryId = $category["PARENT_ID"];
+			}
+			else
+			{
+				break;
+			}
+		}
+		while($category["LEVEL"] > 1 || $category["PARENT_ID"] != $category["CATEGORY_ID"]);
 
-        return array_reverse($result, true);
-    }
+		return array_reverse($result, true);
+	}
 
-    /**
-     * Overrides parent update  to sate update date to current.
-     * @param mixed $primary Primary key.
-     * @param array $data Data fields.
-     * @return Entity\UpdateResult
-     */
-    public static function update($primary, array $data)
-    {
-        $data["LAST_UPDATE"] = DateTime::createFromTimestamp(time());
-        return parent::update($primary, $data);
-    }
+	/**
+	 * Overrides parent update  to sate update date to current.
+	 * @param mixed $primary Primary key.
+	 * @param array $data Data fields.
+	 * @return Entity\UpdateResult
+	 */
+	public static function update($primary, array $data)
+	{
+		$data["LAST_UPDATE"] = DateTime::createFromTimestamp(time());
+		return  parent::update($primary, $data);
+	}
 
-    public static function validateName()
-    {
-        return array(
-            new Entity\Validator\Length(null, 255),
-        );
-    }
+	public static function validateName()
+	{
+		return array(
+			new Entity\Validator\Length(null, 255),
+		);
+	}
 }

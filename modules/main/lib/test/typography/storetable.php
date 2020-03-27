@@ -20,25 +20,25 @@ use Bitrix\Main\ORM\Fields\StringField;
  */
 class StoreTable extends DataManager
 {
-    public static function getTableName()
-    {
-        return '(
+	public static function getTableName()
+	{
+		return '(
 			(SELECT 33 AS ID, "Store 33" AS ADDRESS)
 			UNION
 			(SELECT 34 AS ID, "Store 34" AS ADDRESS)
 		)';
-    }
+	}
 
-    public static function getMap()
-    {
-        return [
-            (new IntegerField('ID'))
-                ->configurePrimary()
-                ->configureAutocomplete(),
+	public static function getMap()
+	{
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
 
-            (new StringField('ADDRESS')),
+			(new StringField('ADDRESS')),
 
-            (new OneToMany('BOOK_ITEMS', StoreBookTable::class, 'STORE'))
-        ];
-    }
+			(new OneToMany('BOOK_ITEMS', StoreBookTable::class, 'STORE'))
+		];
+	}
 }

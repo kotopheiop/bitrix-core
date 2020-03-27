@@ -9,9 +9,9 @@ namespace Bitrix\Sale\Location\Normalizer;
  */
 interface IBuilder
 {
-    /**
-     * @param string $lang Language id.
-     * @return INormalizer
-     */
-    public static function build($lang);
+	/**
+	 * @param string $lang Language id.
+	 * @return INormalizer
+	 */
+	public static function build($lang);
 }

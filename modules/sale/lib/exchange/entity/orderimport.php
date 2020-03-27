@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Exchange\Entity;
 
 use Bitrix\Sale;
@@ -21,7 +20,8 @@ class OrderImport extends EntityImport
 
     public function __construct($parentEntityContext = null)
     {
-        if ($parentEntityContext instanceof Internals\Entity) {
+        if($parentEntityContext instanceof Internals\Entity)
+        {
             throw new Main\ArgumentException('The parentEntityContext is not supported in current context.');
         }
 
@@ -37,17 +37,20 @@ class OrderImport extends EntityImport
     }
 
     protected function createEntity(array $fileds)
-    {
-        return Sale\Order::create($this->settings->getSiteId(), $fileds['USER_ID'], $this->settings->getCurrency());
-    }
+	{
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
 
+		return $orderClass::create($this->settings->getSiteId(), $fileds['USER_ID'], $this->settings->getCurrency());
+	}
     /**
      * @param Internals\Entity $entity
      * @throws Main\ArgumentException
      */
     public function setEntity(Internals\Entity $entity)
     {
-        if (!($entity instanceof Order))
+        if(!($entity instanceof Order))
             throw new Main\ArgumentException("Entity must be instanceof Order");
 
         $this->entity = $entity;
@@ -62,10 +65,10 @@ class OrderImport extends EntityImport
         return new Sale\Result();
     }
 
-    /**
-     * @return Main\Entity\AddResult|Main\Entity\UpdateResult|Sale\Result|mixed
-     */
-    public function save()
+	/**
+	 * @return Main\Entity\AddResult|Main\Entity\UpdateResult|Sale\Result|mixed
+	 */
+	public function save()
     {
         /** @var Order $entity */
         $entity = $this->getEntity();
@@ -74,8 +77,9 @@ class OrderImport extends EntityImport
 
     public static function getFieldsInfo()
     {
-        if (!static::$FIELD_INFOS) {
-            static::$FIELD_INFOS = array(
+        if(!static::$FIELD_INFOS)
+        {
+			static::$FIELD_INFOS = array(
                 "LID",
                 "PERSON_TYPE_ID",
                 "PAYED",
@@ -106,50 +110,59 @@ class OrderImport extends EntityImport
         $personalTypeId = $fields['PERSON_TYPE_ID'];
 
         $propertyFields = '';
-        if (isset($fields['ORDER_PROP'])) {
+        if(isset($fields['ORDER_PROP']))
+        {
             $propertyFields = $fields['ORDER_PROP'];
             unset($fields['ORDER_PROP']);
         }
 
-        if (empty($personalTypeId)) {
+        if(empty($personalTypeId))
+        {
             $result->addError(new Main\Error('Person type is not load'));
         }
 
-        if (empty($userId)) {
+        if(empty($userId))
+        {
             $result->addError(new Main\Error('User id is not load'));
         }
-        if (!$result->isSuccess()) {
+        if(!$result->isSuccess())
+        {
             return $result;
         }
 
         /** @var Sale\Order $entity */
-        $entity = $this->createEntity(['USER_ID' => $userId]);
-        $entity->setPersonTypeId($personalTypeId);
+		$entity = $this->createEntity(['USER_ID'=>$userId]);
+		$entity->setPersonTypeId($personalTypeId);
 
         $result = $this->fillProperty($entity, $propertyFields);
-        if (!$result->isSuccess()) {
+        if(!$result->isSuccess())
+        {
             return $result;
         }
 
-        $registry = Sale\Registry::getInstance($entity::getRegistryType());
-        $basketClassName = $registry->getBasketClassName();
+		$registry = Sale\Registry::getInstance($entity::getRegistryType());
+		$basketClassName = $registry->getBasketClassName();
 
         $basket = $basketClassName::create($entity->getSiteId());
 
         $result = $this->fillBasket($basket, $basketItems);
-        if ($result->isSuccess()) {
-            $entity->setBasket($basket);
+        if($result->isSuccess())
+        {
+			$entity->setBasket($basket);
             $items = $result->getData();
             $this->fillTax($entity, $taxes, $items['modifyTaxList']);
-        } else {
+        }
+        else
+        {
             return $result;
         }
 
-        $entity->setFields($fields);
+		$entity->setFields($fields);
 
         /** @var Sale\Result $r */
         $result = $entity->doFinalAction(true);
-        if ($result->isSuccess()) {
+        if ($result->isSuccess())
+        {
             $this->setEntity($entity);
         }
 
@@ -167,7 +180,7 @@ class OrderImport extends EntityImport
 
         $criterion = $this->getCurrentCriterion($this->getEntity());
 
-        /** @var Sale\Order $order */
+        /** @var Sale\Order $order*/
         $order = $this->getEntity();
 
         $fields = $params['TRAITS'];
@@ -175,35 +188,43 @@ class OrderImport extends EntityImport
         $taxes = $params['TAXES'];
 
         $propertyFields = '';
-        if (isset($fields['ORDER_PROP'])) {
+        if(isset($fields['ORDER_PROP']))
+        {
             $propertyFields = $fields['ORDER_PROP'];
             unset($fields['ORDER_PROP']);
         }
 
-        if ($criterion->equals($fields)) {
+        if($criterion->equals($fields))
+        {
             $result = $this->fillProperty($order, $propertyFields);
-            if (!$result->isSuccess()) {
+            if(!$result->isSuccess())
+            {
                 return $result;
             }
 
             $basket = $order->getBasket();
 
             $result = $this->fillBasket($basket, $basketItems);
-            if ($result->isSuccess()) {
+            if($result->isSuccess())
+            {
                 $items = $result->getData();
                 $this->fillTax($order, $taxes, $items['modifyTaxList']);
-            } else {
+            }
+            else
+            {
                 return $result;
             }
 
             $result = $order->doFinalAction(true);
-            if (!$result->isSuccess()) {
+            if(!$result->isSuccess())
+            {
                 return $result;
             }
 
-            foreach ($fields as $k => $field) {
-                if (!in_array($k, $order::getAvailableFields()))
-                    unset($fields[$k]);
+			foreach ($fields as $k =>$field)
+			{
+				if(!in_array($k, $order::getAvailableFields()))
+					unset($fields[$k]);
             }
 
             $result = $order->setFields($fields);
@@ -229,26 +250,31 @@ class OrderImport extends EntityImport
         return 'EXTERNAL_ORDER';
     }
 
-    /**
-     * @param array $fields
-     * @return Sale\Result
-     */
-    public function load(array $fields)
+	/**
+	 * @param array $fields
+	 * @return Sale\Result
+	 */
+	public function load(array $fields)
     {
-        $result = $this->checkFields($fields);
+		$result = $this->checkFields($fields);
 
-        if ($result->isSuccess()) {
-            if (!empty($fields['ID'])) {
-                $order = $this->loadParentEntity($fields);
-            }
+    	if($result->isSuccess())
+		{
+			if(!empty($fields['ID']))
+			{
+				$order = $this->loadParentEntity($fields);
+			}
 
-            /** @var Order $order */
-            if (!empty($order)) {
-                $this->setEntity($order);
-            } else {
-                $this->setExternal();
-            }
-        }
+			/** @var Order $order*/
+			if(!empty($order))
+			{
+				$this->setEntity($order);
+			}
+			else
+			{
+				$this->setExternal();
+			}
+		}
 
         return $result;
     }
@@ -261,12 +287,13 @@ class OrderImport extends EntityImport
         /** @var Order $entity */
         $entity = $this->getEntity();
 
-        foreach ($collisions as $collision) {
-            $entity->setField('MARKED', 'Y');
+        foreach($collisions as $collision)
+        {
+			$entity->setField('MARKED', 'Y');
 
-            /** @var Exchange\ICollision $collision */
+        	/** @var Exchange\ICollision $collision*/
             $result = new Sale\Result();
-            $result->addWarning(new Sale\ResultError(EntityCollisionType::getDescription($collision->getTypeId()) . ($collision->getMessage() != null ? " " . $collision->getMessage() : ''), $collision->getTypeName()));
+            $result->addWarning(new Sale\ResultError(EntityCollisionType::getDescription($collision->getTypeId()).($collision->getMessage() != null ? " ".$collision->getMessage():'' ), $collision->getTypeName()));
 
             $this->addMarker($entity, $entity, $result);
         }
@@ -276,8 +303,10 @@ class OrderImport extends EntityImport
     {
         $result = array();
 
-        if (!empty($item['ATTRIBUTES'])) {
-            foreach ($item['ATTRIBUTES'] as $id => $value) {
+        if(!empty($item['ATTRIBUTES']))
+        {
+            foreach($item['ATTRIBUTES'] as $id => $value)
+            {
                 $result[] = array(
                     'NAME' => $id,
                     'CODE' => $id,
@@ -288,18 +317,19 @@ class OrderImport extends EntityImport
         return $result;
     }
 
-    private function prepareFieldsBasketItem($productXML_ID, $item)
-    {
-        /** @var Exchange\ISettingsImport $settings */
-        $settings = $this->getSettings();
+	private function prepareFieldsBasketItem($productXML_ID, $item)
+	{
+    	/** @var Exchange\ISettingsImport $settings */
+    	$settings = $this->getSettings();
 
-        $code = $this->getCodeAfterDelimiter($productXML_ID);
-        $product = $code <> '' ? static::getProduct($code) : array();
+    	$code = $this->getCodeAfterDelimiter($productXML_ID);
+		$product = $code<>'' ? static::getProduct($code):array();
 
-        if (empty($product))
-            $product = static::getProduct($productXML_ID);
+		if(empty($product))
+			$product = static::getProduct($productXML_ID);
 
-        if (!empty($product)) {
+		if(!empty($product))
+        {
             $result = array(
                 "PRODUCT_ID" => $product["ID"],
                 "NAME" => $product["NAME"],
@@ -310,7 +340,9 @@ class OrderImport extends EntityImport
                 "WEIGHT" => $product["WEIGHT"],
                 "NOTES" => $product["CATALOG_GROUP_NAME"]
             );
-        } else {
+        }
+        else
+        {
             $ri = new Main\Type\RandomSequence($productXML_ID);
             $result = array(
                 "PRODUCT_ID" => $ri->rand(1000000, 9999999),
@@ -349,107 +381,120 @@ class OrderImport extends EntityImport
                 "APPLY_ORDER" => "100"
             )
         );
-    }
+	}
 
-    /**
-     * @param $code
-     * @return string|null
-     */
-    protected function getCodeAfterDelimiter($code)
-    {
-        $result = '';
+	/**
+	 * @param $code
+	 * @return string|null
+	 */
+	protected function getCodeAfterDelimiter($code)
+	{
+		$result = '';
 
-        if (strpos($code, '#') !== false) {
-            $code = explode('#', $code);
-            $result = $code[1];
-        }
-        return $result;
-    }
+		if(strpos($code, '#') !== false)
+		{
+			$code = explode('#', $code);
+			$result = $code[1];
+		}
+		return $result;
+	}
 
     private static function getProduct($code)
     {
         $result = array();
 
-        $r = \CIBlockElement::GetList(array(),
-            array("=XML_ID" => $code, "ACTIVE" => "Y", "CHECK_PERMISSIONS" => "Y"),
-            false,
-            false,
-            array("ID", "IBLOCK_ID", "XML_ID", "NAME", "DETAIL_PAGE_URL")
-        );
-        if ($ar = $r->GetNext()) {
-            $result = $ar;
-            $product = \CCatalogProduct::GetByID($ar["ID"]);
+		$r = \CIBlockElement::GetList(array(),
+			array("=XML_ID" => $code, "ACTIVE" => "Y", "CHECK_PERMISSIONS" => "Y"),
+			false,
+			false,
+			array("ID", "IBLOCK_ID", "XML_ID", "NAME", "DETAIL_PAGE_URL")
+		);
+		if($ar = $r->GetNext())
+		{
+			$result = $ar;
+			$product = \CCatalogProduct::GetByID($ar["ID"]);
 
-            $result["WEIGHT"] = $product["WEIGHT"];
-            $result["CATALOG_GROUP_NAME"] = $product["CATALOG_GROUP_NAME"];
+			$result["WEIGHT"] = $product["WEIGHT"];
+			$result["CATALOG_GROUP_NAME"] = $product["CATALOG_GROUP_NAME"];
 
-            $productIBlock = static::getIBlockProduct($ar["IBLOCK_ID"]);
-            $result["IBLOCK_XML_ID"] = $productIBlock[$ar["IBLOCK_ID"]]["XML_ID"];
-        }
+			$productIBlock = static::getIBlockProduct($ar["IBLOCK_ID"]);
+			$result["IBLOCK_XML_ID"] = $productIBlock[$ar["IBLOCK_ID"]]["XML_ID"];
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    /**
-     * @param Sale\BasketBase $basket
-     * @param array $item
-     * @return Sale\BasketItem|bool
-     */
-    static public function getBasketItemByItem(Sale\BasketBase $basket, array $item)
+	/**
+	 * @param Sale\BasketBase $basket
+	 * @param array $item
+	 * @return Sale\BasketItem|bool
+	 */
+	static public function getBasketItemByItem(Sale\BasketBase $basket, array $item)
     {
-        foreach ($basket as $basketItem) {
-            /** @var  Sale\BasketItem $basketItem */
-            if ($item['ID'] == $basketItem->getField('PRODUCT_XML_ID')) {
+        foreach($basket as $basketItem)
+        {
+            /** @var  Sale\BasketItem $basketItem*/
+            if($item['ID'] == $basketItem->getField('PRODUCT_XML_ID'))
+            {
                 $fieldsBasketProperty = static::prepareFieldsBasketProperty($item);
 
                 $propertyBasketItem = array();
                 /** @var Sale\BasketPropertiesCollection $basketPropertyCollection */
-                if ($basketPropertyCollection = $basketItem->getPropertyCollection())
+                if($basketPropertyCollection = $basketItem->getPropertyCollection())
                     $propertyBasketItem = $basketPropertyCollection->getPropertyValues();
 
-                if (!empty($fieldsBasketProperty) && is_array($fieldsBasketProperty)) {
-                    if ($basketPropertyCollection->isPropertyAlreadyExists($fieldsBasketProperty)) {
+                if(!empty($fieldsBasketProperty) && is_array($fieldsBasketProperty))
+                {
+                    if($basketPropertyCollection->isPropertyAlreadyExists($fieldsBasketProperty))
+                    {
                         return $basketItem;
                     }
-                } elseif (count($propertyBasketItem) <= 0) {
+                }
+                elseif(count($propertyBasketItem)<=0)
+                {
                     return $basketItem;
                 }
-            } else
+            }
+            else
                 continue;
         }
         return false;
     }
 
-    /**
-     * @param array $fields
-     * @return array
-     */
-    static public function getGroupItemsBasketFields($fields)
-    {
-        $result = array();
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	static public function getGroupItemsBasketFields($fields)
+	{
+		$result = array();
 
-        if (is_array($fields)) {
-            foreach ($fields as $k => $items) {
-                foreach ($items as $productXML_ID => $item) {
-                    if ($productXML_ID == Exchange\ImportOneCBase::DELIVERY_SERVICE_XMLID)
-                        continue;
+		if(is_array($fields))
+		{
+			foreach($fields as $k=>$items)
+			{
+				foreach($items as $productXML_ID => $item)
+				{
+					if($productXML_ID == Exchange\ImportOneCBase::DELIVERY_SERVICE_XMLID)
+						continue;
 
-                    if ($item['TYPE'] == Exchange\ImportBase::ITEM_ITEM) {
-                        $result[$k][$productXML_ID] = $item;
-                    }
-                }
-            }
-        }
+					if($item['TYPE'] == Exchange\ImportBase::ITEM_ITEM)
+					{
+						$result[$k][$productXML_ID] = $item;
+					}
+				}
+			}
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    /**
-     * @param Sale\BasketBase $basket
-     * @param array $basketItems
-     * @return Sale\Result
-     */
-    private function fillBasket(Sale\BasketBase $basket, array $basketItems)
+	/**
+	 * @param Sale\BasketBase $basket
+	 * @param array $basketItems
+	 * @return Sale\Result
+	 */
+	private function fillBasket(Sale\BasketBase $basket, array $basketItems)
     {
         $result = new Sale\Result();
 
@@ -457,98 +502,122 @@ class OrderImport extends EntityImport
         $basketItemsIndexList = array();
 
         /** @var Sale\BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
+        foreach ($basket as $basketItem)
+        {
             $basketItemsIndexList[$basketItem->getId()] = $basketItem->getQuantity();
         }
 
         $basketItems = static::getGroupItemsBasketFields($basketItems);
 
-        if (!empty($basketItems)) {
-            $sort = 100;
-            foreach ($basketItems as $items) {
-                foreach ($items as $productXML_ID => $item) {
-                    $fieldsBasket = array();
-                    if ($basketItem = static::getBasketItemByItem($basket, $item)) {
-                        /** @var Exchange\ICriterionOrder $criterionBasketItems */
-                        $criterionBasketItems = $this->getCurrentCriterion($basket->getOrder());
+        if(!empty($basketItems))
+		{
+			$sort = 100;
+			foreach($basketItems as $items)
+			{
+				foreach($items as $productXML_ID => $item)
+				{
+					$fieldsBasket = array();
+					if($basketItem = static::getBasketItemByItem($basket, $item))
+					{
+						/** @var Exchange\ICriterionOrder $criterionBasketItems */
+						$criterionBasketItems = $this->getCurrentCriterion($basket->getOrder());
 
-                        if ($criterionBasketItems->equalsBasketItem($basketItem, $item)) {
-                            if ($item['PRICE'] != $basketItem->getPrice())
-                                $basketItem->setPrice($item['PRICE'], true);
+						if($criterionBasketItems->equalsBasketItem($basketItem, $item))
+						{
+							if($item['PRICE'] != $basketItem->getPrice())
+								$basketItem->setPrice($item['PRICE'], true);
 
-                            if ($item['QUANTITY'] != $basketItem->getQuantity())
-                                $fieldsBasket['QUANTITY'] = $item['QUANTITY'];
+							if($item['QUANTITY'] != $basketItem->getQuantity())
+								$fieldsBasket['QUANTITY'] = $item['QUANTITY'];
 
-                            /** @var Exchange\ICriterionOrder $criterionBasketItemsTax */
-                            $criterionBasketItemsTax = $this->getCurrentCriterion($basket->getOrder());
+							/** @var Exchange\ICriterionOrder $criterionBasketItemsTax */
+							$criterionBasketItemsTax = $this->getCurrentCriterion($basket->getOrder());
 
-                            if ($criterionBasketItemsTax->equalsBasketItemTax($basketItem, $item)) {
-                                $taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
-                            }
+							if($criterionBasketItemsTax->equalsBasketItemTax($basketItem, $item))
+							{
+								$taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
+							}
 
-                            /** @var Exchange\ICriterionOrder $criterionBasketItemsDiscount */
-                            $criterionBasketItemsDiscount = $this->getCurrentCriterion($basket->getOrder());
+							/** @var Exchange\ICriterionOrder $criterionBasketItemsDiscount */
+							$criterionBasketItemsDiscount = $this->getCurrentCriterion($basket->getOrder());
 
-                            if ($criterionBasketItemsDiscount->equalsBasketItemDiscount($basketItem, $item)) {
-                                $fieldsBasket['DISCOUNT_PRICE'] = $item['DISCOUNT']['PRICE'];
-                            }
-                        }
+							if($criterionBasketItemsDiscount->equalsBasketItemDiscount($basketItem, $item))
+							{
+								$fieldsBasket['DISCOUNT_PRICE'] = $item['DISCOUNT']['PRICE'];
+							}
+						}
 
-                        if (isset($basketItemsIndexList[$basketItem->getId()]))
-                            unset($basketItemsIndexList[$basketItem->getId()]);
-                    } else {
+						if (isset($basketItemsIndexList[$basketItem->getId()]))
+							unset($basketItemsIndexList[$basketItem->getId()]);
+					}
+					else
+					{
 
-                        $fieldsBasket = $this->prepareFieldsBasketItem($productXML_ID, $item);
-                        $fieldsCurrency = $this->convertCurrency($item);
+						$fieldsBasket = $this->prepareFieldsBasketItem($productXML_ID, $item);
+						$fieldsCurrency = $this->convertCurrency($item);
 
-                        $fieldsBasket['CURRENCY'] = $fieldsCurrency['CURRENCY'];
-                        $fieldsBasket['SORT'] = $sort;
-                        $sort += 100;
+						$fieldsBasket['CURRENCY'] = $fieldsCurrency['CURRENCY'];
+						$fieldsBasket['SORT'] = $sort;
+						$sort += 100;
 
-                        $basketItem = $basket->createItem($fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
+						$basketItem = $basket->createItem($fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
 
-                        $basketItem->setPrice($fieldsCurrency['PRICE'], true);
+						$basketItem->setPrice($fieldsCurrency['PRICE'], true);
 
-                        unset($fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
+						unset($fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
 
-                        $taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
-                    }
+						$taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
+					}
 
-                    if (!empty($fieldsBasket)) {
-                        $r = $basketItem->setFields($fieldsBasket);
-                        if ($r->isSuccess()) {
-                            $fieldsBasketProperty = static::prepareFieldsBasketProperty($item);
-                            if (!empty($fieldsBasketProperty)) {
-                                /** @var Sale\BasketPropertiesCollection $propertyCollection */
-                                if ($propertyCollection = $basketItem->getPropertyCollection()) {
-                                    $propertyCollection->setProperty($fieldsBasketProperty);
-                                }
-                            }
-                        } else {
-                            $result->addErrors($r->getErrors());
-                        }
-                    }
-                }
-            }
-        }
+					if(!empty($fieldsBasket))
+					{
+						$r = $basketItem->setFields($fieldsBasket);
+						if ($r->isSuccess())
+						{
+							$fieldsBasketProperty = static::prepareFieldsBasketProperty($item);
+							if(!empty($fieldsBasketProperty))
+							{
+								/** @var Sale\BasketPropertiesCollection $propertyCollection */
+								if ($propertyCollection = $basketItem->getPropertyCollection())
+								{
+									$propertyCollection->setProperty($fieldsBasketProperty);
+								}
+							}
+						}
+						else
+						{
+							$result->addErrors($r->getErrors());
+						}
+					}
+				}
+			}
+		}
 
-        if ($result->isSuccess()) {
-            $result->setData(array('modifyTaxList' => $taxListModify));
+        if($result->isSuccess())
+        {
+            $result->setData(array('modifyTaxList'=>$taxListModify));
 
             $r = $this->synchronizeQuantityBasketItems($basketItemsIndexList);
-            if ($r->isSuccess()) {
-                if (!empty($basketItemsIndexList) && is_array($basketItemsIndexList)) {
-                    foreach ($basketItemsIndexList as $basketIndexId => $basketIndexValue) {
-                        /** @var Sale\BasketItem $foundedBasketItem */
-                        if ($foundedBasketItem = $basket->getItemById($basketIndexId)) {
-                            $resultDelete = $foundedBasketItem->delete();
-                            if ($resultDelete->isSuccess() == false) {
-                                $result->addErrors($resultDelete->getErrors());
-                            }
-                        }
-                    }
+            if($r->isSuccess())
+            {
+                if(!empty($basketItemsIndexList) && is_array($basketItemsIndexList))
+                {
+					foreach ($basketItemsIndexList as $basketIndexId => $basketIndexValue)
+					{
+						/** @var Sale\BasketItem $foundedBasketItem */
+						if ($foundedBasketItem = $basket->getItemById($basketIndexId))
+						{
+							$resultDelete = $foundedBasketItem->delete();
+							if($resultDelete->isSuccess() == false)
+							{
+								$result->addErrors($resultDelete->getErrors());
+							}
+						}
+					}
                 }
-            } else {
+            }
+            else
+            {
                 $result->addErrors($r->getErrors());
             }
         }
@@ -556,68 +625,75 @@ class OrderImport extends EntityImport
         return $result;
     }
 
-    /**
-     * @param array $item
-     * @return array
-     */
-    protected function convertCurrency(array $item)
+	/**
+	 * @param array $item
+	 * @return array
+	 */
+	protected function convertCurrency(array $item)
+	{
+		$result = array();
+		$result['CURRENCY'] = $this->settings->getCurrency();
+
+			/** @var Order $order */
+		$order = $this->getEntity();
+
+		if($this->getEntityId()>0 && $order->getCurrency() <> $this->settings->getCurrency())
+		{
+			$item['PRICE'] = \CCurrencyRates::ConvertCurrency($item['PRICE'], $this->settings->getCurrency(), $order->getCurrency());
+			$this->setCollisions(EntityCollisionType::OrderBasketItemsCurrencyModify, $this->getEntity());
+			$result['CURRENCY'] = $order->getCurrency();
+		}
+
+		$result['PRICE'] = $item['PRICE'];
+
+		return $result;
+	}
+
+	/**
+	 * @internal
+	 * @param Sale\Basket $basket
+	 * @return array
+	 */
+	private static function getProductsVatRate(Sale\Basket $basket)
+	{
+		$result = array();
+		static $vatFields = null;
+
+		foreach($basket as $basketItem)
+		{
+			if($provider = $basketItem->getProvider())
+			{
+				$vatRate = 0.0;
+				if($vatFields[$basketItem->getProductId()] === null)
+				{
+					$rsVAT = \CCatalogProduct::GetVATInfo($basketItem->getProductId());
+					if ($arVAT = $rsVAT->Fetch())
+						$vatFields[$basketItem->getProductId()] = $arVAT['RATE'];
+				}
+
+
+				if (isset($vatFields[$basketItem->getProductId()]))
+					$vatRate = (float)$vatFields[$basketItem->getProductId()] * 0.01;
+
+				$result[$basketItem->getBasketCode()] = array('VAT_RATE'=>$vatRate);
+			}
+			else
+			{
+				continue;
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * @param Order $order
+	 * @param array $fields
+	 * @param $modifyTaxList
+	 */
+	private function fillTax(Order $order, array $fields, $modifyTaxList)
     {
-        $result = array();
-        $result['CURRENCY'] = $this->settings->getCurrency();
-
-        /** @var Order $order */
-        $order = $this->getEntity();
-
-        if ($this->getEntityId() > 0 && $order->getCurrency() <> $this->settings->getCurrency()) {
-            $item['PRICE'] = \CCurrencyRates::ConvertCurrency($item['PRICE'], $this->settings->getCurrency(), $order->getCurrency());
-            $this->setCollisions(EntityCollisionType::OrderBasketItemsCurrencyModify, $this->getEntity());
-            $result['CURRENCY'] = $order->getCurrency();
-        }
-
-        $result['PRICE'] = $item['PRICE'];
-
-        return $result;
-    }
-
-    /**
-     * @param Sale\Basket $basket
-     * @return array
-     * @internal
-     */
-    private static function getProductsVatRate(Sale\Basket $basket)
-    {
-        $result = array();
-        static $vatFields = null;
-
-        foreach ($basket as $basketItem) {
-            if ($provider = $basketItem->getProvider()) {
-                $vatRate = 0.0;
-                if ($vatFields[$basketItem->getProductId()] === null) {
-                    $rsVAT = \CCatalogProduct::GetVATInfo($basketItem->getProductId());
-                    if ($arVAT = $rsVAT->Fetch())
-                        $vatFields[$basketItem->getProductId()] = $arVAT['RATE'];
-                }
-
-
-                if (isset($vatFields[$basketItem->getProductId()]))
-                    $vatRate = (float)$vatFields[$basketItem->getProductId()] * 0.01;
-
-                $result[$basketItem->getBasketCode()] = array('VAT_RATE' => $vatRate);
-            } else {
-                continue;
-            }
-        }
-        return $result;
-    }
-
-    /**
-     * @param Order $order
-     * @param array $fields
-     * @param $modifyTaxList
-     */
-    private function fillTax(Order $order, array $fields, $modifyTaxList)
-    {
-        if (isset($modifyTaxList)) {
+        if(isset($modifyTaxList))
+        {
             /** @var Sale\Tax $tax */
             $tax = $order->getTax();
             $tax->resetTaxList();
@@ -627,21 +703,25 @@ class OrderImport extends EntityImport
             $productVatData = static::getProductsVatRate($basket);
 
             /** @var Sale\BasketItem $basketItem */
-            foreach ($basket as $basketItem) {
+            foreach($basket as $basketItem)
+            {
                 $code = $basketItem->getBasketCode();
-                if (isset($modifyTaxList[$code])) {
+                if(isset($modifyTaxList[$code]))
+                {
                     /*if($basketItem->getId()>0)
                     {
                         $this->setCollisions(EntityCollisionType::OrderBasketItemTaxValueError, $this->getEntity(), $basketItem->getField('NAME'));
                     }
                     else
                     {*/
-                    $productVatFields = $productVatData[$basketItem->getBasketCode()];
-                    if (!empty($productVatFields)) {
-                        if ($productVatFields['VAT_RATE'] <> $modifyTaxList[$code]['VAT_RATE']) {
-                            $this->setCollisions(EntityCollisionType::OrderBasketItemTaxValueError, $order, $basketItem->getField('NAME'));
+                        $productVatFields = $productVatData[$basketItem->getBasketCode()];
+                        if(!empty($productVatFields))
+                        {
+                            if($productVatFields['VAT_RATE'] <> $modifyTaxList[$code]['VAT_RATE'])
+                            {
+                                $this->setCollisions(EntityCollisionType::OrderBasketItemTaxValueError, $order, $basketItem->getField('NAME'));
+                            }
                         }
-                    }
                     //}
 
                     $basketItem->setField('VAT_RATE', $modifyTaxList[$code]['VAT_RATE']);
@@ -652,7 +732,7 @@ class OrderImport extends EntityImport
             $tax->initTaxList($this->prepareFieldsTax($fields));
             $order->refreshVat();
         }
-    }
+     }
 
     private function fillProperty(Order $order, $fieldsOrderProperty)
     {
@@ -661,12 +741,14 @@ class OrderImport extends EntityImport
         /** @var Sale\PropertyValueCollection $propCollection */
         $propCollection = $order->getPropertyCollection();
 
-        if (!empty($fieldsOrderProperty) && is_array($fieldsOrderProperty)) {
+        if (!empty($fieldsOrderProperty) && is_array($fieldsOrderProperty))
+        {
             $fields['PROPERTIES'] = $fieldsOrderProperty;
 
             /** @var Sale\Result $r */
             $r = $propCollection->setValuesFromPost($fields, $_FILES);
-            if (!$r->isSuccess()) {
+            if (!$r->isSuccess())
+            {
                 $result->addErrors($r->getErrors());
                 return $result;
             }
@@ -685,7 +767,7 @@ class OrderImport extends EntityImport
      */
     public static function resolveEntityTypeId(Internals\Entity $order)
     {
-        if (!($order instanceof Order))
+        if(!($order instanceof Order))
             throw new Main\ArgumentException("Entity must be instanceof Order");
 
         return EntityType::ORDER;
@@ -695,7 +777,8 @@ class OrderImport extends EntityImport
     {
         static $iblock_fields = null;
 
-        if ($iblock_fields[$iblockId] == null) {
+        if($iblock_fields[$iblockId] == null)
+        {
             $r = \CIBlock::GetList(array(), array("ID" => $iblockId));
             if ($ar = $r->Fetch())
                 $iblock_fields[$iblockId] = $ar;
@@ -714,18 +797,27 @@ class OrderImport extends EntityImport
         $basketItemsIndexQuantityList = array();
 
         /** @var \Bitrix\Sale\BasketItem $basketItem */
-        foreach ($basket as $basketItem) {
+        foreach ($basket as $basketItem)
+        {
             $basketItemsIndexQuantityList[$basketItem->getId()] = $basketItem->getQuantity();
         }
 
-        if (!empty($basketItems) && is_array($basketItems)) {
-            foreach ($basketItems as $items) {
-                foreach ($items as $productXML_ID => $item) {
-                    if ($basketItem = static::getBasketItemByItem($basket, $item)) {
-                        if (isset($basketItemsIndexQuantityList[$basketItem->getId()])) {
-                            if ($basketItemsIndexQuantityList[$basketItem->getId()] <= $item['QUANTITY']) {
+        if(!empty($basketItems) && is_array($basketItems))
+        {
+            foreach($basketItems as $items)
+            {
+                foreach($items as $productXML_ID => $item)
+                {
+                    if($basketItem = static::getBasketItemByItem($basket, $item))
+                    {
+                        if(isset($basketItemsIndexQuantityList[$basketItem->getId()]))
+                        {
+                            if($basketItemsIndexQuantityList[$basketItem->getId()] <= $item['QUANTITY'])
+                            {
                                 unset($basketItemsIndexQuantityList[$basketItem->getId()]);
-                            } else {
+                            }
+                            else
+                            {
                                 $basketItemsIndexQuantityList[$basketItem->getId()] -= $item['QUANTITY'];
                             }
                         }
@@ -750,7 +842,7 @@ class OrderImport extends EntityImport
 
         /** @var Order $order */
         $order = $this->getEntity();
-        if (empty($order))
+        if(empty($order))
             return $result;
 
         $basket = $order->getBasket();
@@ -759,26 +851,33 @@ class OrderImport extends EntityImport
         /** @var \Bitrix\Sale\Shipment $systemShipment */
         $systemShipment = $shipmentCollection->getSystemShipment();
 
-        if (!empty($basketItemsIndex) && is_array($basketItemsIndex)) {
-            foreach ($basketItemsIndex as $basketIndexId => $basketIndexQuantity) {
+        if(!empty($basketItemsIndex) && is_array($basketItemsIndex))
+        {
+            foreach ($basketItemsIndex as $basketIndexId => $basketIndexQuantity)
+            {
                 /** @var \Bitrix\Sale\BasketItem $foundedBasketItem */
-                if ($foundedBasketItem = $basket->getItemById($basketIndexId)) {
+                if ($foundedBasketItem = $basket->getItemById($basketIndexId))
+                {
                     $systemBasketQuantity = $systemShipment->getBasketItemQuantity($foundedBasketItem);
 
-                    if ($basketIndexQuantity > $systemBasketQuantity) {
-                        $needQuantity = $basketIndexQuantity - $systemBasketQuantity;
+                    if($basketIndexQuantity>$systemBasketQuantity)
+                    {
+                        $needQuantity = $basketIndexQuantity-$systemBasketQuantity;
 
                         /** @var ShipmentImport $shipmentImport */
-                        $shipmentImport = $this->entityCreateByFactory($this->getShipmentTypeId());
-                        Exchange\ManagerImport::configure($shipmentImport);
+						$shipmentImport = $this->entityCreateByFactory($this->getShipmentTypeId());
+						Exchange\ManagerImport::configure($shipmentImport);
                         $shipmentImport->setParentEntity($order);
 
                         $r = $shipmentImport->synchronizeQuantityShipmentItems($foundedBasketItem, $needQuantity);
-                        if ($r->isSuccess()) {
+                        if($r->isSuccess())
+                        {
                             $this->setCollisions(EntityCollisionType::OrderSynchronizeBasketItemsModify, $order);
-                        } else {
-                            $this->setCollisions(EntityCollisionType::OrderSynchronizeBasketItemsModifyError, $order, implode(',', $result->getErrorMessages()));
-                            $result->addErrors($r->getErrors());
+                        }
+                        else
+                        {
+							$this->setCollisions(EntityCollisionType::OrderSynchronizeBasketItemsModifyError, $order, implode(',', $result->getErrorMessages()));
+                        	$result->addErrors($r->getErrors());
                         }
                     }
                 }
@@ -787,123 +886,130 @@ class OrderImport extends EntityImport
         return $result;
     }
 
-    /**
-     * @return int
-     * @internal
-     */
-    protected function getShipmentTypeId()
-    {
-        return EntityType::SHIPMENT;
-    }
+	/**
+	 * @return int
+	 * @internal
+	 */
+	protected function getShipmentTypeId()
+	{
+		return EntityType::SHIPMENT;
+	}
 
-    /**
-     * @return Exchange\ImportBase
-     * @internal
-     */
-    protected function entityCreateByFactory($typeId)
-    {
-        return EntityImportFactory::create($typeId);
-    }
+	/**
+	 * @return Exchange\ImportBase
+	 * @internal
+	 */
+	protected function entityCreateByFactory($typeId)
+	{
+		return EntityImportFactory::create($typeId);
+	}
 
     public function initFields()
-    {
-        $this->setFields(
-            array(
-                'TRAITS' => $this->getFieldsTraits(),
-                'ITEMS' => $this->getFieldsItems(),
-                'TAXES' => $this->getFieldsTaxes(),
-                'CASH_BOX_CHECKS' => $this->getCashBoxChecks()
-            )
-        );
-    }
+	{
+		$this->setFields(
+			array(
+			'TRAITS'=>$this->getFieldsTraits(),
+			'ITEMS'=>$this->getFieldsItems(),
+			'TAXES'=>$this->getFieldsTaxes(),
+			'CASH_BOX_CHECKS'=>$this->getCashBoxChecks()
+			)
+		);
+	}
 
-    /**
-     * @return array
-     * @internal
-     */
-    protected function getFieldsItems()
-    {
-        $result = array();
-        $order = $this->getEntity();
-        if ($order instanceof Order) {
-            /** @var Sale\BasketItem[] $basketItems */
-            $basketItems = $order->getBasket();
-            foreach ($basketItems as $basket) {
-                $attributes = array();
-                $attributeFields = static::getAttributesItem($basket);
-                if (count($attributeFields) > 0)
-                    $attributes['ATTRIBUTES'] = $attributeFields;
+	/**
+	 * @return array
+	 * @internal
+	 */
+	protected function getFieldsItems()
+	{
+		$result = array();
+		$order = $this->getEntity();
+		if($order instanceof Order)
+		{
+			/** @var Sale\BasketItem[] $basketItems */
+			$basketItems = $order->getBasket();
+			foreach ($basketItems as $basket)
+			{
+				$attributes = array();
+				$attributeFields = static::getAttributesItem($basket);
+				if(count($attributeFields)>0)
+					$attributes['ATTRIBUTES'] = $attributeFields;
 
-                $result[] = array_merge($basket->getFieldValues(), $attributes);
-            }
-        }
+				$result[] = array_merge($basket->getFieldValues(), $attributes);
+			}
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    /**
-     * @param Sale\BasketItem $basket
-     * @return array
-     */
-    static public function getAttributesItem(Sale\BasketItem $basket)
-    {
-        $result = array();
-        /** @var Sale\BasketPropertyItemBase[] $propertyItems */
-        $propertyItems = $basket->getPropertyCollection();
-        foreach ($propertyItems as $property) {
-            $result[] = $property->getFieldValues();
-        }
-        return $result;
-    }
+	/**
+	 * @param Sale\BasketItem $basket
+	 * @return array
+	 */
+	static public function getAttributesItem(Sale\BasketItem $basket)
+	{
+		$result = array();
+		/** @var Sale\BasketPropertyItemBase[] $propertyItems */
+		$propertyItems = $basket->getPropertyCollection();
+		foreach ($propertyItems as $property)
+		{
+			$result[] = $property->getFieldValues();
+		}
+		return $result;
+	}
 
-    /**
-     * @return array
-     * @internal
-     */
-    protected function getFieldsTaxes()
-    {
-        $result = array();
-        $order = $this->getEntity();
-        if ($order instanceof Order) {
-            $res = \CSaleOrderTax::GetList(
-                array(),
-                array("ORDER_ID" => $order->getId()),
-                false,
-                false,
-                array("ID", "TAX_NAME", "VALUE", "VALUE_MONEY", "CODE", "IS_IN_PRICE")
-            );
-            while ($tax = $res->Fetch()) {
-                $result[] = $tax;
-            }
-        }
-        return $result;
-    }
+	/**
+	 * @return array
+	 * @internal
+	 */
+	protected function getFieldsTaxes()
+	{
+		$result = array();
+		$order = $this->getEntity();
+		if($order instanceof Order)
+		{
+			$res = \CSaleOrderTax::GetList(
+				array(),
+				array("ORDER_ID" => $order->getId()),
+				false,
+				false,
+				array("ID", "TAX_NAME", "VALUE", "VALUE_MONEY", "CODE", "IS_IN_PRICE")
+			);
+			while ($tax = $res->Fetch())
+			{
+				$result[] = $tax;
+			}
+		}
+		return $result;
+	}
 
-    /**
-     * @return array
-     */
-    protected function getCashBoxChecks()
-    {
-        $result = array();
-        $cashBoxOneCId = \Bitrix\Sale\Cashbox\Cashbox1C::getId();
-        $order = $this->getEntity();
-        if ($order instanceof Order) {
-            if ($cashBoxOneCId > 0) {
-                $result = \Bitrix\Sale\Cashbox\CheckManager::getPrintableChecks(array($cashBoxOneCId), array($order->getId()));
-            }
-        }
-        return $result;
-    }
+	/**
+	 * @return array
+	 */
+	protected function getCashBoxChecks()
+	{
+		$result = array();
+		$cashBoxOneCId = \Bitrix\Sale\Cashbox\Cashbox1C::getId();
+		$order = $this->getEntity();
+		if($order instanceof Order)
+		{
+			if($cashBoxOneCId>0)
+			{
+				$result = \Bitrix\Sale\Cashbox\CheckManager::getPrintableChecks(array($cashBoxOneCId), array($order->getId()));
+			}
+		}
+		return $result;
+	}
 
-    /**
-     * @param Sale\IBusinessValueProvider $entity
-     * @return Order
-     */
-    static protected function getBusinessValueOrderProvider(Sale\IBusinessValueProvider $entity)
-    {
-        if (!($entity instanceof Order))
-            throw new Main\ArgumentException("entity must be instanceof Order");
+	/**
+	 * @param Sale\IBusinessValueProvider $entity
+	 * @return Order
+	 */
+	static protected function getBusinessValueOrderProvider(Sale\IBusinessValueProvider $entity)
+	{
+		if(!($entity instanceof Order))
+			throw new Main\ArgumentException("entity must be instanceof Order");
 
-        return $entity;
-    }
+		return $entity;
+	}
 }

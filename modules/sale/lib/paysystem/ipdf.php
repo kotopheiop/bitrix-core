@@ -10,21 +10,21 @@ use Bitrix\Sale\Payment;
  */
 interface IPdf
 {
-    /**
-     * @param Payment $payment
-     * @return mixed
-     */
-    public function getContent(Payment $payment);
+	/**
+	 * @param Payment $payment
+	 * @return mixed
+	 */
+	public function getContent(Payment $payment);
 
-    /**
-     * @param Payment $payment
-     * @return mixed
-     */
-    public function getFile(Payment $payment);
+	/**
+	 * @param Payment $payment
+	 * @return mixed
+	 */
+	public function getFile(Payment $payment);
 
-    /**
-     * @param Payment $payment
-     * @return mixed
-     */
-    public function isGenerated(Payment $payment);
+	/**
+	 * @param Payment $payment
+	 * @return mixed
+	 */
+	public function isGenerated(Payment $payment);
 }

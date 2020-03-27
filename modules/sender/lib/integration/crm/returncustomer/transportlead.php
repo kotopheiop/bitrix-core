@@ -18,5 +18,5 @@ Loc::loadMessages(__FILE__);
  */
 class TransportLead extends TransportBase
 {
-    const CODE = self::CODE_RC_LEAD;
+	const CODE = self::CODE_RC_LEAD;
 }

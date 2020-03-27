@@ -1,10 +1,8 @@
 <?php
-
 namespace Bitrix\Sale\Exchange\Entity;
 
 use Bitrix\Main;
 use Bitrix\Sale;
-use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\Exchange;
@@ -20,7 +18,7 @@ abstract class EntityImport extends Exchange\ImportBase
     public $collisions = array();
 
     protected $parentEntity = null;
-    /** @var Sale\Internals\Entity $entity */
+    /** @var Sale\Internals\Entity $entity*/
     protected $entity = null;
     protected $external = null;
     protected $marked = false;
@@ -29,7 +27,8 @@ abstract class EntityImport extends Exchange\ImportBase
     {
         $this->fields = new Sale\Internals\Fields();
 
-        if (!empty($parentEntityContext)) {
+        if(!empty($parentEntityContext))
+        {
             $this->setParentEntity($parentEntityContext);
         }
     }
@@ -43,16 +42,16 @@ abstract class EntityImport extends Exchange\ImportBase
     }
 
     /**
-     * @param Order $parentEntity
      * @internal
+     * @param Sale\Order $parentEntity
      */
-    public function setParentEntity(Order $parentEntity)
+    public function setParentEntity(Sale\Order $parentEntity)
     {
         $this->parentEntity = $parentEntity;
     }
 
     /**
-     * @return null|Order
+     * @return null|Sale\Order
      */
     public function getParentEntity()
     {
@@ -65,23 +64,29 @@ abstract class EntityImport extends Exchange\ImportBase
     public function isLoadedParentEntity()
     {
         $order = $this->getParentEntity();
-        return $order instanceof Order;
+        return $order instanceof Sale\Order;
     }
 
-    /**
-     * @param array $fields
-     * @return Order
-     */
-    protected function loadParentEntity(array $fields)
-    {
-        $entity = null;
+	/**
+	 * @param array $fields
+	 * @return Sale\Order
+	 */
+	protected function loadParentEntity(array $fields)
+	{
+		$entity = null;
 
-        if (!empty($fields['ID'])) {
-            /** @var Order $entity */
-            $entity = Order::load($fields['ID']);
-        }
-        return $entity;
-    }
+		if(!empty($fields['ID']))
+		{
+
+			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+			/** @var Sale\Order $orderClass */
+			$orderClass = $registry->getOrderClassName();
+
+			/** @var Sale\Order $entity */
+			$entity = $orderClass::load($fields['ID']);
+		}
+		return $entity;
+	}
 
     /**
      * @param Sale\Internals\Entity $entity
@@ -119,15 +124,18 @@ abstract class EntityImport extends Exchange\ImportBase
      * @param null $message
      * @internal
      */
-    public function setCollisions($tipeId, Sale\Internals\Entity $entity, $message = null)
+    public function setCollisions($tipeId, Sale\Internals\Entity $entity, $message=null)
     {
-        if (Exchange\EntityCollisionType::getErrorGroup($tipeId) == Exchange\EntityCollisionType::GROUP_E_ERROR) {
-            $this->collisionErrors = true;
-        } elseif (Exchange\EntityCollisionType::getErrorGroup($tipeId) == Exchange\EntityCollisionType::GROUP_E_WARNING) {
-            $this->collisionWarnings = true;
-        }
+    	if(Exchange\EntityCollisionType::getErrorGroup($tipeId) == Exchange\EntityCollisionType::GROUP_E_ERROR)
+		{
+			$this->collisionErrors = true;
+		}
+		elseif(Exchange\EntityCollisionType::getErrorGroup($tipeId) == Exchange\EntityCollisionType::GROUP_E_WARNING)
+		{
+			$this->collisionWarnings = true;
+		}
 
-        $collision = $this->getCurrentCollision($this->getOwnerTypeId());
+    	$collision = $this->getCurrentCollision($this->getOwnerTypeId());
         $collision->addItem($this->getOwnerTypeId(), $tipeId, $entity, $message);
 
         $this->collisions[] = $collision;
@@ -157,43 +165,47 @@ abstract class EntityImport extends Exchange\ImportBase
         /** @var Shipment|Payment $entity */
         $entity = $this->getEntity();
 
-        /** @var Order $parentEntity */
+        /** @var Sale\Order $parentEntity */
         $parentEntity = $this->getParentEntity();
 
-        /** @var Exchange\ICollision $collision */
-        foreach ($collisions as $collision) {
+        /** @var Exchange\ICollision $collision*/
+        foreach($collisions as $collision)
+        {
             $result = new Sale\Result();
-            $result->addWarning(new Sale\ResultError(Exchange\EntityCollisionType::getDescription($collision->getTypeId()) . ($collision->getMessage() != null ? " " . $collision->getMessage() : ''), $collision->getTypeName()));
+            $result->addWarning(new Sale\ResultError(Exchange\EntityCollisionType::getDescription($collision->getTypeId()).($collision->getMessage() != null ? " ".$collision->getMessage():'' ), $collision->getTypeName()));
 
             $entity->setField('MARKED', 'Y');
             $this->marked = true;
 
             $collisionEntity = $collision->getEntity();
-            if (!empty($collisionEntity)) {
+            if(!empty($collisionEntity))
+            {
                 $this->addMarker($parentEntity, $collisionEntity, $result);
-            } else {
-                $this->addMarker($parentEntity, $entity, $result);
+            }
+            else
+            {
+				$this->addMarker($parentEntity, $entity, $result);
             }
         }
     }
 
-    /**
-     * @param $order
-     * @param $entity
-     * @param $result
-     */
-    protected function addMarker($order, $entity, $result)
-    {
-        EntityMarker::addMarker($order, $entity, $result);
-    }
+	/**
+	 * @param $order
+	 * @param $entity
+	 * @param $result
+	 */
+	protected function addMarker($order, $entity, $result)
+	{
+		EntityMarker::addMarker($order, $entity, $result);
+	}
 
-    /**
-     * @return bool
-     */
-    public function isMarked()
-    {
-        return $this->marked;
-    }
+	/**
+	 * @return bool
+	 */
+	public function isMarked()
+	{
+		return $this->marked;
+	}
 
     /**
      * @return null|string
@@ -208,7 +220,7 @@ abstract class EntityImport extends Exchange\ImportBase
      * @throws Main\ArgumentTypeException
      * @throws Main\NotSupportedException
      */
-    public function isImportable()
+	public function isImportable()
     {
         return $this->settings->isImportableFor($this->getOwnerTypeId());
     }
@@ -221,16 +233,17 @@ abstract class EntityImport extends Exchange\ImportBase
     public function import(array $params)
     {
         $result = parent::import($params);
-        if ($result->isSuccess()) {
-            /** @var Sale\Internals\Entity $entity */
-            if (($entity = $this->getEntity()))
-                $this->marked($entity, $params['TRAITS']);
-        }
+		if($result->isSuccess())
+		{
+			/** @var Sale\Internals\Entity $entity*/
+			if(($entity = $this->getEntity()))
+				$this->marked($entity, $params['TRAITS']);
+		}
         return $result;
     }
 
     /**
-     * @return Main\Entity\AddResult|Main\Entity\UpdateResult|Sale\Result|mixed
+	 * @return Main\Entity\AddResult|Main\Entity\UpdateResult|Sale\Result|mixed
      */
     abstract public function save();
 
@@ -242,22 +255,24 @@ abstract class EntityImport extends Exchange\ImportBase
      */
     function marked(Sale\Internals\Entity $entity, array $fields)
     {
-        if ($this->isExternal())
+        if($this->isExternal())
             $entity->setField($this->getExternalFieldName(), 'Y');
         else
             $entity->setField('UPDATED_1C', 'Y');
 
-        if (!$this->hasCollisions()) {
+        if(!$this->hasCollisions())
+        {
             $entity->setField('VERSION_1C', $fields['VERSION_1C']);
         }
 
         $entity->setField('ID_1C', $fields['ID_1C']);
 
-        if (!($entity instanceof Order)) {
-            /** @var Order $parentEntity */
+        if(!($entity instanceof Sale\Order))
+        {
+            /** @var Sale\Order $parentEntity */
             $parentEntity = $this->getParentEntity();
 
-            $parentEntity->setField('UPDATED_1C', 'Y');
+            $parentEntity->setField('UPDATED_1C','Y');
         }
     }
 
@@ -267,8 +282,9 @@ abstract class EntityImport extends Exchange\ImportBase
     public function getEntityId()
     {
         $entity = $this->getEntity();
-        if (!empty($entity)) {
-            /** @var Sale\Internals\Entity $entity */
+        if(!empty($entity))
+        {
+            /** @var Sale\Internals\Entity $entity*/
             return $entity->getId();
         }
 

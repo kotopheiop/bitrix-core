@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Delivery\Restrictions;
 
 use Bitrix\Sale\Delivery\Restrictions;
@@ -16,95 +15,98 @@ Loc::loadMessages(__FILE__);
  */
 class ByDimensions extends Restrictions\Base
 {
-    public static function getClassTitle()
-    {
-        return Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_NAME");
-    }
+	public static function getClassTitle()
+	{
+		return Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_NAME");
+	}
 
-    public static function getClassDescription()
-    {
-        return Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_DESCRIPT");
-    }
+	public static function getClassDescription()
+	{
+		return Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_DESCRIPT");
+	}
 
-    /**
-     * @param array $dimensionsList keys:(LENGTH, WIDTH, HEIGHT)
-     * @param array $restrictionParams
-     * @param int $deliveryId
-     * @return bool
-     * @internal
-     */
-    public static function check($dimensionsList, array $restrictionParams, $deliveryId = 0)
-    {
-        if (empty($restrictionParams))
-            return true;
+	/**
+	 * @param array $dimensionsList keys:(LENGTH, WIDTH, HEIGHT)
+	 * @param array $restrictionParams
+	 * @param int $deliveryId
+	 * @return bool
+	 * @internal
+	 */
+	public static function check($dimensionsList, array $restrictionParams, $deliveryId = 0)
+	{
+		if(empty($restrictionParams))
+			return true;
 
-        foreach ($dimensionsList as $dimensions) {
-            foreach ($restrictionParams as $name => $value) //LENGTH, WIDTH, HEIGHT
-            {
-                if ($value <= 0)
-                    continue;
+		foreach($dimensionsList as $dimensions)
+		{
+			foreach($restrictionParams as $name => $value) //LENGTH, WIDTH, HEIGHT
+			{
+				if($value <=0)
+					continue;
 
-                if (!isset($dimensions[$name]))
-                    continue;
+				if(!isset($dimensions[$name]))
+					continue;
 
-                if (intval($dimensions[$name]) <= 0)
-                    continue;
+				if(intval($dimensions[$name]) <= 0)
+					continue;
 
-                if (intval($dimensions[$name]) > intval($value))
-                    return false;
-            }
-        }
+				if(intval($dimensions[$name]) > intval($value))
+					return false;
+			}
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    protected static function extractParams(Entity $entity)
-    {
-        $paramsToCheck = array();
+	protected static function extractParams(Entity $entity)
+	{
+		$paramsToCheck = array();
 
-        if ($entity instanceof Shipment) {
-            foreach ($entity->getShipmentItemCollection() as $shipmentItem) {
-                $basketItem = $shipmentItem->getBasketItem();
+		if ($entity instanceof Shipment)
+		{
+			foreach($entity->getShipmentItemCollection() as $shipmentItem)
+			{
+				$basketItem = $shipmentItem->getBasketItem();
 
-                if (!$basketItem)
-                    continue;
+				if(!$basketItem)
+					continue;
 
-                $dimensions = $basketItem->getField("DIMENSIONS");
+				$dimensions = $basketItem->getField("DIMENSIONS");
 
-                if (is_string($dimensions))
-                    $dimensions = unserialize($dimensions);
+				if(is_string($dimensions))
+					$dimensions = unserialize($dimensions);
 
-                if (!is_array($dimensions) || empty($dimensions))
-                    continue;
+				if(!is_array($dimensions) || empty($dimensions))
+					continue;
 
-                $paramsToCheck[] = $dimensions;
-            }
-        }
+				$paramsToCheck[] = $dimensions;
+			}
+		}
 
-        return $paramsToCheck;
-    }
+		return $paramsToCheck;
+	}
 
-    public static function getParamsStructure($entityId = 0)
-    {
-        return array(
-            "LENGTH" => array(
-                'TYPE' => 'NUMBER',
-                'DEFAULT' => "0",
-                'MIN' => 0,
-                'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_LENGTH")
-            ),
-            "WIDTH" => array(
-                'TYPE' => 'NUMBER',
-                'DEFAULT' => "0",
-                'MIN' => 0,
-                'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_WIDTH")
-            ),
-            "HEIGHT" => array(
-                'TYPE' => 'NUMBER',
-                'DEFAULT' => "0",
-                'MIN' => 0,
-                'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_HEIGHT")
-            )
-        );
-    }
+	public static function getParamsStructure($entityId = 0)
+	{
+		return array(
+			"LENGTH" => array(
+				'TYPE' => 'NUMBER',
+				'DEFAULT' => "0",
+				'MIN' => 0,
+				'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_LENGTH")
+			),
+			"WIDTH" => array(
+				'TYPE' => 'NUMBER',
+				'DEFAULT' => "0",
+				'MIN' => 0,
+				'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_WIDTH")
+			),
+			"HEIGHT" => array(
+				'TYPE' => 'NUMBER',
+				'DEFAULT' => "0",
+				'MIN' => 0,
+				'LABEL' => Loc::getMessage("SALE_DLVR_RSTR_BY_DIMENSIONS_HEIGHT")
+			)
+		);
+	}
 } 

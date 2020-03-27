@@ -34,14 +34,14 @@ class WriteContext
     private $length;
 
     /**
-     * @param \Protobuf\Stream $stream
+     * @param \Protobuf\Stream              $stream
      * @param \Protobuf\Binary\StreamWriter $writer
-     * @param \Protobuf\ComputeSizeContext $computeSizeContext
+     * @param \Protobuf\ComputeSizeContext  $computeSizeContext
      */
     public function __construct(Stream $stream, StreamWriter $writer, ComputeSizeContext $computeSizeContext)
     {
-        $this->stream = $stream;
-        $this->writer = $writer;
+        $this->stream             = $stream;
+        $this->writer             = $writer;
         $this->computeSizeContext = $computeSizeContext;
     }
 

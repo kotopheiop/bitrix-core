@@ -25,136 +25,153 @@ Loc::loadMessages(__FILE__);
  */
 class EventHandler
 {
-    /**
-     * Handler of event sender/OnAfterPostingSendRecipient.
-     *
-     * @param array $eventData Event.
-     * @param Entity\Letter $letter Letter.
-     */
-    public static function onAfterPostingSendRecipient(array $eventData, Entity\Letter $letter)
-    {
-        if (!$eventData['SEND_RESULT']) {
-            return;
-        }
+	/**
+	 * Handler of event sender/OnAfterPostingSendRecipient.
+	 *
+	 * @param array $eventData Event.
+	 * @param Entity\Letter $letter Letter.
+	 */
+	public static function onAfterPostingSendRecipient(array $eventData, Entity\Letter $letter)
+	{
+		if (!$eventData['SEND_RESULT'])
+		{
+			return;
+		}
 
-        static $isModuleIncluded = null;
-        if ($isModuleIncluded === null) {
-            $isModuleIncluded = Loader::includeModule('crm');
-        }
+		static $isModuleIncluded = null;
+		if ($isModuleIncluded === null)
+		{
+			$isModuleIncluded = Loader::includeModule('crm');
+		}
 
-        if (!$isModuleIncluded) {
-            return;
-        }
+		if (!$isModuleIncluded)
+		{
+			return;
+		}
 
-        if ($letter->getMessage()->isReturnCustomer()) {
-            return;
-        }
+		if ($letter->getMessage()->isReturnCustomer())
+		{
+			return;
+		}
 
-        $recipient = $eventData['RECIPIENT'];
-        $fields = $eventData['RECIPIENT']['FIELDS'];
-        $entityTypeId = $entityId = null;
-        if (isset($fields['CRM_ENTITY_TYPE_ID']) && $fields['CRM_ENTITY_TYPE_ID']) {
-            $entityTypeId = $fields['CRM_ENTITY_TYPE_ID'];
-        }
-        if (isset($fields['CRM_ENTITY_ID']) && $fields['CRM_ENTITY_ID']) {
-            $entityId = $fields['CRM_ENTITY_ID'];
-        }
+		$recipient = $eventData['RECIPIENT'];
+		$fields = $eventData['RECIPIENT']['FIELDS'];
+		$entityTypeId = $entityId = null;
+		if (isset($fields['CRM_ENTITY_TYPE_ID']) && $fields['CRM_ENTITY_TYPE_ID'])
+		{
+			$entityTypeId = $fields['CRM_ENTITY_TYPE_ID'];
+		}
+		if (isset($fields['CRM_ENTITY_ID']) && $fields['CRM_ENTITY_ID'])
+		{
+			$entityId = $fields['CRM_ENTITY_ID'];
+		}
 
-        if (!$entityTypeId || !$entityId) {
-            $selector = self::getEntitySelectorByRecipient(
-                $eventData['RECIPIENT']['CONTACT_TYPE_ID'],
-                $eventData['RECIPIENT']['CONTACT_CODE']
-            );
-        } else {
-            $selector = self::getEntitySelectorById($entityTypeId, $entityId);
-        }
+		if (!$entityTypeId || !$entityId)
+		{
+			$selector = self::getEntitySelectorByRecipient(
+				$eventData['RECIPIENT']['CONTACT_TYPE_ID'],
+				$eventData['RECIPIENT']['CONTACT_CODE']
+			);
+		}
+		else
+		{
+			$selector = self::getEntitySelectorById($entityTypeId, $entityId);
+		}
 
 
-        if (!$selector) {
-            return;
-        }
+		if (!$selector)
+		{
+			return;
+		}
 
-        if (!$selector->search()->hasEntities()) {
-            return;
-        }
+		if (!$selector->search()->hasEntities())
+		{
+			return;
+		}
 
-        self::addTimeLineEvent($selector, $letter, $recipient);
-    }
+		self::addTimeLineEvent($selector, $letter, $recipient);
+	}
 
-    protected static function addTimeLineEvent(ActualEntitySelector $selector, Entity\Letter $letter, $recipient)
-    {
-        $isAd = $letter instanceof Entity\Ad;
-        $createdBy = $letter->get('CREATED_BY');
-        if (!$createdBy) {
-            return;
-        }
+	protected static function addTimeLineEvent(ActualEntitySelector $selector, Entity\Letter $letter, $recipient)
+	{
+		$isAd = $letter instanceof Entity\Ad;
+		$createdBy = $letter->get('CREATED_BY');
+		if (!$createdBy)
+		{
+			return;
+		}
 
-        // convert format to time line
-        $bindings = array();
-        $activityBindings = BindingSelector::findBindings($selector);
-        foreach ($activityBindings as $binding) {
-            $binding['ENTITY_ID'] = $binding['OWNER_ID'];
-            $binding['ENTITY_TYPE_ID'] = $binding['OWNER_TYPE_ID'];
-            $bindings[] = array(
-                'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
-                'ENTITY_ID' => $binding['OWNER_ID'],
-            );
-        }
+		// convert format to time line
+		$bindings = array();
+		$activityBindings = BindingSelector::findBindings($selector);
+		foreach ($activityBindings as $binding)
+		{
+			$binding['ENTITY_ID'] = $binding['OWNER_ID'];
+			$binding['ENTITY_TYPE_ID'] = $binding['OWNER_TYPE_ID'];
+			$bindings[] = array(
+				'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
+				'ENTITY_ID' => $binding['OWNER_ID'],
+			);
+		}
 
-        $parameters = array(
-            'ENTITY_TYPE_ID' => $selector->getPrimaryTypeId(),
-            'ENTITY_ID' => $selector->getPrimaryId(),
-            'TYPE_CATEGORY_ID' => $letter->getMessage()->getCode(),
-            'AUTHOR_ID' => $createdBy,
-            'SETTINGS' => array(
-                'letterId' => $letter->getId(),
-                'isAds' => $isAd,
-                'recipient' => array(
-                    'id' => $recipient['ID'],
-                    'typeId' => $recipient['CONTACT_TYPE_ID'],
-                    'code' => $recipient['CONTACT_ID'],
-                ),
-            ),
-            'BINDINGS' => $bindings
-        );
-        Timeline\RecipientEntry::create($parameters);
-    }
+		$parameters = array(
+			'ENTITY_TYPE_ID' => $selector->getPrimaryTypeId(),
+			'ENTITY_ID' => $selector->getPrimaryId(),
+			'TYPE_CATEGORY_ID' => $letter->getMessage()->getCode(),
+			'AUTHOR_ID' => $createdBy,
+			'SETTINGS' => array(
+				'letterId' => $letter->getId(),
+				'isAds' => $isAd,
+				'recipient' => array(
+					'id' => $recipient['ID'],
+					'typeId' => $recipient['CONTACT_TYPE_ID'],
+					'code' => $recipient['CONTACT_ID'],
+				),
+			),
+			'BINDINGS' => $bindings
+		);
+		Timeline\RecipientEntry::create($parameters);
+	}
 
-    protected static function getEntitySelector()
-    {
-        /** @var ActualEntitySelector $selector */
-        static $selector = null;
-        if (!$selector) {
-            $selector = new ActualEntitySelector();
-        } else {
-            $selector->clear();
-        }
+	protected static function getEntitySelector()
+	{
+		/** @var ActualEntitySelector $selector */
+		static $selector = null;
+		if (!$selector)
+		{
+			$selector = new ActualEntitySelector();
+		}
+		else
+		{
+			$selector->clear();
+		}
 
-        return $selector;
-    }
+		return $selector;
+	}
 
-    protected static function getEntitySelectorById($entityTypeId, $entityId)
-    {
-        return self::getEntitySelector()->setEntity($entityTypeId, $entityId);
-    }
+	protected static function getEntitySelectorById($entityTypeId, $entityId)
+	{
+		return self::getEntitySelector()->setEntity($entityTypeId, $entityId);
+	}
 
-    protected static function getEntitySelectorByRecipient($recipientTypeId, $recipientCode)
-    {
-        $selector = self::getEntitySelector();
+	protected static function getEntitySelectorByRecipient($recipientTypeId, $recipientCode)
+	{
+		$selector = self::getEntitySelector();
 
-        switch ($recipientTypeId) {
-            case Recipient\Type::EMAIL:
-                $selector->appendEmailCriterion($recipientCode);
-                break;
+		switch ($recipientTypeId)
+		{
+			case Recipient\Type::EMAIL:
+				$selector->appendEmailCriterion($recipientCode);
+				break;
 
-            case Recipient\Type::PHONE:
-                $selector->appendPhoneCriterion($recipientCode);
-                break;
+			case Recipient\Type::PHONE:
+				$selector->appendPhoneCriterion($recipientCode);
+				break;
 
-            default:
-                return null;
-        }
+			default:
+				return null;
+		}
 
-        return $selector;
-    }
+		return $selector;
+	}
 }

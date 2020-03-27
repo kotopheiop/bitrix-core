@@ -7,328 +7,362 @@ namespace Bitrix\Sale\Controller;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\Helpers\Order\Builder\SettingsContainer;
 use Bitrix\Sale\PaymentCollection;
+use Bitrix\Sale;
 use Bitrix\Sale\Result;
 
 class Payment extends Controller
 {
-    public function getPrimaryAutoWiredParameter()
-    {
-        return new ExactParameter(
-            \Bitrix\Sale\Payment::class,
-            'payment',
-            function ($className, $id) {
+	public function getPrimaryAutoWiredParameter()
+	{
+		return new ExactParameter(
+			Sale\Payment::class,
+			'payment',
+			function($className, $id) {
 
-                $r = \Bitrix\Sale\Payment::getList([
-                    'select' => ['ORDER_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+				$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
-                if ($row = $r->fetch()) {
-                    $order = \Bitrix\Sale\Order::load($row['ORDER_ID']);
-                    $payment = $order->getPaymentCollection()->getItemById($id);
-                    if ($payment instanceof \Bitrix\Sale\Payment)
-                        return $payment;
-                } else {
-                    $this->addError(new Error('payment is not exists', 200640400001));
-                }
-                return null;
-            }
-        );
-    }
+				/** @var Sale\Payment $paymentClass */
+				$paymentClass = $registry->getPaymentClassName();
 
-    //region Actions
-    public function getFieldsAction()
-    {
-        $entity = new \Bitrix\Sale\Rest\Entity\Payment();
-        return ['PAYMENT' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
-    }
+				$r = $paymentClass::getList([
+					'select'=>['ORDER_ID'],
+					'filter'=>['ID'=>$id]
+				]);
 
-    public function modifyAction($fields)
-    {
-        $builder = $this->getBuilder();
-        $builder->buildEntityPayments($fields);
+				if($row = $r->fetch())
+				{
+					/** @var Sale\Order $orderClass */
+					$orderClass = $registry->getOrderClassName();
 
-        if ($builder->getErrorsContainer()->getErrorCollection()->count() > 0) {
-            $this->addErrors($builder->getErrorsContainer()->getErrors());
-            return null;
-        }
+					$order = $orderClass::load($row['ORDER_ID']);
+					$payment = $order->getPaymentCollection()->getItemById($id);
+					if ($payment)
+					{
+						return $payment;
+					}
+				}
+				else
+				{
+					$this->addError(new Error('payment is not exists', 200640400001));
+				}
+				return null;
+			}
+		);
+	}
 
-        $order = $builder->getOrder();
+	//region Actions
+	public function getFieldsAction()
+	{
+		$entity = new \Bitrix\Sale\Rest\Entity\Payment();
+		return ['PAYMENT'=>$entity->prepareFieldInfos(
+			$entity->getFields()
+		)];
+	}
 
-        $r = $order->save();
-        if (!$r->isSuccess()) {
-            $this->addErrors($r->getErrors());
-            return null;
-        }
+	public function modifyAction($fields)
+	{
+		$builder = $this->getBuilder();
+		$builder->buildEntityPayments($fields);
 
-        //TODO: return $payment->toArray();
-        return ['PAYMENTS' => $this->toArray($order)['ORDER']['PAYMENTS']];
-    }
+		if($builder->getErrorsContainer()->getErrorCollection()->count()>0)
+		{
+			$this->addErrors($builder->getErrorsContainer()->getErrors());
+			return null;
+		}
 
-    public function addAction(array $fields)
-    {
-        $result = null;
+		$order = $builder->getOrder();
 
-        $data = [];
-        $data['ORDER']['ID'] = $fields['ORDER_ID'];
-        $data['ORDER']['PAYMENTS'] = [$fields];
+		$r = $order->save();
+		if(!$r->isSuccess())
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
 
-        $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deletePaymentIfNotExists' => false
-            ])
-        );
+		//TODO: return $payment->toArray();
+		return ['PAYMENTS'=>$this->toArray($order)['ORDER']['PAYMENTS']];
+	}
 
-        $builder->buildEntityPayments($data);
+	public function addAction(array $fields)
+	{
+		$result = null;
 
-        if ($builder->getErrorsContainer()->getErrorCollection()->count() > 0) {
-            $this->addErrors($builder->getErrorsContainer()->getErrors());
-            return null;
-        }
+		$data = [];
+		$data['ORDER']['ID'] = $fields['ORDER_ID'];
+		$data['ORDER']['PAYMENTS'] = [$fields];
 
-        $order = $builder->getOrder();
-        $idx = 0;
-        $collection = $order->getPaymentCollection();
-        /** @var \Bitrix\Sale\Payment $payment */
-        foreach ($collection as $payment) {
-            if ($payment->getId() <= 0) {
-                $idx = $payment->getInternalIndex();
-                break;
-            }
-        }
+		$builder = $this->getBuilder(
+			new SettingsContainer([
+				'deletePaymentIfNotExists' => false
+			])
+		);
 
-        $r = $order->save();
-        if (!$r->isSuccess()) {
-            $this->addErrors($r->getErrors());
-            return null;
-        }
+		$builder->buildEntityPayments($data);
 
-        /** @var \Bitrix\Sale\Payment $entity */
-        $entity = $order->getPaymentCollection()->getItemByIndex($idx);
-        return ['PAYMENT' => $this->get($entity)];
-    }
+		if($builder->getErrorsContainer()->getErrorCollection()->count()>0)
+		{
+			$this->addErrors($builder->getErrorsContainer()->getErrors());
+			return null;
+		}
 
-    public function updateAction(\Bitrix\Sale\Payment $payment, array $fields)
-    {
-        $data = [];
+		$order=$builder->getOrder();
+		$idx=0;
+		$collection = $order->getPaymentCollection();
+		/** @var \Bitrix\Sale\Payment $payment */
+		foreach($collection as $payment)
+		{
+			if($payment->getId() <= 0)
+			{
+				$idx = $payment->getInternalIndex();
+				break;
+			}
+		}
 
-        $fields['ID'] = $payment->getId();
-        $fields['ORDER_ID'] = $payment->getOrderId();
+		$r = $order->save();
+		if(!$r->isSuccess())
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
 
-        $data['ORDER']['ID'] = $fields['ORDER_ID'];
-        $data['ORDER']['PAYMENTS'] = [$fields];
+		/** @var \Bitrix\Sale\Payment $entity */
+		$entity = $order->getPaymentCollection()->getItemByIndex($idx);
+		return ['PAYMENT'=>$this->get($entity)];
+	}
 
-        $builder = $this->getBuilder(
-            new SettingsContainer([
-                'deletePaymentIfNotExists' => false
-            ])
-        );
-        $builder->buildEntityPayments($data);
+	public function updateAction(\Bitrix\Sale\Payment $payment, array $fields)
+	{
+		$data = [];
 
-        if ($builder->getErrorsContainer()->getErrorCollection()->count() > 0) {
-            $this->addErrors($builder->getErrorsContainer()->getErrors());
-            return null;
-        }
+		$fields['ID'] = $payment->getId();
+		$fields['ORDER_ID'] = $payment->getOrderId();
 
-        $order = $builder->getOrder();
+		$data['ORDER']['ID'] = $fields['ORDER_ID'];
+		$data['ORDER']['PAYMENTS'] = [$fields];
 
-        $r = $order->save();
-        if (!$r->isSuccess()) {
-            $this->addErrors($r->getErrors());
-            return null;
-        }
-        if ($r->hasWarnings()) {
-            $this->addErrors($r->getWarnings());
-            return null;
-        }
+		$builder = $this->getBuilder(
+			new SettingsContainer([
+				'deletePaymentIfNotExists' => false
+			])
+		);
+		$builder->buildEntityPayments($data);
 
-        /** @var \Bitrix\Sale\Payment $entity */
-        $entity = $order->getPaymentCollection()->getItemById($payment->getId());
-        return ['PAYMENT' => $this->get($entity)];
-    }
+		if($builder->getErrorsContainer()->getErrorCollection()->count()>0)
+		{
+			$this->addErrors($builder->getErrorsContainer()->getErrors());
+			return null;
+		}
 
-    public function deleteAction(\Bitrix\Sale\Payment $payment)
-    {
-        $r = $payment->delete();
-        return $this->save($payment, $r);
-    }
+		$order = $builder->getOrder();
 
-    public function getAction(\Bitrix\Sale\Payment $payment)
-    {
-        return ['PAYMENT' => $this->get($payment)];
-    }
+		$r = $order->save();
+		if(!$r->isSuccess())
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
+		if($r->hasWarnings())
+		{
+			$this->addErrors($r->getWarnings());
+			return null;
+		}
 
-    public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
-    {
-        $select = empty($select) ? ['*'] : $select;
-        $order = empty($order) ? ['ID' => 'ASC'] : $order;
+		/** @var \Bitrix\Sale\Payment $entity */
+		$entity = $order->getPaymentCollection()->getItemById($payment->getId());
+		return ['PAYMENT'=>$this->get($entity)];
+	}
 
-        $runtime = [
-            new \Bitrix\Main\Entity\ReferenceField(
-                'PAY_SYSTEM',
-                '\Bitrix\Sale\Internals\PaySystemActionTable',
-                array('=this.PAY_SYSTEM_ID' => 'ref.ID')
-            )
-        ];
+	public function deleteAction(\Bitrix\Sale\Payment $payment)
+	{
+		$r = $payment->delete();
+		return $this->save($payment, $r);
+	}
 
-        $payments = \Bitrix\Sale\Payment::getList(
-            [
-                'select' => $select,
-                'filter' => $filter,
-                'order' => $order,
-                'offset' => $pageNavigation->getOffset(),
-                'limit' => $pageNavigation->getLimit(),
-                'runtime' => $runtime
-            ]
-        )->fetchAll();
+	public function getAction(\Bitrix\Sale\Payment $payment)
+	{
+		return ['PAYMENT'=>$this->get($payment)];
+	}
 
-        return new Page('payments', $payments, function () use ($select, $filter, $runtime) {
-            return count(
-                \Bitrix\Sale\Payment::getList(['select' => $select, 'filter' => $filter, 'runtime' => $runtime])->fetchAll()
-            );
-        });
-    }
+	public function listAction($select=[], $filter=[], $order=[], PageNavigation $pageNavigation)
+	{
+		$select = empty($select)? ['*']:$select;
+		$order = empty($order)? ['ID'=>'ASC']:$order;
 
-    public function getOrderIdAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->getOrderId();
-    }
+		$runtime = [
+			new \Bitrix\Main\Entity\ReferenceField(
+				'PAY_SYSTEM',
+				'\Bitrix\Sale\Internals\PaySystemActionTable',
+				array('=this.PAY_SYSTEM_ID' => 'ref.ID')
+			)
+		];
 
-    public function getPaymentSystemIdAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->getPaymentSystemId();
-    }
+		$payments = \Bitrix\Sale\Payment::getList(
+			[
+				'select'=>$select,
+				'filter'=>$filter,
+				'order'=>$order,
+				'offset' => $pageNavigation->getOffset(),
+				'limit' => $pageNavigation->getLimit(),
+				'runtime' => $runtime
+			]
+		)->fetchAll();
 
-    public function getPaymentSystemNameAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->getPaymentSystemName();
-    }
+		return new Page('payments', $payments, function() use ($select, $filter, $runtime)
+		{
+			return count(
+				\Bitrix\Sale\Payment::getList(['select'=>$select, 'filter'=>$filter, 'runtime'=>$runtime])->fetchAll()
+			);
+		});
+	}
 
-    public function getPersonTypeIdAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->getPersonTypeId();
-    }
+	public function getOrderIdAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->getOrderId();
+	}
 
-    public function getSumAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->getSum();
-    }
+	public function getPaymentSystemIdAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->getPaymentSystemId();
+	}
 
-    public function getSumPaidAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->getSumPaid();
-    }
+	public function getPaymentSystemNameAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->getPaymentSystemName();
+	}
 
-    public function isInnerAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->isInner() ? 'Y' : 'N';
-    }
+	public function getPersonTypeIdAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->getPersonTypeId();
+	}
 
-    public function isMarkedAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->isMarked() ? 'Y' : 'N';
-    }
+	public function getSumAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->getSum();
+	}
 
-    public function isPaidAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->isPaid() ? 'Y' : 'N';
-    }
+	public function getSumPaidAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->getSumPaid();
+	}
 
-    public function isReturnAction(\Bitrix\Sale\Payment $payment)
-    {
-        return $payment->isReturn() ? 'Y' : 'N';
-    }
+	public function isInnerAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->isInner()? 'Y':'N';
+	}
 
-    public function setPaidAction(\Bitrix\Sale\Payment $payment, $value)
-    {
-        $r = $payment->setPaid($value);
-        if ($r->isSuccess()) {
-            $this->save($payment, $r);
-        }
+	public function isMarkedAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->isMarked()? 'Y':'N';
+	}
 
-        if (!$r->isSuccess()) {
-            $this->addErrors($r->getErrors());
-            return null;
-        }
+	public function isPaidAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->isPaid()? 'Y':'N';
+	}
 
-        return true;
-    }
+	public function isReturnAction(\Bitrix\Sale\Payment $payment)
+	{
+		return $payment->isReturn()? 'Y':'N';
+	}
 
-    /*
-        public function setAccountNumberAction(\Bitrix\Sale\Payment $payment, $id)
-        {
-            $r = $payment->setAccountNumber($id);
-            return $this->save($payment, $r);
-        }
-    */
-    public function setReturnAction(\Bitrix\Sale\Payment $payment, $value)
-    {
-        $r = $payment->setReturn($value);
-        return $this->save($payment, $r);
-    }
+	public function setPaidAction(\Bitrix\Sale\Payment $payment, $value)
+	{
+		$r = $payment->setPaid($value);
+		if($r->isSuccess())
+		{
+			$this->save($payment, $r);
+		}
 
-    //endregion
+		if(!$r->isSuccess())
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
 
-    private function save(\Bitrix\Sale\Payment $payment, Result $r)
-    {
-        if (!$r->isSuccess()) {
-            $this->addErrors($r->getErrors());
-            return null;
-        } else {
-            /** @var PaymentCollection $collection */
-            $collection = $payment->getCollection();
-            $r = $collection->getOrder()->save();
-            if (!$r->isSuccess()) {
-                $this->addErrors($r->getErrors());
-                return null;
-            }
-        }
-        return $r->isSuccess();
-    }
+		return true;
+	}
+/*
+	public function setAccountNumberAction(\Bitrix\Sale\Payment $payment, $id)
+	{
+		$r = $payment->setAccountNumber($id);
+		return $this->save($payment, $r);
+	}
+*/
+	public function setReturnAction(\Bitrix\Sale\Payment $payment, $value)
+	{
+		$r = $payment->setReturn($value);
+		return $this->save($payment, $r);
+	}
+	//endregion
 
-    protected function get(\Bitrix\Sale\Payment $payment, array $fields = [])
-    {
-        $payments = $this->toArray($payment->getCollection()->getOrder(), $fields)['ORDER']['PAYMENTS'];
-        foreach ($payments as $item) {
-            if ($item['ID'] == $payment->getId()) {
-                return $item;
-            }
-        }
-        return [];
-    }
+	private function save(\Bitrix\Sale\Payment $payment, Result $r)
+	{
+		if(!$r->isSuccess())
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
+		else
+		{
+			/** @var PaymentCollection $collection */
+			$collection = $payment->getCollection();
+			$r = $collection->getOrder()->save();
+			if(!$r->isSuccess())
+			{
+				$this->addErrors($r->getErrors());
+				return null;
+			}
+		}
+		return $r->isSuccess();
+	}
 
-    static public function prepareFields($fields)
-    {
-        return isset($fields['PAYMENTS']) ? ['PAYMENT' => $fields['PAYMENTS']] : [];
-    }
+	protected function get(\Bitrix\Sale\Payment $payment, array $fields=[])
+	{
+		$payments = $this->toArray($payment->getCollection()->getOrder(), $fields)['ORDER']['PAYMENTS'];
+		foreach ($payments as $item)
+		{
+			if($item['ID']==$payment->getId())
+			{
+				return $item;
+			}
+		}
+		return [];
+	}
 
-    protected function checkPermissionEntity($name)
-    {
-        if ($name == 'getorderid'
-            || $name == 'getpaymentsystemid'
-            || $name == 'getpaymentsystemname'
-            || $name == 'getpersontypeid'
-            || $name == 'getsum'
-            || $name == 'getsumpaid'
-            || $name == 'isinner'
-            || $name == 'ismarked'
-            || $name == 'isnarked'
-            || $name == 'ispaid'
-            || $name == 'isreturn'
-        ) {
-            $r = $this->checkReadPermissionEntity();
-        } elseif ($name == 'setpaid'
-            || $name == 'setreturn') {
-            $r = $this->checkModifyPermissionEntity();
-        } else {
-            $r = parent::checkPermissionEntity($name);
-        }
-        return $r;
-    }
+	static public function prepareFields($fields)
+	{
+		return isset($fields['PAYMENTS'])?['PAYMENT'=>$fields['PAYMENTS']]:[];
+	}
+
+	protected function checkPermissionEntity($name)
+	{
+		if($name == 'getorderid'
+			|| $name == 'getpaymentsystemid'
+			|| $name == 'getpaymentsystemname'
+			|| $name == 'getpersontypeid'
+			|| $name == 'getsum'
+			|| $name == 'getsumpaid'
+			|| $name == 'isinner'
+			|| $name == 'ismarked'
+			|| $name == 'isnarked'
+			|| $name == 'ispaid'
+			|| $name == 'isreturn'
+		)
+		{
+			$r = $this->checkReadPermissionEntity();
+		}
+		elseif($name == 'setpaid'
+			|| $name == 'setreturn')
+		{
+			$r = $this->checkModifyPermissionEntity();
+		}
+		else
+		{
+			$r = parent::checkPermissionEntity($name);
+		}
+		return $r;
+	}
 }

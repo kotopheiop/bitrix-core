@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Archive\Recovery;
 
 use Bitrix\Main;
@@ -9,44 +8,55 @@ use Bitrix\Main;
  */
 class JsonField extends PackedField
 {
-    public function tryUnpack()
-    {
-        $result = new Main\Result();
-        try {
-            $value = Main\Web\Json::decode($this->packedValue);
-            if (!$value) {
-                $result->addError(new Main\Error('Unavailable value for unpacking'));
-            }
-        } catch (\Exception $e) {
-            $result->addError(new Main\Error('Unavailable value for unpacking'));
-        }
+	public function tryUnpack()
+	{
+		$result = new Main\Result();
+		try
+		{
+			$value = Main\Web\Json::decode($this->packedValue);
+			if (!$value)
+			{
+				$result->addError(new Main\Error('Unavailable value for unpacking'));
+			}
+		}
+		catch (\Exception $e)
+		{
+			$result->addError(new Main\Error('Unavailable value for unpacking'));
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public function unpack()
-    {
-        try {
-            $unpacked = Main\Web\Json::decode($this->packedValue);
-            if (!is_array($unpacked))
-                return null;
+	public function unpack()
+	{
+		try
+		{
+			$unpacked = Main\Web\Json::decode($this->packedValue);
+			if (!is_array($unpacked))
+				return null;
 
-            return $this->formatResult($unpacked);
-        } catch (\Exception $e) {
-            return null;
-        }
-    }
+			return $this->formatResult($unpacked);
+		}
+		catch (\Exception $e)
+		{
+			return null;
+		}
+	}
 
-    private function formatResult(array $fields)
-    {
-        foreach ($fields as &$field) {
-            if (is_array($field)) {
-                $field = $this->formatResult($field);
-            } elseif (CheckDateTime($field)) {
-                $field = new Main\Type\DateTime($field);
-            }
-        }
+	private function formatResult(array $fields)
+	{
+		foreach ($fields as &$field)
+		{
+			if (is_array($field))
+			{
+				$field = $this->formatResult($field);
+			}
+			elseif (CheckDateTime($field))
+			{
+				$field = new Main\Type\DateTime($field);
+			}
+		}
 
-        return $fields;
-    }
+		return $fields;
+	}
 }	

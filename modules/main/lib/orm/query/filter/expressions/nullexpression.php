@@ -15,8 +15,8 @@ namespace Bitrix\Main\ORM\Query\Filter\Expressions;
  */
 class NullExpression extends Expression
 {
-    public function __toString()
-    {
-        return 'NULL';
-    }
+	public function __toString()
+	{
+		return 'NULL';
+	}
 }

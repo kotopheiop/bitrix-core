@@ -9,221 +9,284 @@ use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale;
 use Bitrix\Sale\Result;
 use Bitrix\Sale\ShipmentCollection;
 use Bitrix\Sale\ShipmentItemCollection;
 
 class ShipmentItem extends Controller
 {
-    public function getPrimaryAutoWiredParameter()
-    {
-        return new ExactParameter(
-            \Bitrix\Sale\ShipmentItem::class,
-            'shipmentItem',
-            function ($className, $id) {
+	public function getPrimaryAutoWiredParameter()
+	{
+		return new ExactParameter(
+			Sale\ShipmentItem::class,
+			'shipmentItem',
+			function($className, $id) {
 
-                $si = \Bitrix\Sale\ShipmentItem::getList([
-                    'select' => ['ORDER_DELIVERY_ID'],
-                    'filter' => ['ID' => $id]
-                ]);
+				$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
-                if ($siRow = $si->fetch()) {
-                    $r = \Bitrix\Sale\Shipment::getList([
-                        'select' => ['ORDER_ID'],
-                        'filter' => ['ID' => $siRow['ORDER_DELIVERY_ID']]
-                    ]);
+				/** @var Sale\ShipmentItem $shipmentItemClass */
+				$shipmentItemClass = $registry->getShipmentItemClassName();
 
-                    if ($row = $r->fetch()) {
-                        $order = \Bitrix\Sale\Order::load($row['ORDER_ID']);
-                        /** @var \Bitrix\Sale\Shipment $shipment */
-                        $shipment = $order->getShipmentCollection()->getItemById($siRow['ORDER_DELIVERY_ID']);
-                        $shipmentItem = $shipment->getShipmentItemCollection()->getItemById($id);
+				$si = $shipmentItemClass::getList([
+					'select'=>['ORDER_DELIVERY_ID'],
+					'filter'=>['ID'=>$id]
+				]);
 
-                        if ($shipmentItem instanceof \Bitrix\Sale\ShipmentItem) {
-                            return $shipmentItem;
-                        }
-                    }
-                }
+				if($siRow = $si->fetch())
+				{
+					/** @var Sale\Shipment $shipmentClass */
+					$shipmentClass = $registry->getShipmentClassName();
 
-                $this->addError(new Error('shipment item is not exists', 201240400001));
-                return null;
-            }
-        );
-    }
+					$r = $shipmentClass::getList([
+						'select'=>['ORDER_ID'],
+						'filter'=>['ID'=>$siRow['ORDER_DELIVERY_ID']]
+					]);
 
-    //region Actions
-    public function getFieldsAction()
-    {
-        $entity = new \Bitrix\Sale\Rest\Entity\ShipmentItem();
-        return ['SHIPMENT_ITEM' => $entity->prepareFieldInfos(
-            $entity->getFields()
-        )];
-    }
+					if($row = $r->fetch())
+					{
+						/** @var Sale\Order $orderClass */
+						$orderClass = $registry->getOrderClassName();
 
-    public function getAction(\Bitrix\Sale\ShipmentItem $shipmentItem)
-    {
-        return ['SHIPMENT_ITEM' => $this->get($shipmentItem)];
-    }
+						$order = $orderClass::load($row['ORDER_ID']);
+						/** @var \Bitrix\Sale\Shipment $shipment */
+						$shipment = $order->getShipmentCollection()->getItemById($siRow['ORDER_DELIVERY_ID']);
+						$shipmentItem = $shipment->getShipmentItemCollection()->getItemById($id);
 
-    public function listAction($select = [], $filter = [], $order = [], PageNavigation $pageNavigation)
-    {
-        $select = empty($select) ? ['*'] : $select;
-        $order = empty($order) ? ['ID' => 'ASC'] : $order;
+						if ($shipmentItem)
+						{
+							return $shipmentItem;
+						}
+					}
+				}
 
-        $shipmentItems = \Bitrix\Sale\ShipmentItem::getList(
-            [
-                'select' => $select,
-                'filter' => $filter,
-                'order' => $order,
-                'offset' => $pageNavigation->getOffset(),
-                'limit' => $pageNavigation->getLimit()
-            ]
-        )->fetchAll();
+				$this->addError(new Error('shipment item is not exists', 201240400001));
+				return null;
+			}
+		);
+	}
 
-        return new Page('SHIPMENT_ITEMS', $shipmentItems, function () use ($select, $filter) {
-            return count(
-                \Bitrix\Sale\ShipmentItem::getList(['select' => $select, 'filter' => $filter])->fetchAll()
-            );
-        });
-    }
+	//region Actions
+	public function getFieldsAction()
+	{
+		$entity = new \Bitrix\Sale\Rest\Entity\ShipmentItem();
+		return ['SHIPMENT_ITEM'=>$entity->prepareFieldInfos(
+			$entity->getFields()
+		)];
+	}
 
-    public function addAction(array $fields)
-    {
-        $result = new Result();
+	public function getAction(\Bitrix\Sale\ShipmentItem $shipmentItem)
+	{
+		return ['SHIPMENT_ITEM'=>$this->get($shipmentItem)];
+	}
 
-        $basketId = $fields['BASKET_ID'];
-        $shipmentId = $fields['ORDER_DELIVERY_ID'];
+	public function listAction($select=[], $filter=[], $order=[], PageNavigation $pageNavigation)
+	{
+		$select = empty($select)? ['*']:$select;
+		$order = empty($order)? ['ID'=>'ASC']:$order;
 
-        unset($fields['ORDER_DELIVERY_ID'], $fields['BASKET_ID']);
+		$shipmentItems = \Bitrix\Sale\ShipmentItem::getList(
+			[
+				'select'=>$select,
+				'filter'=>$filter,
+				'order'=>$order,
+				'offset' => $pageNavigation->getOffset(),
+				'limit' => $pageNavigation->getLimit()
+			]
+		)->fetchAll();
 
-        $r = \Bitrix\Sale\Basket::getList([
-            'select' => ['ORDER_ID'],
-            'filter' => ['ID' => $basketId]
-        ]);
+		return new Page('SHIPMENT_ITEMS', $shipmentItems, function() use ($select, $filter)
+		{
+			return count(
+				\Bitrix\Sale\ShipmentItem::getList(['select'=>$select, 'filter'=>$filter])->fetchAll()
+			);
+		});
+	}
 
-        if ($row = $r->fetch()) {
-            $order = \Bitrix\Sale\Order::load($row['ORDER_ID']);
-            $basketItem = $order->getBasket()->getItemByBasketCode($basketId);
-            if ($basketItem instanceof BasketItem) {
-                /** @var ShipmentCollection $collection */
-                $collection = $order->getShipmentCollection();
-                $shipment = $collection->getItemById($shipmentId);
-                if ($shipment instanceof \Bitrix\Sale\Shipment) {
-                    $shipmentItemCollection = $shipment->getShipmentItemCollection();
-                    if ($shipmentItemCollection->isExistBasketItem($basketItem) == false) {
-                        /** @var \Bitrix\Sale\ShipmentItem $shipmentItem */
-                        $shipmentItem = $shipmentItemCollection->createItem($basketItem);
-                        $result = $shipmentItem->setFields($fields);
-                        if ($result->isSuccess() && $result->hasWarnings() == false) {
-                            $r = $this->save($shipmentItem);
-                            if (!$r->isSuccess()) {
-                                $result->addErrors($r->getErrors());
-                            }
-                        }
-                    } else {
-                        $result->addError(new Error('Duplicate entry for key [basketId, orderDeliveryId]', 201250000001));
-                    }
-                } else {
-                    $result->addError(new Error('shipment not exists', 201240400002));
-                }
-            }
-        } else {
-            $result->addError(new Error('shipment not exists', 201240400003));
-        }
+	public function addAction(array $fields)
+	{
+		$result = new Result();
 
-        if (!$result->isSuccess()) {
-            $this->addErrors($result->getErrors());
-            return null;
-        } elseif ($result->hasWarnings()) {
-            $this->addErrors($result->getWarnings());
-            return null;
-        } else {
-            return ['SHIPMENT_ITEM' => $this->get($shipmentItem)];
-        }
-    }
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
-    public function updateAction(\Bitrix\Sale\ShipmentItem $shipmentItem, array $fields)
-    {
-        $r = $shipmentItem->setFields($fields);
 
-        if ($r->isSuccess() == false) {
-            $this->addErrors($r->getErrors());
-            return null;
-        } elseif ($r->hasWarnings()) {
-            $this->addErrors($r->getWarnings());
-            return null;
-        } else {
-            $r = $this->save($shipmentItem);
-            if (!$r->isSuccess()) {
-                $this->addErrors($r->getErrors());
-                return null;
-            } else {
-                return ['SHIPMENT_ITEM' => $this->get($shipmentItem)];
-            }
-        }
-    }
+		$basketId = $fields['BASKET_ID'];
+		$shipmentId = $fields['ORDER_DELIVERY_ID'];
 
-    public function deleteAction(\Bitrix\Sale\ShipmentItem $shipmentItem)
-    {
-        $r = $shipmentItem->delete();
+		unset($fields['ORDER_DELIVERY_ID'], $fields['BASKET_ID']);
 
-        if ($r->isSuccess() == false) {
-            $this->addErrors($r->getErrors());
-            return null;
-        } elseif ($r->hasWarnings()) {
-            $this->addErrors($r->getWarnings());
-            return null;
-        } else {
-            $r = $this->save($shipmentItem);
-            if (!$r->isSuccess()) {
-                $this->addErrors($r->getErrors());
-                return null;
-            } else {
-                return true;
-            }
-        }
-    }
+		/** @var Sale\Basket $basketClass */
+		$basketClass = $registry->getBasketClassName();
 
-    //endregion
+		$r = $basketClass::getList([
+			'select'=>['ORDER_ID'],
+			'filter'=>['ID'=>$basketId]
+		]);
 
-    protected function get(\Bitrix\Sale\ShipmentItem $shipmentItem, array $fields = [])
-    {
-        /** @var ShipmentItemCollection $collectionShipmentItems */
-        $collectionShipmentItems = $shipmentItem->getCollection();
-        /** @var \Bitrix\Sale\Shipment $shipment */
-        $shipment = $collectionShipmentItems->getShipment();
-        /** @var ShipmentCollection $collectionShipments */
-        $collectionShipments = $shipment->getCollection();
-        $order = $collectionShipments->getOrder();
+		if($row = $r->fetch())
+		{
+			/** @var Sale\Order $orderClass */
+			$orderClass = $registry->getOrderClassName();
 
-        $shipments = $this->toArray($order, $fields)['ORDER']['SHIPMENTS'];
-        foreach ($shipments as $shipment) {
-            foreach ($shipment['SHIPMENT_ITEMS'] as $item) {
-                if ($item['ID'] == $shipmentItem->getId()) {
-                    return $item;
-                }
-            }
-        }
-        return [];
-    }
+			$order = $orderClass::load($row['ORDER_ID']);
+			$basketItem = $order->getBasket()->getItemByBasketCode($basketId);
+			if($basketItem instanceof BasketItem)
+			{
+				/** @var ShipmentCollection $collection */
+				$collection = $order->getShipmentCollection();
+				$shipment = $collection->getItemById($shipmentId);
+				if($shipment instanceof \Bitrix\Sale\Shipment)
+				{
+					$shipmentItemCollection = $shipment->getShipmentItemCollection();
+					if($shipmentItemCollection->isExistBasketItem($basketItem) == false)
+					{
+						/** @var \Bitrix\Sale\ShipmentItem $shipmentItem */
+						$shipmentItem = $shipmentItemCollection->createItem($basketItem);
+						$result = $shipmentItem->setFields($fields);
+						if($result->isSuccess() && $result->hasWarnings() == false)
+						{
+							$r = $this->save($shipmentItem);
+							if(!$r->isSuccess())
+							{
+								$result->addErrors($r->getErrors());
+							}
+						}
+					}
+					else
+					{
+						$result->addError(new Error('Duplicate entry for key [basketId, orderDeliveryId]', 201250000001));
+					}
+				}
+				else
+				{
+					$result->addError(new Error('shipment not exists', 201240400002));
+				}
+			}
+		}
+		else
+		{
+			$result->addError(new Error('shipment not exists', 201240400003));
+		}
 
-    private function save(\Bitrix\Sale\ShipmentItem $shipmentItem)
-    {
-        $result = new Result();
-        /** @var ShipmentItemCollection $collectionShipmentItems */
-        $collectionShipmentItems = $shipmentItem->getCollection();
-        /** @var \Bitrix\Sale\Shipment $shipment */
-        $shipment = $collectionShipmentItems->getShipment();
-        /** @var ShipmentCollection $collectionShipments */
-        $collectionShipments = $shipment->getCollection();
-        $order = $collectionShipments->getOrder();
+		if(!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+			return null;
+		}
+		elseif($result->hasWarnings())
+		{
+			$this->addErrors($result->getWarnings());
+			return null;
+		}
+		else
+		{
+			return ['SHIPMENT_ITEM'=>$this->get($shipmentItem)];
+		}
+	}
 
-        $r = $order->save();
-        if (!$r->isSuccess()) {
-            $result->addErrors($r->getErrors());
-        } elseif ($r->hasWarnings()) {
-            $result->addErrors($r->getWarnings());
-        }
-        return $result;
-    }
+	public function updateAction(\Bitrix\Sale\ShipmentItem $shipmentItem, array $fields)
+	{
+		$r = $shipmentItem->setFields($fields);
+
+		if($r->isSuccess() == false)
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
+		elseif($r->hasWarnings())
+		{
+			$this->addErrors($r->getWarnings());
+			return null;
+		}
+		else
+		{
+			$r = $this->save($shipmentItem);
+			if(!$r->isSuccess())
+			{
+				$this->addErrors($r->getErrors());
+				return null;
+			}
+			else
+			{
+				return ['SHIPMENT_ITEM'=>$this->get($shipmentItem)];
+			}
+		}
+	}
+
+	public function deleteAction(\Bitrix\Sale\ShipmentItem $shipmentItem)
+	{
+		$r = $shipmentItem->delete();
+
+		if($r->isSuccess() == false)
+		{
+			$this->addErrors($r->getErrors());
+			return null;
+		}
+		elseif($r->hasWarnings())
+		{
+			$this->addErrors($r->getWarnings());
+			return null;
+		}
+		else
+		{
+			$r = $this->save($shipmentItem);
+			if(!$r->isSuccess())
+			{
+				$this->addErrors($r->getErrors());
+				return null;
+			}
+			else
+			{
+				return true;
+			}
+		}
+	}
+	//endregion
+
+	protected function get(\Bitrix\Sale\ShipmentItem $shipmentItem, array $fields=[])
+	{
+		/** @var ShipmentItemCollection $collectionShipmentItems */
+		$collectionShipmentItems = $shipmentItem->getCollection();
+		/** @var \Bitrix\Sale\Shipment $shipment */
+		$shipment = $collectionShipmentItems->getShipment();
+		/** @var ShipmentCollection $collectionShipments */
+		$collectionShipments = $shipment->getCollection();
+		$order = $collectionShipments->getOrder();
+
+		$shipments = $this->toArray($order, $fields)['ORDER']['SHIPMENTS'];
+		foreach ($shipments as $shipment)
+		{
+			foreach ($shipment['SHIPMENT_ITEMS'] as $item)
+			{
+				if($item['ID']==$shipmentItem->getId())
+				{
+					return $item;
+				}
+			}
+		}
+		return [];
+	}
+
+	private function save(\Bitrix\Sale\ShipmentItem $shipmentItem)
+	{
+		$result = new Result();
+		/** @var ShipmentItemCollection $collectionShipmentItems */
+		$collectionShipmentItems = $shipmentItem->getCollection();
+		/** @var \Bitrix\Sale\Shipment $shipment */
+		$shipment = $collectionShipmentItems->getShipment();
+		/** @var ShipmentCollection $collectionShipments */
+		$collectionShipments = $shipment->getCollection();
+		$order = $collectionShipments->getOrder();
+
+		$r = $order->save();
+		if(!$r->isSuccess())
+		{
+			$result->addErrors($r->getErrors());
+		}
+		elseif($r->hasWarnings())
+		{
+			$result->addErrors($r->getWarnings());
+		}
+		return $result;
+	}
 }

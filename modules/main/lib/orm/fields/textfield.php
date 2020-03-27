@@ -15,25 +15,25 @@ namespace Bitrix\Main\ORM\Fields;
  */
 class TextField extends StringField
 {
-    /**
-     * @param mixed $value
-     *
-     * @return string
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function convertValueFromDb($value)
-    {
-        return $this->getConnection()->getSqlHelper()->convertFromDbText($value);
-    }
+	/**
+	 * @param mixed $value
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function convertValueFromDb($value)
+	{
+		return $this->getConnection()->getSqlHelper()->convertFromDbText($value);
+	}
 
-    /**
-     * @param string $value
-     *
-     * @return string
-     * @throws \Bitrix\Main\SystemException
-     */
-    public function convertValueToDb($value)
-    {
-        return $this->getConnection()->getSqlHelper()->convertToDbText($value);
-    }
+	/**
+	 * @param string $value
+	 *
+	 * @return string
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function convertValueToDb($value)
+	{
+		return $this->getConnection()->getSqlHelper()->convertToDbText($value);
+	}
 }

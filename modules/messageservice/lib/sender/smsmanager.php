@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\MessageService\Sender;
 
 use Bitrix\Main;
@@ -9,201 +8,231 @@ use Bitrix\MessageService\MessageType;
 
 class SmsManager
 {
-    private static $senders;
+	private static $senders;
 
-    /**
-     * @return Base[] List of senders.
-     */
-    public static function getSenders()
-    {
-        if (self::$senders === null) {
-            self::$senders = array();
+	/**
+	 * @return Base[] List of senders.
+	 */
+	public static function getSenders()
+	{
+		if (self::$senders === null)
+		{
+			self::$senders = [];
 
-            if (Sms\SmsRu::isSupported()) {
-                self::$senders[] = new Sms\SmsRu();
-            }
-            if (Sms\SmsAssistentBy::isSupported()) {
-                self::$senders[] = new Sms\SmsAssistentBy();
-            }
-            if (Sms\Twilio::isSupported()) {
-                self::$senders[] = new Sms\Twilio();
-            }
-            if (Sms\Rest::isSupported()) {
-                self::$senders[] = new Sms\Rest();
-            }
+			if (Sms\SmsRu::isSupported())
+			{
+				self::$senders[] = new Sms\SmsRu();
+			}
+			if (Sms\SmsAssistentBy::isSupported())
+			{
+				self::$senders[] = new Sms\SmsAssistentBy();
+			}
+			if (Sms\Twilio::isSupported())
+			{
+				self::$senders[] = new Sms\Twilio();
+			}
+			if (Sms\SmsLineBy::isSupported())
+			{
+				self::$senders[] = new Sms\SmsLineBy();
+			}
+			if (Sms\Rest::isSupported())
+			{
+				self::$senders[] = new Sms\Rest();
+			}
 
-            foreach (Main\EventManager::getInstance()->findEventHandlers(
-                'messageservice', 'onGetSmsSenders'
-            ) as $event
-            ) {
-                $result = (array)ExecuteModuleEventEx($event);
-                foreach ($result as $sender) {
-                    if (
-                        $sender instanceof Base
-                        &&
-                        $sender->getType() === MessageType::SMS
-                        &&
-                        $sender::isSupported()
-                    ) {
-                        self::$senders[] = $sender;
-                    }
-                }
-            }
-        }
-        return self::$senders;
-    }
+			self::fireSendersEvent();
+		}
+		return self::$senders;
+	}
 
-    /**
-     * @return array Simple list of senders, array(id => name)
-     */
-    public static function getSenderSelectList()
-    {
-        $select = array();
-        foreach (static::getSenders() as $sender) {
-            $select[$sender->getId()] = $sender->getName();
-        }
-        return $select;
-    }
+	private static function fireSendersEvent()
+	{
+		foreach (Main\EventManager::getInstance()->findEventHandlers(
+			'messageservice', 'onGetSmsSenders'
+		) as $event
+		)
+		{
+			$result = (array) ExecuteModuleEventEx($event);
+			foreach ($result as $sender)
+			{
+				if (
+					$sender instanceof Base
+					&&
+					$sender->getType() === MessageType::SMS
+					&&
+					$sender::isSupported()
+				)
+				{
+					self::$senders[] = $sender;
+				}
+			}
+		}
+	}
 
-    /**
-     * @return array Sender list information.
-     */
-    public static function getSenderInfoList()
-    {
-        $info = array();
-        foreach (static::getSenders() as $sender) {
-            $info[] = array(
-                'id' => $sender->getId(),
-                'type' => $sender->getType(),
-                'name' => $sender->getName(),
-                'shortName' => $sender->getShortName(),
-                'canUse' => $sender->canUse()
-            );
-        }
-        return $info;
-    }
+	/**
+	 * @return array Simple list of senders, array(id => name)
+	 */
+	public static function getSenderSelectList()
+	{
+		$select = array();
+		foreach (static::getSenders() as $sender)
+		{
+			$select[$sender->getId()] = $sender->getName();
+		}
+		return $select;
+	}
 
-    /**
-     * @param $id
-     * @return Base|null Sender instance.
-     */
-    public static function getSenderById($id)
-    {
-        foreach (static::getSenders() as $sender) {
-            if ($sender->getId() === $id) {
-                return $sender;
-            }
-        }
-        return null;
-    }
+	/**
+	 * @return array Sender list information.
+	 */
+	public static function getSenderInfoList()
+	{
+		$info = array();
+		foreach (static::getSenders() as $sender)
+		{
+			$info[] = array(
+				'id' => $sender->getId(),
+				'type' => $sender->getType(),
+				'name' => $sender->getName(),
+				'shortName' => $sender->getShortName(),
+				'canUse' => $sender->canUse()
+			);
+		}
+		return $info;
+	}
 
-    /**
-     * Get default SMS sender.
-     * @return Base
-     */
-    public static function getDefaultSender()
-    {
-        $senders = static::getSenders();
-        return $senders[0];
-    }
+	/**
+	 * @param $id
+	 * @return Base|null Sender instance.
+	 */
+	public static function getSenderById($id)
+	{
+		foreach (static::getSenders() as $sender)
+		{
+			if ($sender->getId() === $id)
+			{
+				return $sender;
+			}
+		}
+		return null;
+	}
 
-    /**
-     * @return bool Can use SMS transport.
-     */
-    public static function canUse()
-    {
-        return static::getUsableSender() !== null;
-    }
+	/**
+	 * Get default SMS sender.
+	 * @return Base
+	 */
+	public static function getDefaultSender()
+	{
+		$senders = static::getSenders();
+		return $senders[0];
+	}
 
-    /**
-     * @return string Manage url
-     */
-    public static function getManageUrl()
-    {
-        /** @var BaseConfigurable $defaultProvider */
-        $defaultProvider = static::getDefaultSender();
-        return $defaultProvider instanceof BaseConfigurable ? $defaultProvider->getManageUrl() : '';
-    }
+	/**
+	 * @return bool Can use SMS transport.
+	 */
+	public static function canUse()
+	{
+		return static::getUsableSender() !== null;
+	}
 
-    /**
-     * Get first Sender which is ready to use it.
-     * @return Base|null Sender instance.
-     */
-    public static function getUsableSender()
-    {
-        foreach (static::getSenders() as $sender) {
-            if ($sender->canUse()) {
-                return $sender;
-            }
-        }
-        return null;
-    }
+	/**
+	 * @return string Manage url
+	 */
+	public static function getManageUrl()
+	{
+		/** @var BaseConfigurable $defaultProvider */
+		$defaultProvider = static::getDefaultSender();
+		return $defaultProvider instanceof BaseConfigurable ? $defaultProvider->getManageUrl() : '';
+	}
 
-    /**
-     * @param array $messageFields
-     * @param Base|null $sender
-     * @return Message
-     * @throws Main\ArgumentTypeException
-     */
-    public static function createMessage(array $messageFields, Base $sender = null)
-    {
-        if (!$sender && !isset($messageFields['SENDER_ID'])) {
-            $sender = static::getUsableSender();
-        }
+	/**
+	 * Get first Sender which is ready to use it.
+	 * @return Base|null Sender instance.
+	 */
+	public static function getUsableSender()
+	{
+		foreach (static::getSenders() as $sender)
+		{
+			if ($sender->canUse())
+			{
+				return $sender;
+			}
+		}
+		return null;
+	}
 
-        if (isset($messageFields['MESSAGE_TO'])) {
-            $normalizedTo = \NormalizePhone($messageFields['MESSAGE_TO']);
-            if ($normalizedTo) {
-                $messageFields['MESSAGE_TO'] = '+' . $normalizedTo;
-            }
-        }
+	/**
+	 * @param array $messageFields
+	 * @param Base|null $sender
+	 * @return Message
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function createMessage(array $messageFields, Base $sender = null)
+	{
+		if (!$sender && !isset($messageFields['SENDER_ID']))
+		{
+			$sender = static::getUsableSender();
+		}
 
-        $message = Message::createFromFields($messageFields, $sender);
-        $message->setType(MessageType::SMS);
+		if (isset($messageFields['MESSAGE_TO']))
+		{
+			$normalizedTo = \NormalizePhone($messageFields['MESSAGE_TO']);
+			if ($normalizedTo)
+			{
+				$messageFields['MESSAGE_TO'] = '+'.$normalizedTo;
+			}
+		}
 
-        return $message;
-    }
+		$message = Message::createFromFields($messageFields, $sender);
+		$message->setType(MessageType::SMS);
 
-    /**
-     * @param array $messageFields
-     * @param Base|null $sender
-     * @return Main\Entity\AddResult
-     * @throws Main\ArgumentTypeException
-     */
-    public static function sendMessage(array $messageFields, Base $sender = null)
-    {
-        $message = static::createMessage($messageFields, $sender);
-        if (!$message->getFrom()) {
-            /** @var BaseConfigurable $sender */
-            $sender = $message->getSender();
-            if ($sender && $sender->isConfigurable()) {
-                $message->setFrom($sender->getDefaultFrom());
-            }
-        }
-        return $message->send();
-    }
+		return $message;
+	}
 
-    public static function getMessageStatus($messageId)
-    {
-        $message = MessageTable::getById($messageId)->fetch();
-        if (!$message) {
-            $result = new Result\MessageStatus();
-            $result->setId($messageId);
-            $result->addError(new Main\Error('Message not found'));
+	/**
+	 * @param array $messageFields
+	 * @param Base|null $sender
+	 * @return Main\Entity\AddResult
+	 * @throws Main\ArgumentTypeException
+	 */
+	public static function sendMessage(array $messageFields, Base $sender = null)
+	{
+		$message = static::createMessage($messageFields, $sender);
+		if (!$message->getFrom())
+		{
+			/** @var BaseConfigurable $sender */
+			$sender = $message->getSender();
+			if ($sender && $sender->isConfigurable())
+			{
+				$message->setFrom($sender->getDefaultFrom());
+			}
+		}
+		return $message->send();
+	}
 
-            return $result;
-        }
+	public static function getMessageStatus($messageId)
+	{
+		$message = MessageTable::getById($messageId)->fetch();
+		if (!$message)
+		{
+			$result = new Result\MessageStatus();
+			$result->setId($messageId);
+			$result->addError(new Main\Error('Message not found'));
 
-        /** @var BaseConfigurable $sender */
-        $sender = static::getSenderById($message['SENDER_ID']);
-        if (!$sender || !$sender->isConfigurable()) {
-            $result = new Result\MessageStatus();
-            $result->setId($messageId);
-            $result->addError(new Main\Error('Incorrect sender id.'));
+			return $result;
+		}
 
-            return $result;
-        }
+		/** @var BaseConfigurable $sender */
+		$sender = static::getSenderById($message['SENDER_ID']);
+		if (!$sender || !$sender->isConfigurable())
+		{
+			$result = new Result\MessageStatus();
+			$result->setId($messageId);
+			$result->addError(new Main\Error('Incorrect sender id.'));
 
-        return $sender->getMessageStatus($message);
-    }
+			return $result;
+		}
+
+		return $sender->getMessageStatus($message);
+	}
 }

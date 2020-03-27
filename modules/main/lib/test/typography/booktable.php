@@ -25,24 +25,24 @@ use Bitrix\Main\ORM\Fields\StringField;
  */
 class BookTable extends DataManager
 {
-    public static function getObjectClass()
-    {
-        return Book::class;
-    }
+	public static function getObjectClass()
+	{
+		return Book::class;
+	}
 
-    public static function getCollectionClass()
-    {
-        return Books::class;
-    }
+	public static function getCollectionClass()
+	{
+		return Books::class;
+	}
 
-    public static function getUfId()
-    {
-        return 'BOOK';
-    }
+	public static function getUfId()
+	{
+		return 'BOOK';
+	}
 
-    public static function getTableName()
-    {
-        return '(
+	public static function getTableName()
+	{
+		return '(
 			(SELECT 1 AS ID, "Title 1" AS TITLE, 253 AS PUBLISHER_ID, "978-3-16-148410-0" AS ISBN, "Y" AS IS_ARCHIVED,
 				"[\\"quote1\\",\\"quote2\\"]" AS QUOTES
 			)
@@ -51,36 +51,36 @@ class BookTable extends DataManager
 				"[\\"quote3\\",\\"quote4\\"]" AS QUOTES
 			)
 		)';
-    }
+	}
 
-    public static function getMap()
-    {
-        return [
-            (new IntegerField('ID'))
-                ->configurePrimary()
-                ->configureAutocomplete(),
+	public static function getMap()
+	{
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
 
-            (new StringField('TITLE')),
+			(new StringField('TITLE')),
 
-            (new IntegerField('PUBLISHER_ID')),
+			(new IntegerField('PUBLISHER_ID')),
 
-            (new Reference(
-                'PUBLISHER',
-                PublisherTable::class,
-                Join::on('this.PUBLISHER_ID', 'ref.ID')
-            ))
-                ->configureJoinType('inner'),
+			(new Reference(
+					'PUBLISHER',
+					PublisherTable::class,
+					Join::on('this.PUBLISHER_ID', 'ref.ID')
+				))
+				->configureJoinType('inner'),
 
-            (new StringField('ISBN'))
-                ->configureUnique(),
+			(new StringField('ISBN'))
+				->configureUnique(),
 
-            (new BooleanField('IS_ARCHIVED'))
-                ->configureValues('N', 'Y'),
+			(new BooleanField('IS_ARCHIVED'))
+				->configureValues('N', 'Y'),
 
-            (new ArrayField('QUOTES')),
+			(new ArrayField('QUOTES')),
 
-            (new ManyToMany('AUTHORS', AuthorTable::class))
-                ->configureMediatorTableName('(
+			(new ManyToMany('AUTHORS', AuthorTable::class))
+				->configureMediatorTableName('(
 					(SELECT 1 AS BOOK_ID, 18 AS AUTHOR_ID)
 					UNION
 					(SELECT 2 AS BOOK_ID, 17 AS AUTHOR_ID)
@@ -88,7 +88,7 @@ class BookTable extends DataManager
 					(SELECT 2 AS BOOK_ID, 18 AS AUTHOR_ID)
 				)'),
 
-            (new OneToMany('STORE_ITEMS', StoreBookTable::class, 'BOOK'))
-        ];
-    }
+			(new OneToMany('STORE_ITEMS', StoreBookTable::class, 'BOOK'))
+		];
+	}
 }

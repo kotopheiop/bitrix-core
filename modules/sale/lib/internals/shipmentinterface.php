@@ -8,7 +8,6 @@
 
 interface IShipmentOrder
 {
-    public function getShipmentCollection();
-
-    public function loadShipmentCollection();
+	public function getShipmentCollection();
+	public function loadShipmentCollection();
 }

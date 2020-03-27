@@ -1,5 +1,5 @@
 <?
-require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("WebRTC demo");
 ?>
 
@@ -7,4 +7,4 @@ $APPLICATION->SetTitle("WebRTC demo");
 $APPLICATION->IncludeComponent("yourcompanyprefix:pull.webrtc", '');
 ?>
 
-<? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php"); ?>
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Archive\Recovery;
 
 use Bitrix\Main\Result;
@@ -9,12 +8,12 @@ use Bitrix\Main\Result;
  */
 interface ArchivePackable
 {
-    /**
-     * @return Result
-     */
-    public function tryUnpack();
+	/**
+	 * @return Result
+	 */
+	public function tryUnpack();
 
-    public function setPackedOrder(PackedField $field);
+	public function setPackedOrder(PackedField $field);
 
-    public function addPackedBasketItem($id, PackedField $field);
+	public function addPackedBasketItem($id, PackedField $field);
 }

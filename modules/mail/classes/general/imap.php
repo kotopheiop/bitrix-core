@@ -4,143 +4,151 @@ IncludeModuleLangFile(__FILE__);
 
 class CMailImap
 {
-    protected $imap_stream;
-    protected $counter;
+	protected $imap_stream;
+	protected $counter;
 
-    public function __construct()
-    {
-        $this->counter = 0;
-    }
+	public function __construct()
+	{
+		$this->counter = 0;
+	}
 
-    public function connect($host, $port, $timeout = 1, $skip_cert = false)
-    {
-        $skip_cert = PHP_VERSION_ID < 50600 ? true : $skip_cert;
+	public function connect($host, $port, $timeout = 1, $skip_cert = false)
+	{
+		$skip_cert = PHP_VERSION_ID < 50600 ? true : $skip_cert;
 
-        $imap_stream = @stream_socket_client(
-            sprintf('%s:%s', $host, $port), $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT,
-            stream_context_create(array('ssl' => array('verify_peer' => !$skip_cert, 'verify_peer_name' => !$skip_cert)))
-        );
+		$imap_stream = @stream_socket_client(
+			sprintf('%s:%s', $host, $port), $errno, $errstr, $timeout, STREAM_CLIENT_CONNECT,
+			stream_context_create(array('ssl' => array('verify_peer' => !$skip_cert, 'verify_peer_name' => !$skip_cert)))
+		);
 
-        if ($imap_stream === false)
-            throw new Exception(GetMessage('MAIL_IMAP_ERR_CONNECT'));
+		if ($imap_stream === false)
+			throw new Exception(GetMessage('MAIL_IMAP_ERR_CONNECT'));
 
-        stream_set_timeout($imap_stream, $timeout);
-        $this->imap_stream = $imap_stream;
+		stream_set_timeout($imap_stream, $timeout);
+		$this->imap_stream = $imap_stream;
 
-        $prompt = $this->readLine();
+		$prompt = $this->readLine();
 
-        if ($prompt === false)
-            throw new Exception(GetMessage('MAIL_IMAP_ERR_COMMUNICATE'));
+		if ($prompt === false)
+			throw new Exception(GetMessage('MAIL_IMAP_ERR_COMMUNICATE'));
 
-        if (strpos($prompt, '* OK') !== 0) {
-            $this->imap_stream = null;
+		if (strpos($prompt, '* OK') !== 0)
+		{
+			$this->imap_stream = null;
 
-            throw new Exception(GetMessage('MAIL_IMAP_ERR_CONNECT') . ': ' . GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
-        }
-        /*
-                $tag = $this->sendCommand("STARTTLS\r\n");
-                $res = $this->readResponse($tag);
-        
-                if (strpos($res, $tag.' OK') !== false)
-                {
-                    $a = stream_socket_enable_crypto($this->imap_stream, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-                }
-        */
-    }
+			throw new Exception(GetMessage('MAIL_IMAP_ERR_CONNECT').': '.GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
+		}
+/*
+		$tag = $this->sendCommand("STARTTLS\r\n");
+		$res = $this->readResponse($tag);
 
-    public function authenticate($login, $password)
-    {
-        $tag = $this->sendCommand("AUTHENTICATE PLAIN\r\n");
+		if (strpos($res, $tag.' OK') !== false)
+		{
+			$a = stream_socket_enable_crypto($this->imap_stream, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+		}
+*/
+	}
 
-        $prompt = $this->readLine();
-        if (strpos($prompt, '+') !== 0) {
-            if (strpos($prompt, $tag . ' NO') === 0 || strpos($prompt, $tag . ' BAD') === 0)
-                throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH_MECH'));
-            else
-                throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH') . ': ' . GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
-        }
+	public function authenticate($login, $password)
+	{
+		$tag = $this->sendCommand("AUTHENTICATE PLAIN\r\n");
 
-        fputs($this->imap_stream, base64_encode("\x00" . $login . "\x00" . $password) . "\r\n");
+		$prompt = $this->readLine();
+		if (strpos($prompt, '+') !== 0)
+		{
+			if (strpos($prompt, $tag.' NO') === 0 || strpos($prompt, $tag.' BAD') === 0)
+				throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH_MECH'));
+			else
+				throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH').': '.GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
+		}
 
-        $response = $this->readResponse($tag);
+		fputs($this->imap_stream, base64_encode("\x00".$login."\x00".$password)."\r\n");
 
-        if (strpos($response, $tag . ' OK') === false) {
-            if (strpos($response, $tag . ' NO') === 0 || strpos($response, $tag . ' BAD') === 0)
-                throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH'));
-            else
-                throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH') . ': ' . GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
-        }
-    }
+		$response = $this->readResponse($tag);
 
-    public function getUnseen()
-    {
-        $unseen = 0;
+		if (strpos($response, $tag.' OK') === false)
+		{
+			if (strpos($response, $tag.' NO') === 0 || strpos($response, $tag.' BAD') === 0)
+				throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH'));
+			else
+				throw new Exception(GetMessage('MAIL_IMAP_ERR_AUTH').': '.GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
+		}
+	}
 
-        $tag = $this->sendCommand("SELECT \"INBOX\"\r\n");
-        $response = $this->readResponse($tag);
+	public function getUnseen()
+	{
+		$unseen = 0;
 
-        if (strpos($response, $tag . ' OK') === false)
-            throw new Exception(GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
+		$tag = $this->sendCommand("SELECT \"INBOX\"\r\n");
+		$response = $this->readResponse($tag);
 
-        $tag = $this->sendCommand("SEARCH UNSEEN\r\n");
-        $response = $this->readResponse($tag);
+		if (strpos($response, $tag.' OK') === false)
+			throw new Exception(GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
 
-        if (strpos($response, $tag . ' OK') === false)
-            throw new Exception(GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
+		$tag = $this->sendCommand("SEARCH UNSEEN\r\n");
+		$response = $this->readResponse($tag);
 
-        if (preg_match('/\* SEARCH( [0-9 ]*)?/i', $response, $matches)) {
-            if (isset($matches[1]))
-                $unseen = count(preg_split('/\s+/', $matches[1], null, PREG_SPLIT_NO_EMPTY));
-        }
+		if (strpos($response, $tag.' OK') === false)
+			throw new Exception(GetMessage('MAIL_IMAP_ERR_BAD_SERVER'));
 
-        return $unseen;
-    }
+		if (preg_match('/\* SEARCH( [0-9 ]*)?/i', $response, $matches))
+		{
+			if (isset($matches[1]))
+				$unseen = count(preg_split('/\s+/', $matches[1], null, PREG_SPLIT_NO_EMPTY));
+		}
 
-    protected function sendCommand($command)
-    {
-        $this->counter++;
+		return $unseen;
+	}
 
-        $tag = sprintf('A%03u', $this->counter);
+	protected function sendCommand($command)
+	{
+		$this->counter++;
 
-        $command = sprintf('%s %s', $tag, $command);
-        $bytes = fputs($this->imap_stream, $command);
+		$tag = sprintf('A%03u', $this->counter);
 
-        if ($bytes < strlen($command))
-            throw new Exception(GetMessage('MAIL_IMAP_ERR_COMMUNICATE'));
+		$command = sprintf('%s %s', $tag, $command);
+		$bytes = fputs($this->imap_stream, $command);
 
-        return $tag;
-    }
+		if ($bytes < strlen($command))
+			throw new Exception(GetMessage('MAIL_IMAP_ERR_COMMUNICATE'));
 
-    protected function readLine()
-    {
-        $line = '';
+		return $tag;
+	}
 
-        do {
-            $buffer = fgets($this->imap_stream, 4096);
+	protected function readLine()
+	{
+		$line = '';
 
-            if ($buffer === false)
-                return false;
+		do
+		{
+			$buffer = fgets($this->imap_stream, 4096);
 
-            $line .= $buffer;
-        } while (strpos($buffer, "\r\n") === false);
+			if ($buffer === false)
+				return false;
 
-        return $line;
-    }
+			$line .= $buffer;
+		}
+		while (strpos($buffer, "\r\n") === false);
 
-    protected function readResponse($tag)
-    {
-        $response = '';
+		return $line;
+	}
 
-        do {
-            $line = $this->readLine($this->imap_stream);
+	protected function readResponse($tag)
+	{
+		$response = '';
 
-            if ($line === false)
-                return false;
+		do
+		{
+			$line = $this->readLine($this->imap_stream);
 
-            $response .= $line;
-        } while (strpos($line, $tag) !== 0);
+			if ($line === false)
+				return false;
 
-        return $response;
-    }
+			$response .= $line;
+		}
+		while (strpos($line, $tag) !== 0);
+
+		return $response;
+	}
 
 }

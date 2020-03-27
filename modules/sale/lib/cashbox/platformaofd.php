@@ -13,35 +13,35 @@ Localization\Loc::loadMessages(__FILE__);
  */
 class PlatformaOfd extends Ofd
 {
-    const ACTIVE_URL = 'https://lk.platformaofd.ru/web/noauth/cheque?';
+	const ACTIVE_URL = 'https://lk.platformaofd.ru/web/noauth/cheque?';
 
-    /**
-     * @return string
-     */
-    protected function getUrl()
-    {
-        return static::ACTIVE_URL;
-    }
+	/**
+	 * @return string
+	 */
+	protected function getUrl()
+	{
+		return static::ACTIVE_URL;
+	}
 
-    /**
-     * @return array
-     */
-    protected function getLinkParamsMap()
-    {
-        return array(
-            'fn' => Check::PARAM_FN_NUMBER,
-            'fp' => Check::PARAM_FISCAL_DOC_ATTR,
-            'i' => Check::PARAM_FISCAL_DOC_NUMBER,
-        );
-    }
+	/**
+	 * @return array
+	 */
+	protected function getLinkParamsMap()
+	{
+		return array(
+			'fn' => Check::PARAM_FN_NUMBER,
+			'fp' => Check::PARAM_FISCAL_DOC_ATTR,
+			'i' => Check::PARAM_FISCAL_DOC_NUMBER,
+		);
+	}
 
-    /**
-     * @return string
-     * @throws Main\NotImplementedException
-     */
-    public static function getName()
-    {
-        return Localization\Loc::getMessage('SALE_CASHBOX_PLATFORMA_OFD_NAME');
-    }
+	/**
+	 * @throws Main\NotImplementedException
+	 * @return string
+	 */
+	public static function getName()
+	{
+		return Localization\Loc::getMessage('SALE_CASHBOX_PLATFORMA_OFD_NAME');
+	}
 
 }

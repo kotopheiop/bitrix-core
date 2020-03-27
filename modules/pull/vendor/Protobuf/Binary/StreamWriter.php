@@ -37,8 +37,8 @@ class StreamWriter
      */
     public function __construct(Configuration $config)
     {
-        $this->config = $config;
-        $this->isBigEndian = BigEndian::isBigEndian();
+        $this->config          = $config;
+        $this->isBigEndian     = BigEndian::isBigEndian();
         $this->negativeEncoder = $config->getPlatformFactory()
             ->getNegativeEncoder();
     }
@@ -47,8 +47,8 @@ class StreamWriter
      * Store the given bytes in the stream.
      *
      * @param \Protobuf\Stream $stream
-     * @param string $bytes
-     * @param int $length
+     * @param string           $bytes
+     * @param int              $length
      */
     public function writeBytes(Stream $stream, $bytes, $length = null)
     {
@@ -63,7 +63,7 @@ class StreamWriter
      * Store a single byte.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeByte(Stream $stream, $value)
     {
@@ -74,7 +74,7 @@ class StreamWriter
      * Store an integer encoded as varint.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeVarint(Stream $stream, $value)
     {
@@ -93,7 +93,7 @@ class StreamWriter
 
             while ($value > 0) {
                 $values[] = 0x80 | ($value & 0x7f);
-                $value = $value >> 7;
+                $value    = $value >> 7;
             }
         }
 
@@ -106,7 +106,7 @@ class StreamWriter
 
         // Convert the byte sized ints to actual bytes in a string
         $values = array_merge(['C*'], $values);
-        $bytes = call_user_func_array('pack', $values);
+        $bytes  = call_user_func_array('pack', $values);
 
         $this->writeBytes($stream, $bytes);
     }
@@ -115,8 +115,8 @@ class StreamWriter
      * Encodes an integer with zigzag.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
-     * @param integer $base
+     * @param integer          $value
+     * @param integer          $base
      */
     public function writeZigzag(Stream $stream, $value, $base = 32)
     {
@@ -133,7 +133,7 @@ class StreamWriter
      * Encodes an integer with zigzag.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeZigzag32(Stream $stream, $value)
     {
@@ -144,7 +144,7 @@ class StreamWriter
      * Encodes an integer with zigzag.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeZigzag64(Stream $stream, $value)
     {
@@ -155,7 +155,7 @@ class StreamWriter
      * Encode an integer as a fixed of 32bits with sign.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeSFixed32(Stream $stream, $value)
     {
@@ -172,7 +172,7 @@ class StreamWriter
      * Encode an integer as a fixed of 32bits without sign.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeFixed32(Stream $stream, $value)
     {
@@ -183,7 +183,7 @@ class StreamWriter
      * Encode an integer as a fixed of 64bits with sign.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeSFixed64(Stream $stream, $value)
     {
@@ -202,7 +202,7 @@ class StreamWriter
      * Encode an integer as a fixed of 64bits without sign.
      *
      * @param \Protobuf\Stream $stream
-     * @param integer $value
+     * @param integer          $value
      */
     public function writeFixed64(Stream $stream, $value)
     {
@@ -215,7 +215,7 @@ class StreamWriter
      * Encode a number as a 32bit float.
      *
      * @param \Protobuf\Stream $stream
-     * @param float $value
+     * @param float            $value
      */
     public function writeFloat(Stream $stream, $value)
     {
@@ -232,7 +232,7 @@ class StreamWriter
      * Encode a number as a 64bit double.
      *
      * @param \Protobuf\Stream $stream
-     * @param float $value
+     * @param float            $value
      */
     public function writeDouble(Stream $stream, $value)
     {
@@ -249,7 +249,7 @@ class StreamWriter
      * Encode a bool.
      *
      * @param \Protobuf\Stream $stream
-     * @param bool $value
+     * @param bool             $value
      */
     public function writeBool(Stream $stream, $value)
     {
@@ -260,7 +260,7 @@ class StreamWriter
      * Encode a string.
      *
      * @param \Protobuf\Stream $stream
-     * @param string $value
+     * @param string           $value
      */
     public function writeString(Stream $stream, $value)
     {
@@ -288,7 +288,7 @@ class StreamWriter
      *
      * @param \Protobuf\Stream $stream
      * @param \Protobuf\Stream $value
-     * @param int $length
+     * @param int              $length
      */
     public function writeStream(Stream $stream, Stream $value, $length = null)
     {

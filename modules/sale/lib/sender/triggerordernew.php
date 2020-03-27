@@ -4,9 +4,11 @@ namespace Bitrix\Sale\Sender;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Sale;
 
-if (!Loader::includeModule('sender')) {
-    return;
+if (!Loader::includeModule('sender'))
+{
+	return;
 }
 
 Loc::loadMessages(__FILE__);
@@ -14,79 +16,84 @@ Loc::loadMessages(__FILE__);
 class TriggerOrderNew extends \Bitrix\Sender\TriggerConnector
 {
 
-    public function getName()
-    {
-        return Loc::getMessage('sender_trigger_order_new_name');
-    }
+	public function getName()
+	{
+		return Loc::getMessage('sender_trigger_order_new_name');
+	}
 
-    public function getCode()
-    {
-        return "order_new";
-    }
+	public function getCode()
+	{
+		return "order_new";
+	}
 
-    public function getEventModuleId()
-    {
-        return 'sale';
-    }
+	public function getEventModuleId()
+	{
+		return 'sale';
+	}
 
-    public function getEventType()
-    {
-        return "OnOrderAdd";
-    }
+	public function getEventType()
+	{
+		return "OnOrderAdd";
+	}
 
-    public function getConnector()
-    {
-        $connector = new \Bitrix\Sale\Sender\ConnectorOrder;
-        $connector->setModuleId('sale');
+	public function getConnector()
+	{
+		$connector = new \Bitrix\Sale\Sender\ConnectorOrder;
+		$connector->setModuleId('sale');
 
-        return $connector;
-    }
+		return $connector;
+	}
 
-    /** @return array */
-    public function getProxyFieldsFromEventToConnector()
-    {
-        $eventData = $this->getParam('EVENT');
-        return array('ID' => $eventData[0], 'LID' => $this->getSiteId());
-    }
+	/** @return array */
+	public function getProxyFieldsFromEventToConnector()
+	{
+		$eventData = $this->getParam('EVENT');
+		return array('ID' => $eventData[0], 'LID' => $this->getSiteId());
+	}
 
-    /**
-     * @return array
-     * @throws \Bitrix\Main\ArgumentNullException
-     */
-    public function getPersonalizeFields()
-    {
-        $eventData = $this->getParam('EVENT');
-        $result = ['ORDER_ID' => $eventData[0]];
-        if ((int)$eventData[0] <= 0)
-            return $result;
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
+	public function getPersonalizeFields()
+	{
+		$eventData = $this->getParam('EVENT');
+		$result = ['ORDER_ID' => $eventData[0]];
+		if ((int)$eventData[0] <= 0)
+			return $result;
 
-        $order = \Bitrix\Sale\Order::load($eventData[0]);
-        if ($order) {
-            $result = [
-                'ORDER_ID' => $order->getField('ACCOUNT_NUMBER'),
-                'ORDER_REAL_ID' => $order->getId()
-            ];
-        }
-        return $result;
-    }
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		/** @var Sale\Order $orderClass */
+		$orderClass = $registry->getOrderClassName();
 
-    /**
-     * @return array
-     */
-    public static function getPersonalizeList()
-    {
-        return array(
-            array(
-                'CODE' => 'ORDER_ID',
-                'NAME' => Loc::getMessage('sender_trigger_order_new_pers_order_id_name'),
-                'DESC' => Loc::getMessage('sender_trigger_order_new_pers_order_id_desc')
-            )
-        );
-    }
+		$order = $orderClass::load($eventData[0]);
+		if ($order)
+		{
+			$result = [
+				'ORDER_ID' => $order->getField('ACCOUNT_NUMBER'),
+				'ORDER_REAL_ID' => $order->getId()
+			];
+		}
+		return $result;
+	}
 
-    public function getForm()
-    {
-        return '';
-    }
+	/**
+	 * @return array
+	 */
+	public static function getPersonalizeList()
+	{
+		return array(
+			array(
+				'CODE' => 'ORDER_ID',
+				'NAME' => Loc::getMessage('sender_trigger_order_new_pers_order_id_name'),
+				'DESC' => Loc::getMessage('sender_trigger_order_new_pers_order_id_desc')
+			)
+		);
+	}
+
+	public function getForm()
+	{
+		return '';
+	}
 
 }

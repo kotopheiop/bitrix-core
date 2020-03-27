@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Main\Security\Sign;
 
 use Bitrix\Main\SystemException;
@@ -10,16 +9,16 @@ use Bitrix\Main\SystemException;
  * @package Bitrix\Main\Security\Sign
  */
 class BadSignatureException
-    extends SystemException
+	extends SystemException
 {
-    /**
-     * Creates new exception object for signing purposes.
-     *
-     * @param string $message Message.
-     * @param \Exception $previous Previous exception.
-     */
-    public function __construct($message = "", \Exception $previous = null)
-    {
-        parent::__construct($message, 140, '', 0, $previous);
-    }
+	/**
+	 * Creates new exception object for signing purposes.
+	 *
+	 * @param string $message Message.
+	 * @param \Exception $previous Previous exception.
+	 */
+	public function __construct($message = "", \Exception $previous = null)
+	{
+		parent::__construct($message, 140, '', 0, $previous);
+	}
 }

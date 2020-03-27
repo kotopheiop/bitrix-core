@@ -10,7 +10,6 @@ namespace Bitrix\Main\Data;
 
 abstract class NosqlConnection extends Connection
 {
-    abstract public function get($key);
-
-    abstract public function set($key, $value);
+	abstract public function get($key);
+	abstract public function set($key, $value);
 }

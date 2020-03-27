@@ -87,14 +87,10 @@ class JSType extends \Protobuf\Enum
     public static function valueOf($value)
     {
         switch ($value) {
-            case 0:
-                return self::JS_NORMAL();
-            case 1:
-                return self::JS_STRING();
-            case 2:
-                return self::JS_NUMBER();
-            default:
-                return null;
+            case 0: return self::JS_NORMAL();
+            case 1: return self::JS_STRING();
+            case 2: return self::JS_NUMBER();
+            default: return null;
         }
     }
 

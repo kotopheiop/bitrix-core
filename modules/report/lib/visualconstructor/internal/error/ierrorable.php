@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Report\VisualConstructor\Internal\Error;
 
 /**
@@ -8,9 +7,9 @@ namespace Bitrix\Report\VisualConstructor\Internal\Error;
  */
 interface IErrorable
 {
-    /**
-     * Get Errors collections.
-     * @return array
-     */
-    public function getErrors();
+	/**
+	 * Get Errors collections.
+	 * @return array
+	 */
+	public function getErrors();
 }

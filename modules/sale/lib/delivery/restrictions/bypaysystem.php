@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Delivery\Restrictions;
 
 use Bitrix\Main\Localization\Loc;
@@ -18,170 +17,176 @@ Loc::loadMessages(__FILE__);
  */
 class ByPaySystem extends Base
 {
-    public static $easeSort = 200;
-    protected static $preparedData = array();
+	public static $easeSort = 200;
+	protected static $preparedData = array();
 
-    public static function getClassTitle()
-    {
-        return Loc::getMessage("SALE_DLVR_RSTR_BY_PAYSYSTEM_NAME");
-    }
+	public static function getClassTitle()
+	{
+		return Loc::getMessage("SALE_DLVR_RSTR_BY_PAYSYSTEM_NAME");
+	}
 
-    public static function getClassDescription()
-    {
-        return Loc::getMessage("SALE_DLVR_RSTR_BY_PAYSYSTEM_DESCRIPT");
-    }
+	public static function getClassDescription()
+	{
+		return Loc::getMessage("SALE_DLVR_RSTR_BY_PAYSYSTEM_DESCRIPT");
+	}
 
-    public static function check($paySystemIds, array $restrictionParams, $deliveryId = 0)
-    {
-        if (intval($deliveryId) <= 0)
-            return true;
+	public static function check($paySystemIds, array $restrictionParams, $deliveryId = 0)
+	{
+		if(intval($deliveryId) <= 0)
+			return true;
 
-        if (empty($paySystemIds))
-            return true;
+		if(empty($paySystemIds))
+			return true;
 
-        $paySystems = self::getPaySystemsByDeliveryId($deliveryId);
+		$paySystems = self::getPaySystemsByDeliveryId($deliveryId);
 
-        if (empty($paySystems))
-            return true;
+		if(empty($paySystems))
+			return true;
 
-        $diff = array_diff($paySystemIds, $paySystems);
+		$diff = array_diff($paySystemIds, $paySystems);
 
-        return empty($diff);
-    }
+		return empty($diff);
+	}
 
-    protected static function extractParams(Entity $entity)
-    {
-        $result = array();
+	protected static function extractParams(Entity $entity)
+	{
+		$result = array();
 
-        if ($entity instanceof CollectableEntity) {
-            /** @var \Bitrix\Sale\ShipmentCollection $collection */
-            $collection = $entity->getCollection();
+		if ($entity instanceof CollectableEntity)
+		{
+			/** @var \Bitrix\Sale\ShipmentCollection $collection */
+			$collection = $entity->getCollection();
 
-            /** @var \Bitrix\Sale\Order $order */
-            $order = $collection->getOrder();
-        } elseif ($entity instanceof Order) {
-            /** @var \Bitrix\Sale\Order $order */
-            $order = $entity;
-        }
+			/** @var \Bitrix\Sale\Order $order */
+			$order = $collection->getOrder();
+		}
+		elseif ($entity instanceof Order)
+		{
+			/** @var \Bitrix\Sale\Order $order */
+			$order = $entity;
+		}
 
-        if (!$order)
-            return $result;
+		if (!$order)
+			return $result;
 
-        /** @var \Bitrix\Sale\Payment $payment */
-        foreach ($order->getPaymentCollection() as $payment) {
-            $paySystemId = $payment->getPaymentSystemId();
-            if ($paySystemId)
-                $result[] = $paySystemId;
-        }
+		/** @var \Bitrix\Sale\Payment $payment */
+		foreach($order->getPaymentCollection() as $payment)
+		{
+			$paySystemId = $payment->getPaymentSystemId();
+			if ($paySystemId)
+				$result[] = $paySystemId;
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    protected static function getPaySystemsList()
-    {
-        static $result = null;
+	protected static function getPaySystemsList()
+	{
+		static $result = null;
 
-        if ($result !== null)
-            return $result;
+		if($result !== null)
+			return $result;
 
-        $result = array();
+		$result = array();
 
-        $dbResultList = \CSalePaySystem::GetList(
-            array("SORT" => "ASC", "NAME" => "ASC"),
-            array("ACTIVE" => "Y"),
-            false,
-            false,
-            array("ID", "NAME", "ACTIVE", "SORT", "LID")
-        );
+		$dbResultList = \CSalePaySystem::GetList(
+			array("SORT"=>"ASC", "NAME"=>"ASC"),
+			array("ACTIVE" => "Y"),
+			false,
+			false,
+			array("ID", "NAME", "ACTIVE", "SORT", "LID")
+		);
 
-        while ($arPayType = $dbResultList->Fetch()) {
-            $name = (strlen($arPayType["LID"]) > 0) ? htmlspecialcharsbx($arPayType["NAME"]) . " (" . $arPayType["LID"] . ")" : htmlspecialcharsbx($arPayType["NAME"]);
-            $result[$arPayType["ID"]] = $name;
-        }
+		while ($arPayType = $dbResultList->Fetch())
+		{
+			$name = (strlen($arPayType["LID"]) > 0) ? htmlspecialcharsbx($arPayType["NAME"]). " (".$arPayType["LID"].")" : htmlspecialcharsbx($arPayType["NAME"]);
+			$result[$arPayType["ID"]] = $name;
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public static function getParamsStructure($entityId = 0)
-    {
-        $result = array(
-            "PAY_SYSTEMS" => array(
-                "TYPE" => "ENUM",
-                'MULTIPLE' => 'Y',
-                "LABEL" => Loc::getMessage("SALE_DLVR_RSTR_BY_PAYSYSTEM_PRM_PS"),
-                "OPTIONS" => self::getPaySystemsList()
-            )
-        );
+	public static function getParamsStructure($entityId = 0)
+	{
+		$result =  array(
+			"PAY_SYSTEMS" => array(
+				"TYPE" => "ENUM",
+				'MULTIPLE' => 'Y',
+				"LABEL" => Loc::getMessage("SALE_DLVR_RSTR_BY_PAYSYSTEM_PRM_PS"),
+				"OPTIONS" => self::getPaySystemsList()
+			)
+		);
 
-        return $result;
-    }
+		return $result;
+	}
 
-    protected static function getPaySystemsByDeliveryId($deliveryId = 0)
-    {
-        if ($deliveryId == 0)
-            return array();
+	protected static function getPaySystemsByDeliveryId($deliveryId = 0)
+	{
+		if($deliveryId == 0)
+			return array();
 
-        $result = DeliveryPaySystemTable::getLinks($deliveryId, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY, self::$preparedData);
-        return $result;
-    }
+		$result = DeliveryPaySystemTable::getLinks($deliveryId, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY, self::$preparedData);
+		return $result;
+	}
 
-    protected static function prepareParamsForSaving(array $params = array(), $deliveryId = 0)
-    {
-        if (intval($deliveryId) <= 0)
-            return $params;
+	protected static function prepareParamsForSaving(array $params = array(), $deliveryId = 0)
+	{
+		if(intval($deliveryId) <= 0)
+			return $params;
 
-        if (isset($params["PAY_SYSTEMS"]) && is_array($params["PAY_SYSTEMS"])) {
-            DeliveryPaySystemTable::setLinks(
-                $deliveryId,
-                DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY,
-                $params["PAY_SYSTEMS"],
-                true
-            );
+		if(isset($params["PAY_SYSTEMS"]) && is_array($params["PAY_SYSTEMS"]))
+		{
+			DeliveryPaySystemTable::setLinks(
+				$deliveryId,
+				DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY,
+				$params["PAY_SYSTEMS"],
+				true
+			);
 
-            unset($params["PAY_SYSTEMS"]);
-        }
+			unset($params["PAY_SYSTEMS"]);
+		}
 
-        return $params;
-    }
+		return $params;
+	}
 
-    public static function save(array $fields, $restrictionId = 0)
-    {
-        $params = $fields["PARAMS"];
-        $fields["PARAMS"] = array();
+	public static function save(array $fields, $restrictionId = 0)
+	{
+		$params = $fields["PARAMS"];
+		$fields["PARAMS"] = array();
 
-        $result = parent::save($fields, $restrictionId);
+		$result = parent::save($fields, $restrictionId);
 
-        self::prepareParamsForSaving($params, $fields["SERVICE_ID"]);
-        return $result;
-    }
+		self::prepareParamsForSaving($params, $fields["SERVICE_ID"]);
+		return $result;
+	}
 
-    public static function prepareParamsValues(array $paramsValues, $deliveryId = 0)
-    {
-        $result = array();
+	public static function prepareParamsValues(array $paramsValues, $deliveryId = 0)
+	{
+		$result = array();
 
-        if (intval($deliveryId > 0))
-            $result = DeliveryPaySystemTable::getLinks($deliveryId, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY, array());
+		if(intval($deliveryId > 0))
+			$result = DeliveryPaySystemTable::getLinks($deliveryId, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY, array());
 
-        return array("PAY_SYSTEMS" => $result);
-    }
+		return array("PAY_SYSTEMS" =>  $result);
+	}
 
-    public static function delete($restrictionId, $deliveryId = 0)
-    {
-        DeliveryPaySystemTable::setLinks(
-            $deliveryId,
-            DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY,
-            array(),
-            true
-        );
+	public static function delete($restrictionId, $deliveryId = 0)
+	{
+		DeliveryPaySystemTable::setLinks(
+			$deliveryId,
+			DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY,
+			array(),
+			true
+		);
 
-        return parent::delete($restrictionId);
-    }
+		return parent::delete($restrictionId);
+	}
 
-    public static function prepareData(array $deliveryIds)
-    {
-        if (empty($deliveryIds))
-            return;
+	public static function prepareData(array $deliveryIds)
+	{
+		if(empty($deliveryIds))
+			return;
 
-        self::$preparedData = \Bitrix\Sale\Internals\DeliveryPaySystemTable::prepareData($deliveryIds, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY);
-    }
+		self::$preparedData = \Bitrix\Sale\Internals\DeliveryPaySystemTable::prepareData($deliveryIds, DeliveryPaySystemTable::ENTITY_TYPE_DELIVERY);
+	}
 } 

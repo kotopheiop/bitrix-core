@@ -143,7 +143,7 @@ class Configuration
     public function createComputeSizeContext()
     {
         $calculator = $this->getSizeCalculator();
-        $context = new ComputeSizeContext($calculator);
+        $context    = new ComputeSizeContext($calculator);
 
         return $context;
     }
@@ -155,10 +155,10 @@ class Configuration
      */
     public function createWriteContext()
     {
-        $stream = Stream::create();
-        $writer = $this->getStreamWriter();
+        $stream      = Stream::create();
+        $writer      = $this->getStreamWriter();
         $sizeContext = $this->createComputeSizeContext();
-        $context = new WriteContext($stream, $writer, $sizeContext);
+        $context     = new WriteContext($stream, $writer, $sizeContext);
 
         return $context;
     }
@@ -172,9 +172,9 @@ class Configuration
      */
     public function createReadContext($stream)
     {
-        $reader = $this->getStreamReader();
+        $reader   = $this->getStreamReader();
         $registry = $this->extensionRegistry;
-        $context = new ReadContext($stream, $reader, $registry);
+        $context  = new ReadContext($stream, $reader, $registry);
 
         return $context;
     }

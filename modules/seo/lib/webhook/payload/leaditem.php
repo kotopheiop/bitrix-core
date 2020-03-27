@@ -5,7 +5,6 @@
  * @subpackage seoproxy
  * @copyright 2001-2018 Bitrix
  */
-
 namespace Bitrix\Seo\WebHook\Payload;
 
 /**
@@ -26,28 +25,28 @@ namespace Bitrix\Seo\WebHook\Payload;
  */
 class LeadItem extends Item
 {
-    /** @var  array $data Data. */
-    protected $data = [
-        'leadId' => null,
-        'groupId' => null,
-        'userId' => null,
-        'formId' => null,
-        'answers' => [],
-        'source' => null,
-    ];
+	/** @var  array $data Data. */
+	protected $data = [
+		'leadId' => null,
+		'groupId' => null,
+		'userId' => null,
+		'formId' => null,
+		'answers' => [],
+		'source' => null,
+	];
 
-    /**
-     * Set answers.
-     *
-     * @param string $key Key.
-     * @param array $values Values.
-     * @return $this
-     */
-    public function addAnswer($key, array $values)
-    {
-        $answers = $this->getAnswers();
-        $answers[$key] = $values;
-        return $this->setAnswers($answers);
-    }
+	/**
+	 * Set answers.
+	 *
+	 * @param string $key Key.
+	 * @param array $values Values.
+	 * @return $this
+	 */
+	public function addAnswer($key, array $values)
+	{
+		$answers = $this->getAnswers();
+		$answers[$key] = $values;
+		return $this->setAnswers($answers);
+	}
 }
 

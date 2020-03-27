@@ -13,17 +13,19 @@ use Bitrix\Main\Type;
 
 class DateValidator extends Validator
 {
-    public function validate($value, $primary, array $row, ORM\Fields\Field $field)
-    {
-        if (empty($value)) {
-            return true;
-        }
+	public function validate($value, $primary, array $row, ORM\Fields\Field $field)
+	{
+		if (empty($value))
+		{
+			return true;
+		}
 
-        if ($value instanceof Type\Date) {
-            // self-validating object
-            return true;
-        }
+		if ($value instanceof Type\Date)
+		{
+			// self-validating object
+			return true;
+		}
 
-        return $this->getErrorMessage($value, $field);
-    }
+		return $this->getErrorMessage($value, $field);
+	}
 }

@@ -16,14 +16,14 @@ use Bitrix\Main\Localization\Loc;
  */
 class MessageGa extends MessageBase
 {
-    const CODE = self::CODE_ADS_GA;
+	const CODE = self::CODE_ADS_GA;
 
-    /**
-     * Get name.
-     * @return string
-     */
-    public function getName()
-    {
-        return Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_NAME_ADS_GA');
-    }
+	/**
+	 * Get name.
+	 * @return string
+	 */
+	public function getName()
+	{
+		return Loc::getMessage('SENDER_INTEGRATION_SEO_MESSAGE_NAME_ADS_GA');
+	}
 }

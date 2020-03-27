@@ -12,105 +12,112 @@ use Bitrix\Seo\Retargeting;
 
 class AccountGoogle extends Analytics\Account
 {
-    const TYPE_CODE = 'google';
+	const TYPE_CODE = 'google';
 
-    public function getList()
-    {
-        $response = $this->request->send(array(
-            'methodName' => 'analytics.account.list',
-            'parameters' => array()
-        ));
+	public function getList()
+	{
+		$response = $this->request->send(array(
+			'methodName' => 'analytics.account.list',
+			'parameters' => array()
+		));
 
-        return $response;
-    }
+		return $response;
+	}
 
-    public function getProfile()
-    {
-        $response = $this->getRequest()->getClient()->get(
-            'https://www.googleapis.com/oauth2/v1/userinfo?access_token=' .
-            urlencode($this->getRequest()->getAuthAdapter()->getToken())
-        );
+	public function getProfile()
+	{
+		$response = $this->getRequest()->getClient()->get(
+			'https://www.googleapis.com/oauth2/v1/userinfo?access_token=' .
+			urlencode($this->getRequest()->getAuthAdapter()->getToken())
+		);
 
-        if ($response) {
-            $response = Json::decode($response);
-            if (is_array($response)) {
-                return array(
-                    'ID' => $response['id'],
-                    'NAME' => $response['name'],
-                    'LINK' => '',
-                    'PICTURE' => $response['picture'],
-                );
-            }
-        }
+		if ($response)
+		{
+			$response = Json::decode($response);
+			if (is_array($response))
+			{
+				return array(
+					'ID' => $response['id'],
+					'NAME' => $response['name'],
+					'LINK' => '',
+					'PICTURE' => $response['picture'],
+				);
+			}
+		}
 
 
-        return null;
-    }
+		return null;
+	}
 
-    /**
-     * @param $accountId
-     * @param Date|null $dateFrom
-     * @param Date|null $dateTo
-     * @return Retargeting\Response
-     */
-    public function getExpenses($accountId, Date $dateFrom = null, Date $dateTo = null)
-    {
-        $parameters = [
-            'ACCOUNT_ID' => $accountId,
-        ];
-        if ($dateFrom && $dateTo) {
-            $parameters['DATE_FROM'] = $dateFrom->format('Ymd');
-            $parameters['DATE_TO'] = $dateTo->format('Ymd');
-        }
-        $response = $this->getRequest()->send([
-            'methodName' => 'analytics.expenses.get',
-            'parameters' => $parameters,
-        ]);
+	/**
+	 * @param $accountId
+	 * @param Date|null $dateFrom
+	 * @param Date|null $dateTo
+	 * @return Retargeting\Response
+	 */
+	public function getExpenses($accountId, Date $dateFrom = null, Date $dateTo = null)
+	{
+		$parameters = [
+			'ACCOUNT_ID' => $accountId,
+		];
+		if($dateFrom && $dateTo)
+		{
+			$parameters['DATE_FROM'] = $dateFrom->format('Ymd');
+			$parameters['DATE_TO'] = $dateTo->format('Ymd');
+		}
+		$response = $this->getRequest()->send([
+			'methodName' => 'analytics.expenses.get',
+			'parameters' => $parameters,
+		]);
 
-        if ($response->isSuccess()) {
-            $data = $response->getData();
-            $response->setData([
-                'expenses' => new Analytics\Internals\Expenses([
-                    'impressions' => $data['Impressions'],
-                    'clicks' => $data['Clicks'],
-                    'actions' => $data['Interactions'],
-                    'cpc' => $data['Avg. CPC'],
-                    'cpm' => $data['Avg. CPM'],
-                    'spend' => $data['Cost'],
-                    'currency' => $data['Currency'],
-                ]),
-            ]);
-        }
+		if($response->isSuccess())
+		{
+			$data = $response->getData();
+			$response->setData([
+				'expenses' => new Analytics\Internals\Expenses([
+					'impressions' => $data['Impressions'],
+					'clicks' => $data['Clicks'],
+					'actions' => $data['Interactions'],
+					'cpc' => $data['Avg. CPC'],
+					'cpm' => $data['Avg. CPM'],
+					'spend' => $data['Cost'],
+					'currency' => $data['Currency'],
+				]),
+			]);
+		}
 
-        return $response;
-    }
+		return $response;
+	}
 
-    /**
-     * @param $accountId
-     * @param array $params
-     * @param array $publicPageIds
-     * @return Result
-     */
-    public function updateAnalyticParams($accountId, array $params, array $publicPageIds = [])
-    {
-        $result = new Result();
-        if (!isset($params['phone']) && !isset($params['url_tags'])) {
-            return $result;
-        }
-        $parameters = [
-            'ACCOUNT_ID' => $accountId,
-        ];
-        if (isset($params['phone'])) {
-            $phoneNumber = Parser::getInstance()->parse($params['phone']);
-            $parameters['PHONE'] = ['COUNTRY_CODE' => strtoupper($phoneNumber->getCountry()), 'NUMBER' => $phoneNumber->format()];
-        }
-        if (isset($params['url_tags'])) {
-            $parameters['URL_TAGS'] = $params['url_tags'];
-        }
+	/**
+	 * @param $accountId
+	 * @param array $params
+	 * @param array $publicPageIds
+	 * @return Result
+	 */
+	public function updateAnalyticParams($accountId, array $params, array $publicPageIds = [])
+	{
+		$result = new Result();
+		if(!isset($params['phone']) && !isset($params['url_tags']))
+		{
+			return $result;
+		}
+		$parameters = [
+			'ACCOUNT_ID' => $accountId,
+		];
+		if(isset($params['phone']))
+		{
+			$phoneNumber = Parser::getInstance()->parse($params['phone']);
+			$parameters['PHONE'] = ['COUNTRY_CODE' => strtoupper($phoneNumber->getCountry()), 'NUMBER' => $phoneNumber->format()];
+		}
+		if(isset($params['url_tags']))
+		{
+			$parameters['URL_TAGS'] = $params['url_tags'];
+		}
 
-        return $this->getRequest()->send([
-            'methodName' => 'analytics.update',
-            'parameters' => $parameters,
-        ]);
-    }
+		return $this->getRequest()->send([
+			'methodName' => 'analytics.update',
+			'parameters' => $parameters,
+		]);
+	}
 }

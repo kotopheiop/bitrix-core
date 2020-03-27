@@ -4,61 +4,73 @@
  */
 
 namespace Bitrix\Photogallery\Integration\SocialNetwork;
+use Bitrix\Main\Loader;
+
 class Group
 {
-    public static function onSocNetGroupDelete($groupId)
-    {
-        $iblockIdList = array();
-        $res = \CIBlock::getList(array(), array("ACTIVE" => "Y", "CODE" => "group_photogallery%"));
-        while ($iblock = $res->fetch()) {
-            $iblockIdList[] = $iblock["ID"];
-        }
+	public static function onSocNetGroupDelete($groupId)
+	{
+		if (!Loader::includeModule('iblock'))
+		{
+			return true;
+		}
 
-        if (empty($iblockIdList)) {
-            return true;
-        }
+		$iblockIdList = array();
+		$res = \CIBlock::getList(array(), array("ACTIVE" => "Y", "CODE"=>"group_photogallery%"));
+		while($iblock = $res->fetch())
+		{
+			$iblockIdList[] = $iblock["ID"];
+		}
 
-        $res = \CIBlockSection::getList(
-            array(),
-            array(
-                "IBLOCK_ID" => $iblockIdList,
-                "SOCNET_GROUP_ID" => $groupId
-            ),
-            false,
-            array('ID', 'LEFT_MARGIN', 'RIGHT_MARGIN')
-        );
-        while ($section = $res->fetch()) {
-            @set_time_limit(1000);
+		if (empty($iblockIdList))
+		{
+			return true;
+		}
 
-            $treeSectionIdList = $treeElementIdList = array();
+		$res = \CIBlockSection::getList(
+			array(),
+			array(
+				"IBLOCK_ID" => $iblockIdList,
+				"SOCNET_GROUP_ID" => $groupId
+			),
+			false,
+			array('ID', 'LEFT_MARGIN', 'RIGHT_MARGIN')
+		);
+		while ($section = $res->fetch())
+		{
+			@set_time_limit(1000);
 
-            $pseudoComponentParams = array(
-                'IS_SOCNET' => 'Y',
-                'USER_ALIAS' => 'group_' . $groupId
-            );
+			$treeSectionIdList = $treeElementIdList = array();
 
-            $pseudoComponentResult = array(
-                'SECTION' => $section
-            );
+			$pseudoComponentParams = array(
+				'IS_SOCNET' => 'Y',
+				'USER_ALIAS' => 'group_'.$groupId
+			);
 
-            foreach (getModuleEvents("photogallery", "OnBeforeSectionDrop", true) as $event) {
-                executeModuleEventEx($event, array($section['ID'], $pseudoComponentParams, $pseudoComponentResult, &$treeSectionIdList, &$treeElementIdList));
-            }
+			$pseudoComponentResult = array(
+				'SECTION' => $section
+			);
 
-            if (\CIBlockSection::delete($section['ID'], false)) {
-                $eventFields = array(
-                    "ID" => $section['ID'],
-                    "SECTIONS_IN_TREE" => $treeSectionIdList,
-                    "ELEMENTS_IN_TREE" => $treeElementIdList
-                );
-                foreach (getModuleEvents("photogallery", "OnAfterSectionDrop", true) as $event) {
-                    executeModuleEventEx($event, array($section['ID'], $eventFields, $pseudoComponentParams, $pseudoComponentResult));
-                }
-            }
-        }
+			foreach(getModuleEvents("photogallery", "OnBeforeSectionDrop", true) as $event)
+			{
+				executeModuleEventEx($event, array($section['ID'], $pseudoComponentParams, $pseudoComponentResult, &$treeSectionIdList, &$treeElementIdList));
+			}
 
-        return true;
-    }
+			if (\CIBlockSection::delete($section['ID'], false))
+			{
+				$eventFields = array(
+					"ID" => $section['ID'],
+					"SECTIONS_IN_TREE" => $treeSectionIdList,
+					"ELEMENTS_IN_TREE" => $treeElementIdList
+				);
+				foreach(getModuleEvents("photogallery", "OnAfterSectionDrop", true) as $event)
+				{
+					executeModuleEventEx($event, array($section['ID'], $eventFields, $pseudoComponentParams, $pseudoComponentResult));
+				}
+			}
+		}
+
+		return true;
+	}
 }
-
 ?>

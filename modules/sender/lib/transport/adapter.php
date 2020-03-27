@@ -17,248 +17,271 @@ use Bitrix\Sender\Message;
  */
 class Adapter implements iBase, iLimitation
 {
-    /** @var  iBase $transport Transport. */
-    protected $transport;
+	/** @var  iBase $transport Transport. */
+	protected $transport;
 
-    /** @var  Adapter[] $list List. */
-    protected static $list;
+	/** @var  Adapter[] $list List. */
+	protected static $list;
 
-    /** @var  boolean $startResult Start result. */
-    protected $startResult = null;
+	/** @var  boolean $startResult Start result. */
+	protected $startResult = null;
 
-    /** @var  boolean $isEnded Is ended. */
-    protected $isEnded = false;
 
-    /** @var  iLimiter[] $limiters Limiters. */
-    protected $limiters = null;
+	/** @var  boolean $isStarted Is started. */
+	protected $isStarted = false;
 
-    /** @var  integer $sendCount Count of send. */
-    protected $sendCount = 0;
+	/** @var  boolean $isEnded Is ended. */
+	protected $isEnded = false;
 
-    /**
-     * Get instance.
-     *
-     * @param string $code Code.
-     *
-     * @return Adapter
-     */
-    public static function getInstance($code)
-    {
-        return isset(self::$list[$code]) ? self::$list[$code] : self::create($code);
-    }
+	/** @var  iLimiter[] $limiters Limiters. */
+	protected $limiters = null;
 
-    /**
-     * Create.
-     *
-     * @param string $code Code.
-     * @return static
-     * @throws ArgumentException
-     */
-    public static function create($code)
-    {
-        $transport = Factory::getTransport($code);
-        /** @var IBase $transport Transport. */
-        if (!$transport) {
-            throw new ArgumentException($code);
-        }
+	/** @var  integer $sendCount Count of send. */
+	protected $sendCount = 0;
 
-        return new static($transport);
-    }
+	/**
+	 * Get instance.
+	 *
+	 * @param string $code Code.
+	 *
+	 * @return Adapter
+	 */
+	public static function getInstance($code)
+	{
+		return isset(self::$list[$code]) ? self::$list[$code] : self::create($code);
+	}
 
-    /**
-     * Transport constructor.
-     *
-     * @param iBase $transport Transport.
-     */
-    public function __construct(iBase $transport)
-    {
-        $this->transport = $transport;
-    }
+	/**
+	 * Create.
+	 *
+	 * @param string $code Code.
+	 * @return static
+	 * @throws ArgumentException
+	 */
+	public static function create($code)
+	{
+		$transport = Factory::getTransport($code);
+		/** @var IBase $transport Transport. */
+		if (!$transport)
+		{
+			throw new ArgumentException($code);
+		}
 
-    /**
-     * Get name.
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->transport->getName();
-    }
+		return new static($transport);
+	}
 
-    /**
-     * Get code.
-     *
-     * @return string
-     */
-    public function getCode()
-    {
-        return $this->transport->getCode();
-    }
+	/**
+	 * Transport constructor.
+	 *
+	 * @param iBase $transport Transport.
+	 */
+	public function __construct(iBase $transport)
+	{
+		$this->transport = $transport;
+	}
 
-    /**
-     * Get supported recipient types.
-     *
-     * @return integer[]
-     */
-    public function getSupportedRecipientTypes()
-    {
-        return $this->transport->getSupportedRecipientTypes();
-    }
+	/**
+	 * Get name.
+	 *
+	 * @return string
+	 */
+	public function getName()
+	{
+		return $this->transport->getName();
+	}
 
-    /**
-     * Set count of send.
-     *
-     * @param integer $sendCount Count of send.
-     * @return $this
-     */
-    public function setSendCount($sendCount)
-    {
-        $this->sendCount = $sendCount;
-        return $this;
-    }
+	/**
+	 * Get code.
+	 *
+	 * @return string
+	 */
+	public function getCode()
+	{
+		return $this->transport->getCode();
+	}
 
-    /**
-     * Get count of send.
-     *
-     * @return integer
-     */
-    public function getSendCount()
-    {
-        return $this->sendCount;
-    }
+	/**
+	 * Get supported recipient types.
+	 *
+	 * @return integer[]
+	 */
+	public function getSupportedRecipientTypes()
+	{
+		return $this->transport->getSupportedRecipientTypes();
+	}
 
-    /**
-     * Load configuration.
-     *
-     * @return Message\Configuration
-     */
-    public function loadConfiguration()
-    {
-        return $this->transport->loadConfiguration();
-    }
+	/**
+	 * Set count of send.
+	 *
+	 * @param integer $sendCount Count of send.
+	 * @return $this
+	 */
+	public function setSendCount($sendCount)
+	{
+		$this->sendCount = $sendCount;
+		return $this;
+	}
 
-    /**
-     * Save configuration.
-     *
-     * @param Message\Configuration $configuration Configuration.
-     */
-    public function saveConfiguration(Message\Configuration $configuration)
-    {
-        $this->transport->saveConfiguration($configuration);
-    }
+	/**
+	 * Get count of send.
+	 *
+	 * @return integer
+	 */
+	public function getSendCount()
+	{
+		return $this->sendCount;
+	}
 
-    /**
-     * Start.
-     */
-    public function start()
-    {
-        if ($this->startResult !== null) {
-            return $this->startResult;
-        }
+	/**
+	 * Load configuration.
+	 *
+	 * @return Message\Configuration
+	 */
+	public function loadConfiguration()
+	{
+		return $this->transport->loadConfiguration();
+	}
 
-        $startResult = $this->transport->start();
-        if ($startResult === null) {
-            $startResult = true;
-        }
-        $this->startResult = $startResult;
+	/**
+	 * Save configuration.
+	 *
+	 * @param Message\Configuration $configuration Configuration.
+	 */
+	public function saveConfiguration(Message\Configuration $configuration)
+	{
+		$this->transport->saveConfiguration($configuration);
+	}
 
-        return $this->startResult;
-    }
+	/**
+	 * Start.
+	 */
+	public function start()
+	{
+		if ($this->startResult !== null)
+		{
+			return $this->startResult;
+		}
 
-    /**
-     * Send message.
-     *
-     * @param Message\Adapter $message Message.
-     *
-     * @return bool
-     */
-    public function send(Message\Adapter $message)
-    {
-        $this->start();
-        return $this->transport->send($message);
-    }
+		$startResult = $this->transport->start();
+		if ($startResult === null)
+		{
+			$startResult = true;
+		}
+		$this->startResult = $startResult;
 
-    /**
-     * End.
-     */
-    public function end()
-    {
-        if ($this->isEnded) {
-            return;
-        }
+		return $this->startResult;
+	}
 
-        $this->transport->end();
-        $this->isEnded = true;
-    }
+	/**
+	 * Send message.
+	 *
+	 * @param Message\Adapter $message Message.
+	 *
+	 * @return bool
+	 */
+	public function send(Message\Adapter $message)
+	{
+		if (!$this->isStarted && $this->getSendCount())
+		{
+			\Bitrix\Sender\Log::stat('sending_started', $this->transport->getCode(), $message->getId());
+		}
+		$this->start();
+		$this->isStarted = true;
 
-    /**
-     * Destroy.
-     */
-    public function __destroy()
-    {
-        $this->end();
-    }
+		$result = $this->transport->send($message);
+		\Bitrix\Sender\Log::stat('item_sent', $message->getId(), $result ? 'Y' : 'N');
+		return $result;
+	}
 
-    /**
-     * Get send duration in seconds.
-     *
-     * @param Adapter|null $message Message.
-     * @return integer
-     */
-    public function getDuration($message = null)
-    {
-        if (!($this->transport instanceof iDuration)) {
-            return 0;
-        }
+	/**
+	 * End.
+	 */
+	public function end()
+	{
+		if ($this->isEnded)
+		{
+			return;
+		}
 
-        return $this->transport->getDuration($message);
-    }
+		$this->transport->end();
+		$this->isEnded = true;
+	}
 
-    /**
-     * Has limiters.
-     *
-     * @return bool
-     */
-    public function hasLimiters()
-    {
-        return count($this->getLimiters()) > 0;
-    }
+	/**
+	 * Destroy.
+	 */
+	public function __destroy()
+	{
+		$this->end();
+	}
 
-    /**
-     * Get limiters.
-     *
-     * @param Message\iBase $message Message.
-     * @return iLimiter[]
-     */
-    public function getLimiters(Message\iBase $message = null)
-    {
-        if ($this->limiters === null) {
-            if (!($this->transport instanceof iLimitation)) {
-                $this->limiters = array();
-            } else {
-                $this->limiters = $this->transport->getLimiters($message);
-            }
-        }
+	/**
+	 * Get send duration in seconds.
+	 *
+	 * @param Adapter|null $message Message.
+	 * @return integer
+	 */
+	public function getDuration($message = null)
+	{
+		if (!($this->transport instanceof iDuration))
+		{
+			return 0;
+		}
 
-        return $this->limiters;
-    }
+		return $this->transport->getDuration($message);
+	}
 
-    /**
-     * Check limit exceeding.
-     *
-     * @param Message\iBase $message Message.
-     * @return bool
-     */
-    public function isLimitsExceeded(Message\iBase $message = null)
-    {
-        foreach ($this->getLimiters($message) as $limiter) {
-            if ($limiter->getCurrent() < $limiter->getLimit()) {
-                continue;
-            }
+	/**
+	 * Has limiters.
+	 *
+	 * @return bool
+	 */
+	public function hasLimiters()
+	{
+		return count($this->getLimiters()) > 0;
+	}
 
-            return true;
-        }
+	/**
+	 * Get limiters.
+	 *
+	 * @param Message\iBase $message Message.
+	 * @return iLimiter[]
+	 */
+	public function getLimiters(Message\iBase $message = null)
+	{
+		if ($this->limiters === null)
+		{
+			if (!($this->transport instanceof iLimitation))
+			{
+				$this->limiters = array();
+			}
+			else
+			{
+				$this->limiters = $this->transport->getLimiters($message);
+			}
+		}
 
-        return false;
-    }
+		return $this->limiters;
+	}
+
+	/**
+	 * Check limit exceeding.
+	 *
+	 * @param Message\iBase $message Message.
+	 * @return bool
+	 */
+	public function isLimitsExceeded(Message\iBase $message = null)
+	{
+		foreach ($this->getLimiters($message) as $limiter)
+		{
+			if ($limiter->getCurrent() < $limiter->getLimit())
+			{
+				continue;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
 }

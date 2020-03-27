@@ -8,180 +8,207 @@ use Bitrix\Main\Loader;
 
 final class Manager
 {
-    /** @var  ErrorCollection */
-    protected $errorCollection;
-    /** @var  Manager */
-    private static $instance;
+	/** @var  ErrorCollection */
+	protected $errorCollection;
+	/** @var  Manager */
+	private static $instance;
 
 
-    /**
-     * Returns Singleton of Manager
-     * @return Manager
-     */
-    public static function getInstance()
-    {
-        if (!isset(self::$instance)) {
-            self::$instance = new self;
-        }
+	/**
+	 * Returns Singleton of Manager
+	 * @return Manager
+	 */
+	public static function getInstance()
+	{
+		if (!isset(self::$instance))
+		{
+			self::$instance = new self;
+		}
 
-        return self::$instance;
-    }
+		return self::$instance;
+	}
+	
+	private function __construct()
+	{
+		$this->errorCollection = new ErrorCollection;
+	}
 
-    private function __construct()
-    {
-        $this->errorCollection = new ErrorCollection;
-    }
+	private function __clone()
+	{}
 
-    private function __clone()
-    {
-    }
+	public function dropIndex($discountId)
+	{
+		IndexElementTable::deleteByDiscount($discountId);
+		IndexSectionTable::deleteByDiscount($discountId);
+	}
 
-    public function dropIndex($discountId)
-    {
-        IndexElementTable::deleteByDiscount($discountId);
-        IndexSectionTable::deleteByDiscount($discountId);
-    }
+	public function indexDiscount(array $discount)
+	{
+		if(empty($discount['ID']))
+		{
+			return false;
+		}
 
-    public function indexDiscount(array $discount)
-    {
-        if (empty($discount['ID'])) {
-            return false;
-        }
+		$condition = $this->getConditionStructure($discount);
+		if(!$condition)
+		{
+			return false;
+		}
+		
+		list($elementIds, $sectionIds) = $this->extractElementsAndSections($condition);
 
-        $condition = $this->getConditionStructure($discount);
-        if (!$condition) {
-            return false;
-        }
+		$this->dropIndex($discount['ID']);
 
-        list($elementIds, $sectionIds) = $this->extractElementsAndSections($condition);
+		if(!$elementIds && !$sectionIds)
+		{
+			return false;
+		}
 
-        $this->dropIndex($discount['ID']);
+		if($elementIds)
+		{
+			IndexElementTable::fillByDiscount($discount['ID'], $elementIds);
+		}
 
-        if (!$elementIds && !$sectionIds) {
-            return false;
-        }
+		if($sectionIds)
+		{
+			IndexSectionTable::fillByDiscount($discount['ID'], $sectionIds);
+		}
+		
+		return true;
+	}
 
-        if ($elementIds) {
-            IndexElementTable::fillByDiscount($discount['ID'], $elementIds);
-        }
+	public function hasDataToIndex(array $discount)
+	{
+		list($elementIds, $sectionIds) = $this->extractElementsAndSections($discount['CONDITIONS']);
 
-        if ($sectionIds) {
-            IndexSectionTable::fillByDiscount($discount['ID'], $sectionIds);
-        }
+		return !empty($elementIds) || !empty($sectionIds);
+	}
 
-        return true;
-    }
+	private function getConditionStructure(array $discount)
+	{
+		if(empty($discount['CONDITIONS']) && empty($discount['CONDITIONS_LIST']))
+		{
+			return null;
+		}
 
-    public function hasDataToIndex(array $discount)
-    {
-        list($elementIds, $sectionIds) = $this->extractElementsAndSections($discount['CONDITIONS']);
+		if(!empty($discount['CONDITIONS_LIST']))
+		{
+			$conditions = $discount['CONDITIONS_LIST'];
+		}
+		else
+		{
+			$conditions = $discount['CONDITIONS'];
+		}
 
-        return !empty($elementIds) || !empty($sectionIds);
-    }
+		if(is_string($conditions))
+		{
+			$conditions = unserialize($conditions);
+		}
 
-    private function getConditionStructure(array $discount)
-    {
-        if (empty($discount['CONDITIONS']) && empty($discount['CONDITIONS_LIST'])) {
-            return null;
-        }
+		if(!$conditions || !is_array($conditions))
+		{
+			return null;
+		}
 
-        if (!empty($discount['CONDITIONS_LIST'])) {
-            $conditions = $discount['CONDITIONS_LIST'];
-        } else {
-            $conditions = $discount['CONDITIONS'];
-        }
+		return $conditions;
+	}
 
-        if (is_string($conditions)) {
-            $conditions = unserialize($conditions);
-        }
+	private function extractElementsAndSections(array $condition)
+	{
+		if(empty($condition['CLASS_ID']))
+		{
+			return null;
+		}
 
-        if (!$conditions || !is_array($conditions)) {
-            return null;
-        }
+		if($condition['CLASS_ID'] !== 'CondGroup' || empty($condition['DATA']))
+		{
+			return null;
+		}
 
-        return $conditions;
-    }
+		if(empty($condition['CHILDREN']))
+		{
+			return null;
+		}
 
-    private function extractElementsAndSections(array $condition)
-    {
-        if (empty($condition['CLASS_ID'])) {
-            return null;
-        }
+		if(
+			!($condition['DATA']['All'] === 'AND' && $condition['DATA']['True'] === 'True') &&
+			!($condition['DATA']['All'] === 'OR'  && $condition['DATA']['True'] === 'True')
+		)
+		{
+			return null;
+		}
 
-        if ($condition['CLASS_ID'] !== 'CondGroup' || empty($condition['DATA'])) {
-            return null;
-        }
+		$elementIds = $sectionIds = array();
+		foreach($condition['CHILDREN'] as $child)
+		{
+			$onlyOneCondition =
+				isset($child['CHILDREN'])
+				&& is_array($child['CHILDREN'])
+				&& count($child['CHILDREN']) === 1
+				&& $child['DATA']['All'] === 'AND'
+				&& $child['DATA']['Found'] === 'Found';
 
-        if (empty($condition['CHILDREN'])) {
-            return null;
-        }
+			if(
+				$child['CLASS_ID'] === 'CondBsktProductGroup' &&
+				(
+					($child['DATA']['All'] === 'OR' && $child['DATA']['Found'] === 'Found') ||
+					$onlyOneCondition
+				)
+			)
+			{
+				foreach($child['CHILDREN'] as $grandchild)
+				{
+					switch($grandchild['CLASS_ID'])
+					{
+						case 'CondIBElement':
+							if (is_array($grandchild['DATA']['value']))
+							{
+								$elementIds = array_merge($elementIds, $grandchild['DATA']['value']);
+							}
+							else
+							{
+								$elementIds[] = $grandchild['DATA']['value'];
+							}
+							break;
+						case 'CondIBSection':
+							if($grandchild['DATA']['logic'] === 'Equal')
+							{
+								$sectionIds[] = $grandchild['DATA']['value'];
+							}
+							break;
+					}
+				}
+			}
+		}
 
-        if (
-            !($condition['DATA']['All'] === 'AND' && $condition['DATA']['True'] === 'True') &&
-            !($condition['DATA']['All'] === 'OR' && $condition['DATA']['True'] === 'True')
-        ) {
-            return null;
-        }
+		$elementIds = $this->convertSkuToMainProducts($elementIds);
 
-        $elementIds = $sectionIds = array();
-        foreach ($condition['CHILDREN'] as $child) {
-            $onlyOneCondition =
-                isset($child['CHILDREN'])
-                && is_array($child['CHILDREN'])
-                && count($child['CHILDREN']) === 1
-                && $child['DATA']['All'] === 'AND'
-                && $child['DATA']['Found'] === 'Found';
+		return array($elementIds, $sectionIds);
+	}
 
-            if (
-                $child['CLASS_ID'] === 'CondBsktProductGroup' &&
-                (
-                    ($child['DATA']['All'] === 'OR' && $child['DATA']['Found'] === 'Found') ||
-                    $onlyOneCondition
-                )
-            ) {
-                foreach ($child['CHILDREN'] as $grandchild) {
-                    switch ($grandchild['CLASS_ID']) {
-                        case 'CondIBElement':
-                            if (is_array($grandchild['DATA']['value'])) {
-                                $elementIds = array_merge($elementIds, $grandchild['DATA']['value']);
-                            } else {
-                                $elementIds[] = $grandchild['DATA']['value'];
-                            }
-                            break;
-                        case 'CondIBSection':
-                            if ($grandchild['DATA']['logic'] === 'Equal') {
-                                $sectionIds[] = $grandchild['DATA']['value'];
-                            }
-                            break;
-                    }
-                }
-            }
-        }
+	private function convertSkuToMainProducts(array $elementIds)
+	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return $elementIds;
+		}
 
-        $elementIds = $this->convertSkuToMainProducts($elementIds);
+		$products = \CCatalogSKU::getProductList($elementIds);
+		if (empty($products))
+		{
+			return $elementIds;
+		}
 
-        return array($elementIds, $sectionIds);
-    }
+		$newElementIds = array_combine($elementIds, $elementIds);
+		foreach($products as $offerId => $product)
+		{
+			if(isset($newElementIds[$offerId]))
+			{
+				$newElementIds[$product['ID']] = $product['ID'];
+				unset($newElementIds[$offerId]);
+			}
+		}
 
-    private function convertSkuToMainProducts(array $elementIds)
-    {
-        if (!Loader::includeModule('catalog')) {
-            return $elementIds;
-        }
-
-        $products = \CCatalogSKU::getProductList($elementIds);
-        if (empty($products)) {
-            return $elementIds;
-        }
-
-        $newElementIds = array_combine($elementIds, $elementIds);
-        foreach ($products as $offerId => $product) {
-            if (isset($newElementIds[$offerId])) {
-                $newElementIds[$product['ID']] = $product['ID'];
-                unset($newElementIds[$offerId]);
-            }
-        }
-
-        return array_values($newElementIds);
-    }
+		return array_values($newElementIds);
+	}
 }

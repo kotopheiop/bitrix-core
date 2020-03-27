@@ -1,77 +1,84 @@
 <?
+namespace Bitrix\Sale\Cashbox\AdminPage\Settings
+{
+	use Bitrix\Main\Localization\Loc;
+	use Bitrix\Sale\Internals\Input;
+	use Bitrix\Sale\Cashbox;
 
-namespace Bitrix\Sale\Cashbox\AdminPage\Settings {
+	if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+		die();
 
-    use Bitrix\Main\Localization\Loc;
-    use Bitrix\Sale\Internals\Input;
-    use Bitrix\Sale\Cashbox;
+	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/cashbox/inputs/file.php");
+	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/delivery/inputs.php");
 
-    if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
-        die();
+	global $APPLICATION;
 
-    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/cashbox/inputs/file.php");
-    require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/sale/lib/delivery/inputs.php");
+	$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
+	if ($saleModulePermissions < "W")
+		$APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
 
-    global $APPLICATION;
+	Loc::loadMessages(__FILE__);
 
-    $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-    if ($saleModulePermissions < "W")
-        $APPLICATION->AuthForm(Loc::getMessage("SALE_ACCESS_DENIED"));
+	$result = '';
+	// variable $cashbox must be defined in file, where this file is included
+	if (isset($cashbox))
+	{
+		/** @var Cashbox\Cashbox $handler */
+		$handler = $cashbox['HANDLER'];
+		$cashboxSettings = $cashbox['SETTINGS'];
+		if (class_exists($handler))
+		{
+			$settings = $handler::getSettings($cashbox['KKM_ID']);
 
-    Loc::loadMessages(__FILE__);
+			if ($settings)
+			{
+				foreach ($settings as $group => $block)
+				{
+					$result .= '<tr class="heading"><td colspan="2">'.$block['LABEL'].'</td></tr>';
 
-    $result = '';
-    // variable $cashbox must be defined in file, where this file is included
-    if (isset($cashbox)) {
-        /** @var Cashbox\Cashbox $handler */
-        $handler = $cashbox['HANDLER'];
-        $cashboxSettings = $cashbox['SETTINGS'];
-        if (class_exists($handler)) {
-            $settings = $handler::getSettings($cashbox['KKM_ID']);
+					if ($group === 'VAT')
+					{
+						$result .= '<tr><td colspan="2" style="text-align: center">';
+						$result .= BeginNote().Loc::getMessage('SALE_CASHBOX_VAT_ATTENTION').EndNote();
+						$result .= '</td></tr>';
+					}
 
-            if ($settings) {
-                foreach ($settings as $group => $block) {
-                    $result .= '<tr class="heading"><td colspan="2">' . $block['LABEL'] . '</td></tr>';
+					$className = 'adm-detail-content-cell-l';
+					if (isset($block['REQUIRED']) && $block['REQUIRED'] === 'Y')
+						$className .= ' adm-required-field';
 
-                    if ($group === 'VAT') {
-                        $result .= '<tr><td colspan="2" style="text-align: center">';
-                        $result .= BeginNote() . Loc::getMessage('SALE_CASHBOX_VAT_ATTENTION') . EndNote();
-                        $result .= '</td></tr>';
-                    }
+					foreach ($block['ITEMS'] as $code => $item)
+					{
+						$itemClassName = $className;
+						if ($item['REQUIRED'] === 'Y'
+							&& $block['REQUIRED'] !== 'Y'
+						)
+						{
+							$itemClassName .= ' adm-required-field';
+						}
 
-                    $className = 'adm-detail-content-cell-l';
-                    if (isset($block['REQUIRED']) && $block['REQUIRED'] === 'Y')
-                        $className .= ' adm-required-field';
+						$value = null;
+						if (isset($cashboxSettings[$group][$code]))
+							$value = $cashboxSettings[$group][$code];
 
-                    foreach ($block['ITEMS'] as $code => $item) {
-                        $itemClassName = $className;
-                        if ($item['REQUIRED'] === 'Y'
-                            && $block['REQUIRED'] !== 'Y'
-                        ) {
-                            $itemClassName .= ' adm-required-field';
-                        }
+						if ($handler === '\Bitrix\Sale\Cashbox\CashboxBitrix' && $group === 'PAYMENT_TYPE')
+						{
+							/* hack is for difference between real values of payment cashbox's settings and user view (diff is '-1') */
+							if ($value === null)
+								$value = $item['VALUE'];
 
-                        $value = null;
-                        if (isset($cashboxSettings[$group][$code]))
-                            $value = $cashboxSettings[$group][$code];
+							$value++;
+						}
 
-                        if ($handler === '\Bitrix\Sale\Cashbox\CashboxBitrix' && $group === 'PAYMENT_TYPE') {
-                            /* hack is for difference between real values of payment cashbox's settings and user view (diff is '-1') */
-                            if ($value === null)
-                                $value = $item['VALUE'];
+						$result .= '<td width="45%" class="'.$itemClassName.'">'.htmlspecialcharsbx($item['LABEL']).':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">'.Input\Manager::getEditHtml('SETTINGS['.$group.']['.$code.']', $item, $value).'</td></tr>';
+					}
+				}
+			}
+		}
+	}
 
-                            $value++;
-                        }
+	if ($result === '')
+		$result = '<tr><td colspan="2">'.Loc::getMessage('SALE_CASHBOX_NO_SETTINGS').'</td></tr>';
 
-                        $result .= '<td width="45%" class="' . $itemClassName . '">' . htmlspecialcharsbx($item['LABEL']) . ':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">' . Input\Manager::getEditHtml('SETTINGS[' . $group . '][' . $code . ']', $item, $value) . '</td></tr>';
-                    }
-                }
-            }
-        }
-    }
-
-    if ($result === '')
-        $result = '<tr><td colspan="2">' . Loc::getMessage('SALE_CASHBOX_NO_SETTINGS') . '</td></tr>';
-
-    echo $result;
+	echo $result;
 }

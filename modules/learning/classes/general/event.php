@@ -11,52 +11,53 @@ IncludeModuleLangFile(__FILE__);
 
 class CLearningEvent
 {
-    public static function MakeMainObject()
-    {
-        $obj = new CEventMain;
-        return $obj;
-    }
+	public static function MakeMainObject()
+	{
+		$obj = new CEventMain;
+		return $obj;
+	}
 
 
-    public function GetFilter()
-    {
-        $arFilter = array();
+	public function GetFilter()
+	{
+		$arFilter = array();
 
-        return $arFilter;
-    }
-
-
-    public function GetAuditTypes()
-    {
-        return array(
-            'LEARNING_REMOVE_ITEM' => '[LEARNING_REMOVE_ITEM] ' . GetMessage('LEARNING_LOG_REMOVE_ITEM')
-        );
-    }
+		return  $arFilter;
+	}
 
 
-    public function GetEventInfo($row, $arParams)
-    {
-        $EventPrint = '???';
-        switch ($row['AUDIT_TYPE_ID']) {
-            case 'LEARNING_REMOVE_ITEM':
-                $EventPrint = GetMessage('LEARNING_LOG_REMOVE_ITEM');
-                break;
-        }
-
-        return array(
-            'eventType' => $EventPrint,
-            'eventName' => $row['ITEM_ID'],
-            'eventURL' => null
-        );
-    }
+	public function GetAuditTypes()
+	{
+		return array(
+			'LEARNING_REMOVE_ITEM' => '[LEARNING_REMOVE_ITEM] ' . GetMessage('LEARNING_LOG_REMOVE_ITEM')
+		);
+	}
 
 
-    public function GetFilterSQL($var)
-    {
-        $ar = array();
+	public function GetEventInfo($row, $arParams)
+	{
+		$EventPrint = '???';
+		switch($row['AUDIT_TYPE_ID'])
+		{
+			case 'LEARNING_REMOVE_ITEM':
+				$EventPrint = GetMessage('LEARNING_LOG_REMOVE_ITEM');
+				break;
+		}
 
-        $ar[] = array('AUDIT_TYPE_ID' => 'LEARNING_REMOVE_ITEM');
+		return array(
+			'eventType' => $EventPrint,
+			'eventName' => $row['ITEM_ID'],
+			'eventURL'  => null
+		);
+	}
 
-        return $ar;
-    }
+
+	public function GetFilterSQL($var)
+	{
+		$ar = array();
+
+		$ar[] = array('AUDIT_TYPE_ID' => 'LEARNING_REMOVE_ITEM');
+
+		return $ar;
+	}
 }

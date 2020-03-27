@@ -9,73 +9,104 @@ use Bitrix\Main;
 
 abstract class Builder
 {
-    const TYPE_STANDART = 'STANDART';
-    const TYPE_WEBPACK = 'WEBPACK';
+	protected const TYPE_STANDART = 'STANDART';
+	protected const TYPE_WEBPACK = 'WEBPACK';
 
-    const MODULE_ID = 'landing';
-    const FOLDER_NAME = 'assets';
-    const PACKAGE_NAME = 'landing_assets';
+	public const PACKAGE_NAME = 'landing_assets';
 
-    /**
-     * @var ResourceCollection
-     */
-    protected $resources;
-    /**
-     * @var array
-     */
-    protected $normalizedResources = [];
+	/**
+	 * @var ResourceCollection
+	 */
+	protected $resources;
+	/**
+	 * @var array
+	 */
+	protected $normalizedResources = [];
+	/**
+	 * Asset pack may be attached to landing
+	 * @var int
+	 */
+	protected $landingId = 0;
 
-    public function __construct($resources)
-    {
-        if ($resources instanceof ResourceCollection) {
-            $this->resources = $resources;
-        } else {
-            throw new ArgumentTypeException($resources, 'ResourceCollection');
-        }
-    }
+	/**
+	 * Builder constructor.
+	 * @param ResourceCollection $resources
+	 * @throws ArgumentTypeException
+	 */
+	public function __construct(ResourceCollection $resources)
+	{
+		if ($resources instanceof ResourceCollection)
+		{
+			$this->resources = $resources;
+		}
+		else
+		{
+			throw new ArgumentTypeException($resources, 'ResourceCollection');
+		}
+	}
 
-    /**
-     * @param ResourceCollection
-     * @param string $type
-     * @return StandartBuilder|WebpackBuilder
-     * @throws ArgumentException
-     */
-    public static function createByType($resources, $type)
-    {
-        switch ($type) {
-            case self::TYPE_STANDART:
-                return new StandartBuilder($resources);
-            case self::TYPE_WEBPACK:
-                return new WebpackBuilder($resources);
-            default:
-                throw new ArgumentException("Unknown landing asset builder type `$type`.");
-        }
-    }
+	/**
+	 * @param ResourceCollection $resources	Resources object
+	 * @param string $type Builder type
+	 * @return Builder
+	 * @throws ArgumentException
+	 * @throws ArgumentTypeException
+	 */
+	public static function createByType(ResourceCollection $resources, string $type): ?Builder
+	{
+		switch ($type)
+		{
+			case self::TYPE_STANDART:
+				return new StandartBuilder($resources);
+			case self::TYPE_WEBPACK:
+				return new WebpackBuilder($resources);
+			default:
+				throw new ArgumentException("Unknown landing asset builder type `$type`.");
+		}
+	}
 
-    abstract public function setOutput();
+	/**
+	 * Assets pack must be attached only to once landing. Set ID
+	 * @param int $lid - landing ID
+	 */
+	public function attachToLanding(int $lid): void
+	{
+		$this->landingId = (int)$lid;
+	}
 
-    abstract protected function normalizeResources();
+	/**
+	 * Add assets to page
+	 * @return mixed
+	 */
+	abstract public function setOutput();
 
-    protected function initResourcesAsJsExtension($resources, $extName = null)
-    {
-        if (!$extName) {
-            $extName = self::PACKAGE_NAME;
-        }
-        $extFullName = $extName . '_' . md5(serialize($resources));
+	abstract protected function normalizeResources();
 
-        $resources = array_merge($resources, [
-            'bundle_js' => $extFullName,
-            'bundle_css' => $extFullName,
-        ]);
-        \CJSCore::registerExt($extName, $resources);
-        \CJSCore::Init($extName);
-    }
+	protected function initResourcesAsJsExtension(array $resources, $extName = null): void
+	{
+		if (!$extName)
+		{
+			$extName = self::PACKAGE_NAME;
+		}
+		$extFullName = $extName . '_' . md5(serialize($resources));
 
-    protected function setStrings()
-    {
-        foreach ($this->resources->getStrings() as $string) {
-            // Main\Page\Asset::getInstance()->addString($string);
-            Main\Page\Asset::getInstance()->addString($string, false, Main\Page\AssetLocation::AFTER_JS);
-        }
-    }
+		$resources = array_merge($resources, [
+			'bundle_js' => $extFullName,
+			'bundle_css' => $extFullName,
+		]);
+		/** @noinspection PhpMethodOrClassCallIsNotCaseSensitiveInspection */
+		\CJSCore::registerExt($extName, $resources);
+		\CJSCore::Init($extName);
+	}
+
+	/**
+	 * Add assets strings to page
+	 */
+	protected function setStrings(): void
+	{
+		foreach ($this->resources->getStrings() as $string)
+		{
+			Main\Page\Asset::getInstance()->addString($string, false, Main\Page\AssetLocation::AFTER_JS);
+		}
+	}
 }

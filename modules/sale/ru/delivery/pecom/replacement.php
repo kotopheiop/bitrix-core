@@ -1,19 +1,18 @@
 <?
-
 namespace Bitrix\Sale\Delivery\Pecom;
 
 class Replacement
 {
-    public static function getRegionExceptions()
-    {
-        return array(
-            'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' => 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
-            'ï¿½ï¿½ï¿½ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½' => 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½',
-        );
-    }
+	public static function getRegionExceptions()
+	{
+		return array(
+			'ÌÎÑÊÂÀ' => 'ÌÎÑÊÎÂÑÊÀß ÎÁËÀÑÒÜ',
+			'ÑÀÍÊÒ-ÏÅÒÅĞÁÓĞÃ' => 'ËÅÍÈÍÃĞÀÄÑÊÀß ÎÁËÀÑÒÜ',
+		);
+	}
 
-    public static function getDistrictMark()
-    {
-        return 'ï¿½\-ï¿½';
-    }
+	public static function getDistrictMark()
+	{
+		return 'Ğ\-Í';
+	}
 }

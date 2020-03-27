@@ -5,7 +5,6 @@
  * @subpackage sender
  * @copyright 2001-2012 Bitrix
  */
-
 namespace Bitrix\Sender\Templates;
 
 use Bitrix\Main\Localization\Loc;
@@ -19,20 +18,20 @@ Loc::loadMessages(__FILE__);
  */
 class Type extends ClassConstant
 {
-    const BASE = 1;
-    const USER = 2;
-    const ADDITIONAL = 3;
-    const SITE_TMPL = 4;
+	const BASE = 1;
+	const USER = 2;
+	const ADDITIONAL = 3;
+	const SITE_TMPL = 4;
 
-    /**
-     * Get caption.
-     *
-     * @param integer $id ID.
-     * @return integer|null
-     */
-    public static function getName($id)
-    {
-        $name = Loc::getMessage('SENDER_TEMPLATES_TYPE_CAPTION_' . self::getCode($id));
-        return $name ?: parent::getName($id);
-    }
+	/**
+	 * Get caption.
+	 *
+	 * @param integer $id ID.
+	 * @return integer|null
+	 */
+	public static function getName($id)
+	{
+		$name = Loc::getMessage('SENDER_TEMPLATES_TYPE_CAPTION_' . self::getCode($id));
+		return $name ?: parent::getName($id);
+	}
 }

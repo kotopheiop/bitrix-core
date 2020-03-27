@@ -12,18 +12,18 @@ use Bitrix\Main;
 
 class Culture extends Main\Localization\EO_Culture
 {
-    public function getDateTimeFormat()
-    {
-        return $this->getFormatDatetime();
-    }
+	public function getDateTimeFormat()
+	{
+		return $this->getFormatDatetime();
+	}
 
-    public function getDateFormat()
-    {
-        return $this->getFormatDate();
-    }
+	public function getDateFormat()
+	{
+		return $this->getFormatDate();
+	}
 
-    public function getNameFormat()
-    {
-        return $this->getFormatName();
-    }
+	public function getNameFormat()
+	{
+		return $this->getFormatName();
+	}
 }

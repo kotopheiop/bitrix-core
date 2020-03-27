@@ -12,10 +12,10 @@ use Bitrix\Crm\Integration;
 Loc::loadMessages(__FILE__);
 
 Loader::registerAutoLoadClasses(
-    'sale',
-    [
-        PaySystem\Manager::getClassNameFromPath('orderdocument') => 'handlers/paysystem/orderdocument/handler.php'
-    ]
+	'sale',
+	[
+		PaySystem\Manager::getClassNameFromPath('orderdocument') => 'handlers/paysystem/orderdocument/handler.php'
+	]
 );
 
 /**
@@ -24,23 +24,23 @@ Loader::registerAutoLoadClasses(
  */
 class InvoiceDocumentHandler extends OrderDocumentHandler
 {
-    /**
-     * @return string
-     */
-    protected static function getDataProviderClass()
-    {
-        return Integration\DocumentGenerator\DataProvider\Invoice::class;
-    }
+	/**
+	 * @return string
+	 */
+	protected static function getDataProviderClass()
+	{
+		return Integration\DocumentGenerator\DataProvider\Invoice::class;
+	}
 
-    /**
-     * @param $payment
-     * @return mixed
-     */
-    protected function getInvoiceNumber(Payment $payment)
-    {
-        $invoice = $payment->getOrder();
+	/**
+	 * @param $payment
+	 * @return mixed
+	 */
+	protected function getInvoiceNumber(Payment $payment)
+	{
+		$invoice = $payment->getOrder();
 
-        return $invoice->getField('ACCOUNT_NUMBER');
-    }
+		return $invoice->getField('ACCOUNT_NUMBER');
+	}
 
 }

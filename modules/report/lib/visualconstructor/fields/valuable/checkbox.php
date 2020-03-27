@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Report\VisualConstructor\Fields\Valuable;
 
 /**
@@ -9,25 +8,25 @@ namespace Bitrix\Report\VisualConstructor\Fields\Valuable;
 class CheckBox extends BaseValuable
 {
 
-    /**
-     * Constructor for checkbox field.
-     *
-     * @param string $key Unique key.
-     */
-    public function __construct($key)
-    {
-        parent::__construct($key);
-    }
+	/**
+	 * Constructor for checkbox field.
+	 *
+	 * @param string $key Unique key.
+	 */
+	public function __construct($key)
+	{
+		parent::__construct($key);
+	}
 
-    /**
-     * Load field component with checkbox template.
-     * And print it.
-     *
-     * @return void
-     */
-    public function printContent()
-    {
-        $this->includeFieldComponent('checkbox');
-    }
+	/**
+	 * Load field component with checkbox template.
+	 * And print it.
+	 *
+	 * @return void
+	 */
+	public function printContent()
+	{
+		$this->includeFieldComponent('checkbox');
+	}
 
 }

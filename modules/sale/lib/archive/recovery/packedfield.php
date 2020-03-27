@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Sale\Archive\Recovery;
 
 use Bitrix\Main\Result;
@@ -9,22 +8,21 @@ use Bitrix\Main\Result;
  */
 abstract class PackedField
 {
-    protected $packedValue = '';
+	protected $packedValue = '';
 
-    public function __construct($packedValue = '')
-    {
-        $this->packedValue = $packedValue;
-    }
+	public function __construct($packedValue = '')
+	{
+		$this->packedValue = $packedValue;
+	}
 
-    public function getPackedValue()
-    {
-        return $this->packedValue;
-    }
+	public function getPackedValue()
+	{
+		return $this->packedValue;
+	}
 
-    /**
-     * @return Result
-     */
-    abstract public function tryUnpack();
-
-    abstract public function unpack();
+	/**
+	 * @return Result
+	 */
+	abstract public function tryUnpack();
+	abstract public function unpack();
 }

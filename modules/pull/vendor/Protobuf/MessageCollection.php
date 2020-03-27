@@ -35,7 +35,7 @@ class MessageCollection extends ArrayObject implements Collection
      */
     public function offsetSet($offset, $value)
     {
-        if (!$value instanceof Message) {
+        if ( ! $value instanceof Message) {
             throw new InvalidArgumentException(sprintf(
                 'Argument 2 passed to %s must implement interface \Protobuf\Message, %s given',
                 __METHOD__,

@@ -87,14 +87,10 @@ class OptimizeMode extends \Protobuf\Enum
     public static function valueOf($value)
     {
         switch ($value) {
-            case 1:
-                return self::SPEED();
-            case 2:
-                return self::CODE_SIZE();
-            case 3:
-                return self::LITE_RUNTIME();
-            default:
-                return null;
+            case 1: return self::SPEED();
+            case 2: return self::CODE_SIZE();
+            case 3: return self::LITE_RUNTIME();
+            default: return null;
         }
     }
 

@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Main\Numerator;
 /**
  * Interface Hashable
@@ -7,5 +6,5 @@ namespace Bitrix\Main\Numerator;
  */
 interface Hashable
 {
-    public function getHash();
+	public function getHash();
 }

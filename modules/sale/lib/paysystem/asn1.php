@@ -41,8 +41,7 @@ namespace Bitrix\Sale\PaySystem;
  * Note that this class only implements a small subset of the ASN.1 DER, and should
  * not be used as a general-purpose ASN.1 encoder/decoder.
  */
-class ASN1
-{
+class ASN1 {
     const UNIVERSAL_CLASS = 0x00;
     const APPLICATION_CLASS = 0x40;
     const CONTEXT_CLASS = 0x80;
@@ -67,8 +66,7 @@ class ASN1
      * bit string manually
      * @return int the number of bytes read, or 0 if there is an error
      */
-    static function readDER($der, $offset, &$data, $ignore_bit_strings = FALSE)
-    {
+    static function readDER($der, $offset, &$data, $ignore_bit_strings = FALSE) {
         $pos = $offset;
 
         $size = strlen($der);
@@ -114,8 +112,7 @@ class ASN1
      * constructed type
      * @return string the encoded object
      */
-    static function encodeDER($type, $value = '', $primitive = true, $class = 0)
-    {
+    static function encodeDER($type, $value = '', $primitive = true, $class = 0) {
         $tag_header = $class;
         if (!$primitive) $tag_header |= 0x20;
 
@@ -158,8 +155,7 @@ class ASN1
      * @param $string oid the binary DER-encoded object identifier
      * @return $string the decoded string
      */
-    static function decodeOID($oid)
-    {
+    static function decodeOID($oid) {
         $pos = 0;
         $size = strlen($oid);
 
@@ -188,8 +184,7 @@ class ASN1
      * @param $string $str the object identifier string
      * @return $string the binary DER-encoded object identifier
      */
-    static function encodeOID($str)
-    {
+    static function encodeOID($str) {
         $numbers = explode('.', $str);
 
         // First octet

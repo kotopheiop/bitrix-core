@@ -17,13 +17,14 @@ use Bitrix\Main\ORM\Fields\Field;
  */
 class BooleanValidator extends Validator
 {
-    public function validate($value, $primary, array $row, Field $field)
-    {
-        /** @var BooleanField $field */
-        if (in_array($field->normalizeValue($value), $field->getValues(), true)) {
-            return true;
-        }
+	public function validate($value, $primary, array $row, Field $field)
+	{
+		/** @var BooleanField $field */
+		if (in_array($field->normalizeValue($value), $field->getValues(), true))
+		{
+			return true;
+		}
 
-        return $this->getErrorMessage($value, $field);
-    }
+		return $this->getErrorMessage($value, $field);
+	}
 }

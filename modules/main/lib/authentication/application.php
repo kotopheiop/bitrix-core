@@ -12,29 +12,31 @@ use Bitrix\Main;
 
 class Application
 {
-    protected $validUrls = array();
+	protected $validUrls = array();
 
-    public function __construct()
-    {
-    }
+	public function __construct()
+	{
+	}
 
-    /**
-     * Checks the valid scope for the applicaton.
-     *
-     * @return bool
-     */
-    public function checkScope()
-    {
-        /** @var Main\HttpRequest $request */
-        $request = Main\Context::getCurrent()->getRequest();
-        $realPath = $request->getScriptFile();
+	/**
+	 * Checks the valid scope for the applicaton.
+	 *
+	 * @return bool
+	 */
+	public function checkScope()
+	{
+		/** @var Main\HttpRequest $request */
+		$request = Main\Context::getCurrent()->getRequest();
+		$realPath = $request->getScriptFile();
 
-        foreach ($this->validUrls as $url) {
-            if (strpos($realPath, $url) === 0) {
-                return true;
-            }
-        }
+		foreach($this->validUrls as $url)
+		{
+			if(strpos($realPath, $url) === 0)
+			{
+				return true;
+			}
+		}
 
-        return false;
-    }
+		return false;
+	}
 }

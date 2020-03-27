@@ -12,30 +12,30 @@ use Bitrix\Main\Entity;
 
 class EventMessageAttachmentTable extends Entity\DataManager
 {
-    /**
-     * @return string
-     */
-    public static function getTableName()
-    {
-        return 'b_event_message_attachment';
-    }
+	/**
+	 * @return string
+	 */
+	public static function getTableName()
+	{
+		return 'b_event_message_attachment';
+	}
 
-    /**
-     * @return array
-     */
-    public static function getMap()
-    {
-        return array(
-            'EVENT_MESSAGE_ID' => array(
-                'data_type' => 'integer',
-                'primary' => true,
-            ),
+	/**
+	 * @return array
+	 */
+	public static function getMap()
+	{
+		return array(
+			'EVENT_MESSAGE_ID' => array(
+				'data_type' => 'integer',
+				'primary' => true,
+			),
 
-            'FILE_ID' => array(
-                'data_type' => 'integer',
-                'primary' => true,
-            ),
-        );
-    }
+			'FILE_ID' => array(
+				'data_type' => 'integer',
+				'primary' => true,
+			),
+		);
+	}
 
 }

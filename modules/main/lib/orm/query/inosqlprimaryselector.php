@@ -12,5 +12,5 @@ use Bitrix\Main\ORM\Entity;
 
 interface INosqlPrimarySelector
 {
-    public function getEntityByPrimary(Entity $entity, $primary, $select);
+	public function getEntityByPrimary(Entity $entity, $primary, $select);
 }

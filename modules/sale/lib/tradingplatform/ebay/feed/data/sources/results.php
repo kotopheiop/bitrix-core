@@ -10,119 +10,126 @@ use \Bitrix\Sale\TradingPlatform\Ebay\Feed\ResultsTable;
 
 class Results extends DataSource implements \Iterator
 {
-    protected $siteId;
-    protected $feedsToCheck = array();
-    protected $resultFileContent = "";
-    protected $remotePathTmpl = "";
-    protected $filter = array();
+	protected $siteId;
+	protected $feedsToCheck = array();
+	protected $resultFileContent = "";
+	protected $remotePathTmpl = "";
+	protected $filter = array();
 
-    public function __construct($params)
-    {
-        if (!isset($params["SITE_ID"]) || strlen($params["SITE_ID"]) <= 0)
-            throw new ArgumentNullException("SITE_ID");
+	public function __construct($params)
+	{
+		if(!isset($params["SITE_ID"]) || strlen($params["SITE_ID"]) <= 0)
+			throw new ArgumentNullException("SITE_ID");
 
-        if (!isset($params["REMOTE_PATH_TMPL"]) || strlen($params["REMOTE_PATH_TMPL"]) <= 0)
-            throw new ArgumentNullException("REMOTE_PATH_TMPL");
+		if(!isset($params["REMOTE_PATH_TMPL"]) || strlen($params["REMOTE_PATH_TMPL"]) <= 0)
+			throw new ArgumentNullException("REMOTE_PATH_TMPL");
 
-        if (!isset($params["FILTER"]))
-            throw new ArgumentNullException("FILTER");
+		if(!isset($params["FILTER"]))
+			throw new ArgumentNullException("FILTER");
 
-        $this->siteId = $params["SITE_ID"];
-        $this->remotePathTmpl = $params["REMOTE_PATH_TMPL"];
-        $this->filter = $params["FILTER"];
-    }
+		$this->siteId = $params["SITE_ID"];
+		$this->remotePathTmpl = $params["REMOTE_PATH_TMPL"];
+		$this->filter = $params["FILTER"];
+	}
 
-    public function current()
-    {
-        return array(
-            "RESULT_ID" => $this->key(),
-            "CONTENT" => $this->resultFileContent
-        );
-    }
+	public function current()
+	{
+		return array(
+			"RESULT_ID" => $this->key(),
+			"CONTENT" => $this->resultFileContent
+		);
+	}
 
-    public function key()
-    {
-        return key($this->feedsToCheck);
-    }
+	public function key()
+	{
+		return key($this->feedsToCheck);
+	}
 
-    public function next()
-    {
-        $feedData = next($this->feedsToCheck);
+	public function next()
+	{
+		$feedData = next($this->feedsToCheck);
 
-        if ($feedData !== false)
-            $this->resultFileContent = $this->getFileContent($feedData);
-    }
+		if($feedData !== false)
+			$this->resultFileContent = $this->getFileContent($feedData);
+	}
 
-    public function rewind()
-    {
-        $this->feedsToCheck = array();
+	public function rewind()
+	{
+		$this->feedsToCheck = array();
 
-        $res = ResultsTable::getList(array(
-            'filter' => $this->filter
-        ));
+		$res = ResultsTable::getList(array(
+			'filter' => $this->filter
+		));
 
-        while ($feed = $res->fetch())
-            $this->feedsToCheck[$feed["ID"]] = $feed;
+		while($feed = $res->fetch())
+			$this->feedsToCheck[$feed["ID"]] = $feed;
 
-        $feedData = reset($this->feedsToCheck);
+		$feedData = reset($this->feedsToCheck);
 
-        if ($feedData !== false)
-            $this->resultFileContent = $this->getFileContent($feedData);
-    }
+		if($feedData !== false)
+			$this->resultFileContent = $this->getFileContent($feedData);
+	}
 
-    public function valid()
-    {
-        return current($this->feedsToCheck) !== false;
-    }
+	public function valid()
+	{
+		return current($this->feedsToCheck) !== false;
+	}
 
-    protected function createRemotePath($feedData)
-    {
-        return str_replace(
-            array(
-                "##FEED_TYPE##",
-                "##UPLOAD_DATE##"
-            ),
-            array(
-                $feedData["FEED_TYPE"],
-                $feedData["UPLOAD_TIME"]->format("M-d-Y")
-            ),
-            $this->remotePathTmpl
-        );
-    }
+	protected function createRemotePath($feedData)
+	{
+		return str_replace(
+			array(
+				"##FEED_TYPE##",
+				"##UPLOAD_DATE##"
+			),
+			array(
+				$feedData["FEED_TYPE"],
+				$feedData["UPLOAD_TIME"]->format("M-d-Y")
+			),
+			$this->remotePathTmpl
+		);
+	}
 
-    protected function getFileContent($feedData)
-    {
-        $result = "";
-        $timeToKeepFiles = 24;
-        $tmpDir = \CTempFile::GetDirectoryName($timeToKeepFiles);
-        CheckDirPath($tmpDir);
+	protected function getFileContent($feedData)
+	{
+		$result = "";
+		$timeToKeepFiles = 24;
+		$tmpDir = \CTempFile::GetDirectoryName($timeToKeepFiles);
+		CheckDirPath($tmpDir);
 
-        $sftp = \Bitrix\Sale\TradingPlatform\Ebay\Helper::getSftp($this->siteId);
+		$sftp = \Bitrix\Sale\TradingPlatform\Ebay\Helper::getSftp($this->siteId);
 
-        if (!$sftp)
-            return "";
+		if(!$sftp)
+			return "";
 
-        $sftp->connect();
-        $remotePath = $this->createRemotePath($feedData);
+		$sftp->connect();
+		$remotePath = $this->createRemotePath($feedData);
 
-        try {
-            $files = $sftp->getFilesList($remotePath);
-        } catch (SystemException $e) {
-            $files = array();
-        }
+		try
+		{
+			$files = $sftp->getFilesList($remotePath);
+		}
+		catch(SystemException $e)
+		{
+			$files = array();
+		}
 
-        foreach ($files as $file) {
-            if (!strstr($file, $feedData["FILENAME"]))
-                continue;
+		foreach($files as $file)
+		{
+			if(!strstr($file, $feedData["FILENAME"]))
+				continue;
 
-            if ($sftp->downloadFile($remotePath . "/" . $file, $tmpDir . $file)) {
-                $result = file_get_contents($tmpDir . $file);
-                Ebay::log(Logger::LOG_LEVEL_INFO, "EBAY_DATA_SOURCE_RESULTS_RECEIVED", $file, "File received successfully.", $this->siteId);
-            } else {
-                Ebay::log(Logger::LOG_LEVEL_ERROR, "EBAY_DATA_SOURCE_RESULTS_ERROR", $tmpDir . $file, "Can't receive file content.", $this->siteId);
-            }
-        }
+			if($sftp->downloadFile($remotePath."/".$file, $tmpDir.$file))
+			{
+				$result = file_get_contents($tmpDir.$file);
+				Ebay::log(Logger::LOG_LEVEL_INFO, "EBAY_DATA_SOURCE_RESULTS_RECEIVED", $file, "File received successfully.", $this->siteId);
+			}
+			else
+			{
+				Ebay::log(Logger::LOG_LEVEL_ERROR, "EBAY_DATA_SOURCE_RESULTS_ERROR", $tmpDir.$file, "Can't receive file content.", $this->siteId);
+			}
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 } 

@@ -4,8 +4,9 @@ namespace Bitrix\Sale\Sender;
 
 use Bitrix\Main\Loader;
 
-if (!Loader::includeModule('sender')) {
-    return;
+if (!Loader::includeModule('sender'))
+{
+	return;
 }
 
 class ConnectorOrder extends \Bitrix\Sender\Connector
@@ -27,16 +28,17 @@ class ConnectorOrder extends \Bitrix\Sender\Connector
         $runtime = array();
         $filter = array();
 
-        if ($this->getFieldValue('LID'))
+        if($this->getFieldValue('LID'))
             $filter['=LID'] = $this->getFieldValue('LID', null);
 
-        if ($this->getFieldValue('ID'))
+        if($this->getFieldValue('ID'))
             $filter['=ID'] = $this->getFieldValue('ID', 0);
 
-        if ($this->getFieldValue('USER_ID'))
+        if($this->getFieldValue('USER_ID'))
             $filter['=USER_ID'] = $this->getFieldValue('USER_ID', 0);
 
-        if ($this->getFieldValue('BASKET_PRODUCT_ID')) {
+        if($this->getFieldValue('BASKET_PRODUCT_ID'))
+        {
             $filter['=BASKET.PRODUCT_ID'] = $this->getFieldValue('BASKET_PRODUCT_ID', 0);
             $runtime['BASKET'] = array(
                 'data_type' => 'Bitrix\Sale\Internals\Basket',

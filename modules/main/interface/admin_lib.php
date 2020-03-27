@@ -1650,9 +1650,9 @@ class CAdminContextMenu
 	}
 
 	/**
+	 * @deprecated
 	 * @param $items
 	 * @param array $additional_items
-	 *@deprecated
 	 */
 	function CAdminContextMenu($items, $additional_items = array())
 	{
@@ -2048,10 +2048,10 @@ class CAdminResult extends CDBResult
 	}
 
 	/**
-	* @param mixed $res
+	* @deprecated
+ 	* @param mixed $res
 	* @param string $table_id
-	*@deprecated
- 	*/
+	*/
 	public function CAdminResult($res, $table_id)
 	{
 		self::__construct($res, $table_id);
@@ -2149,10 +2149,10 @@ class CAdminMessage
 	}
 
 	/**
-	* @param string|array $message
+	* @deprecated
+	 * @param string|array $message
 	 * @param CAdminException|bool $exception
-	*@deprecated
-	 */
+	*/
 	public function CAdminMessage($message, $exception=false)
 	{
 		self::__construct($message, $exception);

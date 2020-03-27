@@ -18,7 +18,7 @@ interface Message
      * Creates message from the given stream.
      *
      * @param \Protobuf\Stream|resource|string $stream
-     * @param \Protobuf\Configuration $configuration
+     * @param \Protobuf\Configuration          $configuration
      *
      * @return \Protobuf\Message
      */

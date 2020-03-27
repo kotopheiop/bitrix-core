@@ -17,28 +17,28 @@ use Bitrix\Sender\Internals\CodeBasedFactory;
  */
 class Factory extends CodeBasedFactory
 {
-    /**
-     * Get transport instances.
-     *
-     * @return iInstallable[]
-     */
-    public static function getInstallable()
-    {
-        $list = static::getObjectInstances(__NAMESPACE__ . '\iInstallable');
-        static::reset();
+	/**
+	 * Get transport instances.
+	 *
+	 * @return iInstallable[]
+	 */
+	public static function getInstallable()
+	{
+		$list = static::getObjectInstances(__NAMESPACE__ . '\iInstallable');
+		static::reset();
 
-        return $list;
-    }
+		return $list;
+	}
 
-    protected static function getInterface()
-    {
-        return __NAMESPACE__ . '\iInstallable';
-    }
+	protected static function getInterface()
+	{
+		return __NAMESPACE__ . '\iInstallable';
+	}
 
-    protected static function getClasses()
-    {
-        return array(
-            iInstallable::EVENT_NAME => Integration\EventHandler::onSenderPresetList(),
-        );
-    }
+	protected static function getClasses()
+	{
+		return array(
+			iInstallable::EVENT_NAME => Integration\EventHandler::onSenderPresetList(),
+		);
+	}
 }

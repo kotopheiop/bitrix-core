@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Report\VisualConstructor\Controller;
 
 

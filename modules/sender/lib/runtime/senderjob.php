@@ -17,99 +17,109 @@ use Bitrix\Sender\Internals\Model\LetterTable;
  */
 class SenderJob extends Job
 {
-    /** @var  int $letterId Letter ID. */
-    protected $letterId;
+	/** @var  int $letterId Letter ID. */
+	protected $letterId;
 
-    /** @var  int $campaignId Campaign ID. */
-    protected $campaignId;
+	/** @var  int $campaignId Campaign ID. */
+	protected $campaignId;
 
-    /**
-     * Set campaign ID.
-     *
-     * @param int $campaignId Campaign ID.
-     * @return $this
-     */
-    public function withCampaignId($campaignId)
-    {
-        $this->campaignId = $campaignId;
-        return $this;
-    }
+	/**
+	 * Set campaign ID.
+	 *
+	 * @param int $campaignId Campaign ID.
+	 * @return $this
+	 */
+	public function withCampaignId($campaignId)
+	{
+		$this->campaignId = $campaignId;
+		return $this;
+	}
 
-    /**
-     * Set letter ID.
-     *
-     * @param int $letterId Letter ID.
-     * @return $this
-     */
-    public function withLetterId($letterId)
-    {
-        $this->letterId = $letterId;
-        return $this;
-    }
+	/**
+	 * Set letter ID.
+	 *
+	 * @param int $letterId Letter ID.
+	 * @return $this
+	 */
+	public function withLetterId($letterId)
+	{
+		$this->letterId = $letterId;
+		return $this;
+	}
 
-    /**
-     * Actualize jobs.
-     * @return $this
-     */
-    public function actualize()
-    {
-        $filter = [];
-        if ($this->campaignId) {
-            $filter['=CAMPAIGN_ID'] = $this->campaignId;
-        }
-        if ($this->letterId) {
-            $filter['=ID'] = $this->letterId;
-        }
+	/**
+	 * Actualize jobs.
 
-        $list = LetterTable::getList(array(
-            'select' => ['ID', 'STATUS', 'AUTO_SEND_TIME', 'CAMPAIGN_ACTIVE' => 'CAMPAIGN.ACTIVE'],
-            'filter' => $filter
-        ));
-        foreach ($list as $row) {
-            $agentName = static::getAgentName($row['ID']);
-            if (!$agentName) {
-                continue;
-            }
+	 * @return $this
+	 */
+	public function actualize()
+	{
+		$filter = [];
+		if ($this->campaignId)
+		{
+			$filter['=CAMPAIGN_ID'] = $this->campaignId;
+		}
+		if ($this->letterId)
+		{
+			$filter['=ID'] = $this->letterId;
+		}
 
-            self::removeAgent($agentName);
+		$list = LetterTable::getList(array(
+			'select' => ['ID', 'STATUS', 'AUTO_SEND_TIME', 'CAMPAIGN_ACTIVE' => 'CAMPAIGN.ACTIVE'],
+			'filter' => $filter
+		));
+		foreach ($list as $row)
+		{
+			$agentName = static::getAgentName($row['ID']);
+			if (!$agentName)
+			{
+				continue;
+			}
 
-            if (Env::isSenderJobCron()) {
-                continue;
-            }
+			self::removeAgent($agentName);
 
-            if (empty($row['AUTO_SEND_TIME'])) {
-                continue;
-            }
+			if (Env::isSenderJobCron())
+			{
+				continue;
+			}
 
-            if ($row['CAMPAIGN_ACTIVE'] !== 'Y') {
-                continue;
-            }
+			if (empty($row['AUTO_SEND_TIME']))
+			{
+				continue;
+			}
 
-            $allowedStatuses = [LetterTable::STATUS_SEND, LetterTable::STATUS_PLAN];
-            if (!in_array($row['STATUS'], $allowedStatuses)) {
-                continue;
-            }
+			if ($row['CAMPAIGN_ACTIVE'] !== 'Y')
+			{
+				continue;
+			}
 
-            $interval = Option::get('sender', 'auto_agent_interval');
-            self::addAgent($agentName, $interval, $row['AUTO_SEND_TIME']);
-        }
+			$allowedStatuses = [LetterTable::STATUS_SEND, LetterTable::STATUS_PLAN];
+			if (!in_array($row['STATUS'], $allowedStatuses))
+			{
+				continue;
+			}
 
-        return $this;
-    }
+			$interval = Option::get('sender', 'auto_agent_interval');
+			self::addAgent($agentName, $interval, $row['AUTO_SEND_TIME']);
+		}
 
-    /**
-     * Get agent name.
-     *
-     * @param int $letterId Letter ID.
-     * @return string
-     */
-    public static function getAgentName($letterId)
-    {
-        $letterId = (int)$letterId;
-        if (!$letterId) {
-            return '';
-        }
+		return $this;
+	}
 
-        return '\Bitrix\Sender\MailingManager::chainSend(' . $letterId . ');';
-    }
+	/**
+	 * Get agent name.
+	 *
+	 * @param int $letterId Letter ID.
+	 * @return string
+	 */
+	public static function getAgentName($letterId)
+	{
+		$letterId = (int) $letterId;
+		if (!$letterId)
+		{
+			return '';
+		}
+
+		return '\Bitrix\Sender\MailingManager::chainSend(' . $letterId . ');';
+	}
 }

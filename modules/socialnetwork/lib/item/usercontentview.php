@@ -5,7 +5,6 @@
  * @subpackage socialnetwork
  * @copyright 2001-2017 Bitrix
  */
-
 namespace Bitrix\Socialnetwork\Item;
 
 use Bitrix\Main\Entity\ExpressionField;
@@ -16,246 +15,275 @@ use Bitrix\Main\DB\SqlQueryException;
 
 class UserContentView
 {
-    public static function getAvailability()
-    {
-        static $result = null;
-        if ($result !== null) {
-            return $result;
-        }
+	public static function getAvailability()
+	{
+		static $result = null;
+		if ($result !== null)
+		{
+			return $result;
+		}
 
-        $result = true;
-        /*
-        
-                if (!ModuleManager::isModuleInstalled('bitrix24'))
-                {
-                    return $result;
-                }
-        
-                if (Loader::includeModule('bitrix24'))
-                {
-                    $result = (
-                        !in_array(\CBitrix24::getLicenseType(), array('project'), true)
-                        || \CBitrix24::isNfrLicense()
-                        || \CBitrix24::isDemoLicense()
-                    );
-                }
-        */
-        return $result;
+		$result = true;
+/*
 
-    }
+		if (!ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return $result;
+		}
 
-    public static function getViewData($params = array())
-    {
-        if (!is_array($params)) {
-            return false;
-        }
+		if (Loader::includeModule('bitrix24'))
+		{
+			$result = (
+				!in_array(\CBitrix24::getLicenseType(), array('project'), true)
+				|| \CBitrix24::isNfrLicense()
+				|| \CBitrix24::isDemoLicense()
+			);
+		}
+*/
+		return $result;
 
-        $contentId = (isset($params['contentId']) ? $params['contentId'] : false);
-        if (empty($contentId)) {
-            return false;
-        }
+	}
 
-        $result = array();
+	public static function getViewData($params = array())
+	{
+		if (!is_array($params))
+		{
+			return false;
+		}
 
-        if (!is_array($contentId)) {
-            $contentId = array($contentId);
-        }
+		$contentId = (isset($params['contentId']) ? $params['contentId'] : false);
+		if (empty($contentId))
+		{
+			return false;
+		}
 
-        $res = UserContentViewTable::getList(array(
-            'filter' => array(
-                '@CONTENT_ID' => $contentId
-            ),
-            'select' => array('CNT', 'CONTENT_ID', 'RATING_TYPE_ID', 'RATING_ENTITY_ID'),
-            'runtime' => array(
-                new ExpressionField('CNT', 'COUNT(*)')
-            ),
-            'group' => array('CONTENT_ID')
-        ));
+		$result = array();
 
-        while ($content = $res->fetch()) {
-            $result[$content['CONTENT_ID']] = $content;
-        }
+		if (!is_array($contentId))
+		{
+			$contentId = array($contentId);
+		}
 
-        return $result;
-    }
+		$res = UserContentViewTable::getList(array(
+			'filter' => array(
+				'@CONTENT_ID' => $contentId
+			),
+			'select' => array('CNT', 'CONTENT_ID', 'RATING_TYPE_ID', 'RATING_ENTITY_ID'),
+			'runtime' => array(
+				new ExpressionField('CNT', 'COUNT(*)')
+			),
+			'group' => array('CONTENT_ID')
+		));
 
-    public static function getUserList($params = array())
-    {
-        global $USER;
+		while ($content = $res->fetch())
+		{
+			$result[$content['CONTENT_ID']] = $content;
+		}
 
-        $result = [
-            'items' => [],
-            'hiddenCount' => 0
-        ];
+		return $result;
+	}
 
-        $contentId = (!empty($params['contentId']) ? $params['contentId'] : false);
-        $pageNum = (!empty($params['page']) ? intval($params['page']) : 1);
-        $pathToUserProfile = (!empty($params['pathToUserProfile']) ? $params['pathToUserProfile'] : '');
-        $pageSize = 10;
+	public static function getUserList($params = array())
+	{
+		global $USER;
 
-        if (
-            !$contentId
-            && $pageNum <= 0
-        ) {
-            return $result;
-        }
+		$result = [
+			'items' => [],
+			'hiddenCount' => 0
+		];
 
-        $select = [
-            'USER_ID',
-            'DATE_VIEW',
-            'USER_NAME' => 'USER.NAME',
-            'USER_LAST_NAME' => 'USER.LAST_NAME',
-            'USER_SECOND_NAME' => 'USER.SECOND_NAME',
-            'USER_LOGIN' => 'USER.LOGIN',
-            'USER_PERSONAL_PHOTO' => 'USER.PERSONAL_PHOTO'
-        ];
+		$contentId = (!empty($params['contentId']) ? $params['contentId'] : false);
+		$pageNum = (!empty($params['page']) ? intval($params['page']) : 1);
+		$pathToUserProfile = (!empty($params['pathToUserProfile']) ? $params['pathToUserProfile'] : '');
+		$pageSize = 10;
 
-        $extranetInstalled = $mailInstalled = false;
-        $extranetIdList = array();
+		if (
+			!$contentId
+			&& $pageNum <= 0
+		)
+		{
+			return $result;
+		}
 
-        if (ModuleManager::isModuleInstalled('extranet')) {
-            $extranetInstalled = true;
-            $select['USER_UF_DEPARTMENT'] = "USER.UF_DEPARTMENT";
-        }
+		$select = [
+			'USER_ID',
+			'DATE_VIEW',
+			'USER_NAME' => 'USER.NAME',
+			'USER_LAST_NAME' => 'USER.LAST_NAME',
+			'USER_SECOND_NAME' => 'USER.SECOND_NAME',
+			'USER_LOGIN' => 'USER.LOGIN',
+			'USER_PERSONAL_PHOTO' => 'USER.PERSONAL_PHOTO'
+		];
 
-        if (IsModuleInstalled('mail')) {
-            $mailInstalled = true;
-            $select['USER_EXTERNAL_AUTH_ID'] = "USER.EXTERNAL_AUTH_ID";
-        }
+		$extranetInstalled = $mailInstalled = false;
+		$extranetIdList = array();
 
-        $queryParams = [
-            'order' => [
-                'DATE_VIEW' => 'DESC'
-            ],
-            'filter' => [
-                '=CONTENT_ID' => $contentId
-            ],
-            'select' => $select
-        ];
+		if (ModuleManager::isModuleInstalled('extranet'))
+		{
+			$extranetInstalled = true;
+			$select['USER_UF_DEPARTMENT'] = "USER.UF_DEPARTMENT";
+		}
 
-        if (!$extranetInstalled) {
-            $queryParams['limit'] = $pageSize;
-            $queryParams['offset'] = ($pageNum - 1) * $pageSize;
-        }
+		if (IsModuleInstalled('mail'))
+		{
+			$mailInstalled = true;
+			$select['USER_EXTERNAL_AUTH_ID'] = "USER.EXTERNAL_AUTH_ID";
+		}
 
-        $userList = [];
-        $timeZoneOffset = \CTimeZone::getOffset();
+		$queryParams = [
+			'order' => [
+				'DATE_VIEW' => 'DESC'
+			],
+			'filter' => [
+				'=CONTENT_ID' => $contentId
+			],
+			'select' => $select
+		];
 
-        $res = UserContentViewTable::getList($queryParams);
+		if (!$extranetInstalled)
+		{
+			$queryParams['limit'] = $pageSize;
+			$queryParams['offset'] = ($pageNum - 1) * $pageSize;
+		}
 
-        while ($fields = $res->fetch()) {
-            $photoSrc = '';
-            if (
-                !empty($fields['USER_PERSONAL_PHOTO'])
-                && intval($fields['USER_PERSONAL_PHOTO']) > 0
-            ) {
-                $file = \CFile::resizeImageGet(
-                    $fields["USER_PERSONAL_PHOTO"],
-                    array('width' => 58, 'height' => 58),
-                    BX_RESIZE_IMAGE_EXACT,
-                    false
-                );
-                $photoSrc = $file["src"];
-            }
+		$userList = [];
+		$timeZoneOffset = \CTimeZone::getOffset();
 
-            $userFields = [
-                'NAME' => $fields['USER_NAME'],
-                'LAST_NAME' => $fields['USER_LAST_NAME'],
-                'SECOND_NAME' => $fields['USER_SECOND_NAME'],
-                'LOGIN' => $fields['USER_LOGIN'],
-            ];
+		$res = UserContentViewTable::getList($queryParams);
 
-            $userType = '';
-            if (
-                $mailInstalled
-                && $fields["USER_EXTERNAL_AUTH_ID"] == "email"
-            ) {
-                $userType = "mail";
-            } elseif (
-                $extranetInstalled
-                && (
-                    empty($fields["USER_UF_DEPARTMENT"])
-                    || intval($fields["USER_UF_DEPARTMENT"][0]) <= 0
-                )
-            ) {
-                $userType = "extranet";
-                $extranetIdList[] = $fields["USER_ID"];
-            }
+		while ($fields = $res->fetch())
+		{
+			$photoSrc = '';
+			if (
+				!empty($fields['USER_PERSONAL_PHOTO'])
+				&& intval($fields['USER_PERSONAL_PHOTO']) > 0
+			)
+			{
+				$file = \CFile::resizeImageGet(
+					$fields["USER_PERSONAL_PHOTO"],
+					array('width' => 58, 'height' => 58),
+					BX_RESIZE_IMAGE_EXACT,
+					false
+				);
+				$photoSrc = $file["src"];
+			}
 
-            $dateView = ($fields['DATE_VIEW'] instanceof \Bitrix\Main\Type\DateTime ? $fields['DATE_VIEW']->toString() : '');
+			$userFields = [
+				'NAME' => $fields['USER_NAME'],
+				'LAST_NAME' => $fields['USER_LAST_NAME'],
+				'SECOND_NAME' => $fields['USER_SECOND_NAME'],
+				'LOGIN' => $fields['USER_LOGIN'],
+			];
 
-            $userList[$fields['USER_ID']] = [
-                'ID' => $fields['USER_ID'],
-                'TYPE' => $userType,
-                'URL' => \CUtil::jSEscape(\CComponentEngine::makePathFromTemplate($pathToUserProfile, [
-                    "UID" => $fields["USER_ID"],
-                    "user_id" => $fields["USER_ID"],
-                    "USER_ID" => $fields["USER_ID"]
-                ])),
-                'PHOTO_SRC' => $photoSrc,
-                'FULL_NAME' => \CUser::formatName(\CSite::getNameFormat(), $userFields, true, true),
-                'DATE_VIEW' => $dateView,
-                'DATE_VIEW_FORMATTED' => (!empty($dateView) ? \CComponentUtil::getDateTimeFormatted(MakeTimeStamp($dateView), "FULL", $timeZoneOffset) : '')
-            ];
-        }
+			$userType = '';
+			if (
+				$mailInstalled
+				&& $fields["USER_EXTERNAL_AUTH_ID"] == "email"
+			)
+			{
+				$userType = "mail";
+			}
+			elseif (
+				$extranetInstalled
+				&& (
+					empty($fields["USER_UF_DEPARTMENT"])
+					|| intval($fields["USER_UF_DEPARTMENT"][0]) <= 0
+				)
+			)
+			{
+				$userType = "extranet";
+				$extranetIdList[] = $fields["USER_ID"];
+			}
 
-        $userIdToCheckList = [];
+			$dateView = ($fields['DATE_VIEW'] instanceof \Bitrix\Main\Type\DateTime ? $fields['DATE_VIEW']->toString() : '');
 
-        if (Loader::includeModule('extranet')) {
-            $userIdToCheckList = (
-            \CExtranet::isIntranetUser(SITE_ID, $USER->getId())
-                ? $extranetIdList
-                : array_keys($userList)
-            );
-        }
+			$userList[$fields['USER_ID']] = [
+				'ID' => $fields['USER_ID'],
+				'TYPE' => $userType,
+				'URL' => \CUtil::jSEscape(\CComponentEngine::makePathFromTemplate($pathToUserProfile, [
+					"UID" => $fields["USER_ID"],
+					"user_id" => $fields["USER_ID"],
+					"USER_ID" => $fields["USER_ID"]
+				])),
+				'PHOTO_SRC' => $photoSrc,
+				'FULL_NAME' => \CUser::formatName(\CSite::getNameFormat(), $userFields, true, true),
+				'DATE_VIEW' => $dateView,
+				'DATE_VIEW_FORMATTED' => (!empty($dateView) ? \CComponentUtil::getDateTimeFormatted(MakeTimeStamp($dateView), "FULL", $timeZoneOffset) : '')
+			];
+		}
 
-        if (!empty($userIdToCheckList)) {
-            $myGroupsUserList = \CExtranet::getMyGroupsUsersSimple(\CExtranet::getExtranetSiteID());
-            foreach ($userIdToCheckList as $userIdToCheck) {
-                if (
-                    !in_array($userIdToCheck, $myGroupsUserList)
-                    && $userIdToCheck != $USER->getId()
-                ) {
-                    unset($userList[$userIdToCheck]);
-                    $result['hiddenCount']++;
-                }
-            }
-        }
+		$userIdToCheckList = [];
 
-        if (!$extranetInstalled) {
-            $result['items'] = $userList;
-        } else {
-            if ($pageNum <= ((count($userList) / $pageSize) + 1)) {
-                $res = new \CDBResult();
-                $res->initFromArray($userList);
-                $res->navStart($pageSize, false, $pageNum);
+		if (Loader::includeModule('extranet'))
+		{
+			$userIdToCheckList = (
+				\CExtranet::isIntranetUser(SITE_ID, $USER->getId())
+					? $extranetIdList
+					: array_keys($userList)
+			);
+		}
 
-                while ($user = $res->fetch()) {
-                    $result['items'][] = $user;
-                }
-            } else {
-                $result['items'] = [];
-            }
-        }
+		if (!empty($userIdToCheckList))
+		{
+			$myGroupsUserList = \CExtranet::getMyGroupsUsersSimple(\CExtranet::getExtranetSiteID());
+			foreach ($userIdToCheckList as $userIdToCheck)
+			{
+				if (
+					!in_array($userIdToCheck, $myGroupsUserList)
+					&& $userIdToCheck != $USER->getId()
+				)
+				{
+					unset($userList[$userIdToCheck]);
+					$result['hiddenCount']++;
+				}
+			}
+		}
 
-        return $result;
-    }
+		if (!$extranetInstalled)
+		{
+			$result['items'] = $userList;
+		}
+		else
+		{
+			if ($pageNum <= ((count($userList) / $pageSize) + 1))
+			{
+				$res = new \CDBResult();
+				$res->initFromArray($userList);
+				$res->navStart($pageSize, false, $pageNum);
 
-    public static function deleteNoDemand($userId = 0)
-    {
-        $userId = intval($userId);
-        if ($userId <= 0) {
-            return false;
-        }
+				while($user = $res->fetch())
+				{
+					$result['items'][] = $user;
+				}
+			}
+			else
+			{
+				$result['items'] = [];
+			}
+		}
 
-        $result = true;
+		return $result;
+	}
 
-        try {
-            \Bitrix\Main\Application::getConnection()->queryExecute("DELETE FROM " . UserContentViewTable::getTableName() . " WHERE USER_ID = " . $userId);
-        } catch (SqlQueryException $exception) {
-            $result = false;
-        }
+	public static function deleteNoDemand($userId = 0)
+	{
+		$userId = intval($userId);
+		if ($userId <= 0)
+		{
+			return false;
+		}
 
-        return $result;
-    }
+		$result = true;
+
+		try
+		{
+			\Bitrix\Main\Application::getConnection()->queryExecute("DELETE FROM ".UserContentViewTable::getTableName()." WHERE USER_ID = ".$userId);
+		}
+		catch (SqlQueryException $exception)
+		{
+			$result = false;
+		}
+
+		return $result;
+	}
 }

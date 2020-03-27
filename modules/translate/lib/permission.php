@@ -3,43 +3,160 @@
 namespace Bitrix\Translate;
 
 use Bitrix\Main;
+use Bitrix\Translate;
 
 
 class Permission
 {
-    const WRITE = 'W';
-    const READ = 'R';
-    const DENY = 'D';
+	const SOURCE = 'X';
+	const WRITE = 'W';
+	const READ = 'R';
+	const DENY = 'D';
 
-    /** @var array */
-    private static $initFolders = array();
+	/**
+	 * Checks user's access to path.
+	 *
+	 * @param string $path Path to check.
+	 *
+	 * @return bool
+	 */
+	public static function isAllowPath($path)
+	{
+		static $initFolders;
+		if (empty($initFolders))
+		{
+			$initFolders = Translate\Config::getInitPath();
+			if (empty($initFolders))
+			{
+				$initFolders = array(Translate\Config::getDefaultPath());
+			}
+		}
 
-    /**
-     * Checks user's access to path.
-     *
-     * @param string $path Path to check.
-     *
-     * @return bool
-     */
-    public static function isAllowPath($path)
-    {
-        if (empty(self::$initFolders)) {
-            $initFolders = trim((string)Main\Config\Option::get('translate', 'INIT_FOLDERS', \Bitrix\Translate\TRANSLATE_DEFAULT_PATH));
-            $initFolders = explode(',', $initFolders);
-            foreach ($initFolders as $oneFolder) {
-                self::$initFolders[] = trim($oneFolder);
-            }
-        }
+		$path = (string)$path;
+		$allowPath = false;
+		foreach ($initFolders as $oneFolder)
+		{
+			if (strpos($path, $oneFolder) === 0)
+			{
+				$allowPath = true;
+				break;
+			}
+		}
 
-        $path = (string)$path;
-        $allowPath = false;
-        foreach (self::$initFolders as $oneFolder) {
-            if (strpos($path, $oneFolder) === 0) {
-                $allowPath = true;
-                break;
-            }
-        }
+		return $allowPath;
+	}
 
-        return $allowPath;
-    }
+	/**
+	 * Return true if current user can edit php.
+	 *
+	 * @param \CUser|Main\Engine\CurrentUser $checkUser Current user check for.
+	 *
+	 * @return bool
+	 */
+	public static function canEditSource($checkUser)
+	{
+		if($checkUser instanceof \CUser || $checkUser instanceof Main\Engine\CurrentUser)
+		{
+			return $checkUser->canDoOperation('edit_php');
+		}
+
+		return false;
+	}
+
+
+	/**
+	 * Determines if current user is admin.
+	 *
+	 * @param \CUser|Main\Engine\CurrentUser $checkUser User.
+	 *
+	 * @return bool
+	 */
+	public static function isAdmin($checkUser)
+	{
+		if(!($checkUser instanceof \CUser) && !($checkUser instanceof Main\Engine\CurrentUser))
+		{
+			return false;
+		}
+
+		if($checkUser->isAdmin())
+		{
+			return true;
+		}
+
+		try
+		{
+			if(\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') && \Bitrix\Main\Loader::includeModule('bitrix24'))
+			{
+				return \CBitrix24::isPortalAdmin($checkUser->getId());
+			}
+		}
+		catch(\Exception $e)
+		{
+		}
+
+		return false;
+	}
+
+
+	/**
+	 * Return true if current user can view module pages.
+	 *
+	 * @param \CUser|Main\Engine\CurrentUser $checkUser User.
+	 *
+	 * @return bool
+	 */
+	public static function canView($checkUser)
+	{
+		if(!($checkUser instanceof \CUser) && !($checkUser instanceof Main\Engine\CurrentUser))
+		{
+			return false;
+		}
+
+		if (self::isAdmin($checkUser))
+		{
+			return true;
+		}
+
+		if ($checkUser instanceof Main\Engine\CurrentUser)
+		{
+			$userRights = \CMain::getUserRight('translate', $checkUser->getUserGroups());
+		}
+		elseif ($checkUser instanceof \CUser)
+		{
+			$userRights = \CMain::getUserRight('translate', $checkUser->getUserGroupArray());
+		}
+
+		return ($userRights >= self::READ);
+	}
+
+	/**
+	 * Return true if current user can edit on module pages.
+	 *
+	 * @param \CUser|Main\Engine\CurrentUser $checkUser User.
+	 *
+	 * @return bool
+	 */
+	public static function canEdit($checkUser)
+	{
+		if(!($checkUser instanceof \CUser) && !($checkUser instanceof Main\Engine\CurrentUser))
+		{
+			return false;
+		}
+
+		if (self::isAdmin($checkUser))
+		{
+			return true;
+		}
+
+		if ($checkUser instanceof Main\Engine\CurrentUser)
+		{
+			$userRights = \CMain::getUserRight('translate', $checkUser->getUserGroups());
+		}
+		elseif ($checkUser instanceof \CUser)
+		{
+			$userRights = \CMain::getUserRight('translate', $checkUser->getUserGroupArray());
+		}
+
+		return ($userRights >= self::WRITE);
+	}
 }

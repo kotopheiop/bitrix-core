@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Rest\Event;
 
 use Bitrix\Main\Loader;
@@ -8,103 +7,115 @@ use Bitrix\Rest\EventOfflineTable;
 
 class ProviderOffline implements ProviderOfflineInterface
 {
-    /**
-     * @var ProviderOffline
-     */
-    protected static $instance = null;
+	/**
+	 * @var ProviderOffline
+	 */
+	protected static $instance = null;
 
-    public static function instance()
-    {
-        if (static::$instance === null) {
-            static::$instance = new static();
-        }
+	public static function instance()
+	{
+		if(static::$instance === null)
+		{
+			static::$instance = new static();
+		}
 
-        return static::$instance;
-    }
+		return static::$instance;
+	}
 
-    public function send(array $eventList)
-    {
-        $serverAuthData = $this->getServerAuthData();
+	public function send(array $eventList)
+	{
+		$serverAuthData = $this->getServerAuthData();
 
-        $offlineEventsCount = array();
+		$offlineEventsCount = array();
 
-        foreach ($eventList as $item) {
-            $application = $item['APPLICATION'];
-            $handler = $item['HANDLER'];
+		foreach($eventList as $item)
+		{
+			$application = $item['APPLICATION'];
+			$handler = $item['HANDLER'];
 
-            if (
-                $serverAuthData['client_id'] !== $application['CLIENT_ID']
-                || $serverAuthData['auth_connector'] !== $handler['CONNECTOR_ID']
-            ) {
-                if (!isset($offlineEventsCount[$application['CLIENT_ID']])) {
-                    $offlineEventsCount[$application['CLIENT_ID']] = array();
-                }
+			if(
+				$serverAuthData['client_id'] !== $application['CLIENT_ID']
+				|| $serverAuthData['auth_connector'] !== $handler['CONNECTOR_ID']
+			)
+			{
+				if(!isset($offlineEventsCount[$application['CLIENT_ID']]))
+				{
+					$offlineEventsCount[$application['CLIENT_ID']] = array();
+				}
 
-                if (!isset($offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']])) {
-                    $offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']] = 0;
-                }
+				if(!isset($offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']]))
+				{
+					$offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']] = 0;
+				}
 
-                EventOfflineTable::callEvent(array(
-                    'APP_ID' => $application['ID'],
-                    'EVENT_NAME' => $handler['EVENT_NAME'],
-                    'EVENT_DATA' => $item['DATA'],
-                    'EVENT_ADDITIONAL' => $item['AUTH'],
-                    'CONNECTOR_ID' => $handler['CONNECTOR_ID'],
-                ));
+				EventOfflineTable::callEvent(array(
+					'APP_ID' => $application['ID'],
+					'EVENT_NAME' => $handler['EVENT_NAME'],
+					'EVENT_DATA' => $item['DATA'],
+					'EVENT_ADDITIONAL' => $item['AUTH'],
+					'CONNECTOR_ID' => $handler['CONNECTOR_ID'],
+				));
 
-                $offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']]++;
-            }
-        }
+				$offlineEventsCount[$application['CLIENT_ID']][$handler['CONNECTOR_ID']]++;
+			}
+		}
 
-        if (count($offlineEventsCount) > 0) {
-            $this->notifyApplications($offlineEventsCount);
-        }
-    }
+		if(count($offlineEventsCount) > 0)
+		{
+			$this->notifyApplications($offlineEventsCount);
+		}
+	}
 
-    protected function getServerAuthData()
-    {
-        $server = \CRestServer::instance();
-        $serverAuthData = array('auth_connector' => '', 'client_id' => '');
-        if ($server !== null) {
-            $serverAuthData = $server->getAuthData();
-            if (!isset($serverAuthData['auth_connector'])) {
-                $serverAuthData['auth_connector'] = '';
-            }
+	protected function getServerAuthData()
+	{
+		$server = \CRestServer::instance();
+		$serverAuthData = array('auth_connector' => '', 'client_id' => '');
+		if($server !== null)
+		{
+			$serverAuthData = $server->getAuthData();
+			if(!isset($serverAuthData['auth_connector']))
+			{
+				$serverAuthData['auth_connector'] = '';
+			}
 
-            $serverAuthData['client_id'] = $server->getClientId();
-        }
+			$serverAuthData['client_id'] = $server->getClientId();
+		}
 
-        return $serverAuthData;
-    }
+		return $serverAuthData;
+	}
 
-    protected function notifyApplications(array $counters)
-    {
-        foreach ($counters as $clientId => $connectorCounters) {
-            if (is_array($connectorCounters) && count($connectorCounters) > 0) {
-                $this->notifyApplication($clientId, $connectorCounters);
-            }
-        }
-    }
+	protected function notifyApplications(array $counters)
+	{
+		foreach($counters as $clientId => $connectorCounters)
+		{
+			if(is_array($connectorCounters) && count($connectorCounters) > 0)
+			{
+				$this->notifyApplication($clientId, $connectorCounters);
+			}
+		}
+	}
 
-    protected function notifyApplication($clientId, array $connectorCounters)
-    {
-        if (Loader::includeModule('pull')) {
-            $eventParam = array();
+	protected function notifyApplication($clientId, array $connectorCounters)
+	{
+		if(Loader::includeModule('pull'))
+		{
+			$eventParam = array();
 
-            foreach ($connectorCounters as $connectorId => $count) {
-                $eventParam[] = array(
-                    'connector_id' => $connectorId,
-                    'count' => $count
-                );
-            }
+			foreach($connectorCounters as $connectorId => $count)
+			{
+				$eventParam[] = array(
+					'connector_id' => $connectorId,
+					'count' => $count
+				);
+			}
 
-            Pull\Event::add(Pull\Event::SHARED_CHANNEL, array(
-                'module_id' => 'rest',
-                'command' => 'event_offline',
-                'params' => $eventParam,
-            ), $clientId);
-        }
-    }
+			Pull\Event::add(Pull\Event::SHARED_CHANNEL, array(
+				'module_id' => 'rest',
+				'command' => 'event_offline',
+				'params' => $eventParam,
+			), $clientId);
+		}
+	}
 
 }
 

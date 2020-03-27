@@ -1,22 +1,21 @@
 <?
-
 abstract class CBPRuntimeService
 {
-    protected $runtime;
+	protected $runtime;
 
-    public function SetRuntime(CBPRuntime $runtime)
-    {
-        $this->runtime = $runtime;
-    }
+	public function SetRuntime(CBPRuntime $runtime)
+	{
+		$this->runtime = $runtime;
+	}
 
-    public function Start(CBPRuntime $runtime = null)
-    {
-        if ($runtime != null)
-            $this->SetRuntime($runtime);
-    }
+	public function Start(CBPRuntime $runtime = null)
+	{
+		if ($runtime != null)
+			$this->SetRuntime($runtime);
+	}
 
-    public function Stop()
-    {
-
-    }
+	public function Stop()
+	{
+		
+	}
 }

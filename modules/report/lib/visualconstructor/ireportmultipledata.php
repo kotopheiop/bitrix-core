@@ -1,5 +1,4 @@
 <?php
-
 namespace Bitrix\Report\VisualConstructor;
 
 /**
@@ -8,24 +7,24 @@ namespace Bitrix\Report\VisualConstructor;
  */
 interface IReportMultipleData extends IReportData
 {
-    /**
-     * array with format
-     * array(
-     *     'items' => array(
-     *            array(
-     *                'label' => 'Some Title',
-     *                'value' => 5,
-     *                'targetUrl' => 'http://url.domain?params=param'
-     *          )
-     *     )
-     * )
-     * @return array
-     */
-    public function getMultipleData();
+	/**
+	 * array with format
+	 * array(
+	 *     'items' => array(
+	 *     	    array(
+	 *     		    'label' => 'Some Title',
+	 *     		    'value' => 5,
+	 *     		    'targetUrl' => 'http://url.domain?params=param'
+	 *          )
+	 *     )
+	 * )
+	 * @return array
+	 */
+	public function getMultipleData();
 
-    /**
-     * @return array
-     */
-    public function getMultipleDemoData();
+	/**
+	 * @return array
+	 */
+	public function getMultipleDemoData();
 
 }

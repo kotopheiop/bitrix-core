@@ -1,7 +1,7 @@
 <?php
 
 use Bitrix\Sale\Location\ExternalTable,
-    \Bitrix\Main\Localization\Loc;
+	\Bitrix\Main\Localization\Loc;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -11,148 +11,150 @@ IncludeModuleLangFile(__FILE__);
  */
 class CSaleYMLocation
 {
-    private $cityNames = null;
-    private $cacheId = "CSaleYMLocations";
+	private $cityNames = null;
+	private $cacheId = "CSaleYMLocations";
 
-    const EXTERNAL_SERVICE_CODE = 'YAMARKET';
+	const EXTERNAL_SERVICE_CODE = 'YAMARKET';
 
-    public function __construct()
-    {
-    }
+	public function __construct(){}
 
-    /**
-     * returns locations data
-     */
-    private function getData()
-    {
-        if ($this->cityNames !== null)
-            return $this->cityNames;
+	/**
+	 * returns locations data
+	 */
+	private function getData()
+	{
+		if($this->cityNames !== null)
+			return $this->cityNames;
 
-        $ttl = 2592000;
-        $cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
+		$ttl = 2592000;
+		$cacheManager = \Bitrix\Main\Application::getInstance()->getManagedCache();
 
-        if (false && $cacheManager->read($ttl, $this->cacheId)) {
-            $cityNames = $cacheManager->get($this->cacheId);
-        } else {
-            $cityNames = $this->loadDataToCache();
-            $cacheManager->set($this->cacheId, $cityNames);
-        }
+		if(false && $cacheManager->read($ttl, $this->cacheId))
+		{
+			$cityNames = $cacheManager->get($this->cacheId);
+		}
+		else
+		{
+			$cityNames = $this->loadDataToCache();
+			$cacheManager->set($this->cacheId, $cityNames);
+		}
 
-        $this->cityNames = $cityNames;
-        return $cityNames;
-    }
+		$this->cityNames = $cityNames;
+		return $cityNames;
+	}
 
-    /**
-     * Loads data from base
-     */
+	/**
+	 * Loads data from base
+	 */
 
-    private function loadDataToCache()
-    {
-        $result = array();
+	private function loadDataToCache()
+	{
+		$result = array();
 
-        $res = \Bitrix\Sale\Location\LocationTable::getList(array(
-            'filter' => array(
-                '=NAME.LANGUAGE_ID' => 'ru',
-                '=TYPE.CODE' => array('CITY')
-            ),
-            'select' => array(
-                'ID',
-                'NAME_NAME' => 'NAME.NAME'
-            )
-        ));
+		$res = \Bitrix\Sale\Location\LocationTable::getList(array(
+			'filter' => array(
+				'=NAME.LANGUAGE_ID' => 'ru',
+				'=TYPE.CODE' => array('CITY')
+			),
+			'select' => array(
+				'ID',
+				'NAME_NAME' => 'NAME.NAME'
+			)
+		));
 
-        $replaceFrom = explode(',', Loc::getMessage('SALE_YML_REPLACE_FROM'));
+		$replaceFrom  = explode(',', Loc::getMessage('SALE_YML_REPLACE_FROM'));
 
-        while ($loc = $res->fetch()) {
-            $result[$loc['ID']] = str_replace(
-                $replaceFrom,
-                Loc::getMessage('SALE_YML_REPLACE_TO'),
-                ToLower($loc['NAME_NAME'])
-            );
-        }
+		while($loc = $res->fetch())
+		{
+			$result[$loc['ID']] = str_replace(
+				$replaceFrom,
+				Loc::getMessage('SALE_YML_REPLACE_TO'),
+				ToLower($loc['NAME_NAME'])
+			);
+		}
 
-        return $result;
-    }
+		return $result;
+	}
 
-    /**
-     * @param $cityName
-     * @return int location id
-     */
-    public function getLocationByCityName($cityName)
-    {
-        $this->getData();
-        $result = array_search(
-            str_replace(
-                explode(
-                    ',',
-                    Loc::getMessage('SALE_YML_REPLACE_FROM')
-                ),
-                Loc::getMessage('SALE_YML_REPLACE_TO'),
-                ToLower(
-                    $cityName
-                )
-            ),
-            $this->cityNames
-        );
-        return $result;
-    }
+	/**
+	 * @param $cityName
+	 * @return int location id
+	 */
+	public function getLocationByCityName($cityName)
+	{
+		$this->getData();
+		$result =  array_search(
+			str_replace(
+				explode(
+					',',
+					Loc::getMessage('SALE_YML_REPLACE_FROM')
+				),
+				Loc::getMessage('SALE_YML_REPLACE_TO'),
+				ToLower(
+					$cityName
+				)
+			),
+			$this->cityNames
+		);
+		return $result;
+	}
 
-    protected function getLocationByExternalIds($yandexLocationsIds)
-    {
-        if (empty($yandexLocationsIds))
-            return array();
+	protected function getLocationByExternalIds($yandexLocationsIds)
+	{
+		if(empty($yandexLocationsIds))
+			return array();
 
-        $result = array();
+		$result = array();
 
-        $res = ExternalTable::getList(array(
-            'filter' => array(
-                '=XML_ID' => $yandexLocationsIds,
-                '=SERVICE.CODE' => self::EXTERNAL_SERVICE_CODE
-            )
-        ));
+		$res = ExternalTable::getList(array(
+			'filter' => array(
+				'=XML_ID' => $yandexLocationsIds,
+				'=SERVICE.CODE' => self::EXTERNAL_SERVICE_CODE
+			)
+		));
 
-        while ($loc = $res->fetch())
-            $result[$loc['XML_ID']] = $loc['LOCATION_ID'];
+		while($loc = $res->fetch())
+			$result[$loc['XML_ID']] = $loc['LOCATION_ID'];
 
-        return $result;
-    }
+		return $result;
+	}
 
-    protected function extractLocations($yandexLocation)
-    {
-        if (empty($yandexLocation) || !is_array($yandexLocation))
-            return array();
+	protected function extractLocations($yandexLocation)
+	{
+		if(empty($yandexLocation) || !is_array($yandexLocation))
+			return array();
 
-        $result = array();
-        $tmp = $yandexLocation;
-        unset($tmp['parent']);
-        $result[$tmp['id']] = $tmp;
+		$result = array();
+		$tmp = $yandexLocation;
+		unset($tmp['parent']);
+		$result[$tmp['id']] = $tmp;
 
-        if (!empty($yandexLocation['parent']))
-            $result = $result + $this->extractLocations($yandexLocation['parent']);
+		if(!empty($yandexLocation['parent']))
+			$result = $result + $this->extractLocations($yandexLocation['parent']);
 
-        return $result;
-    }
+		return $result;
+	}
 
-    public function getLocationId($yandexLocation)
-    {
-        if (empty($yandexLocation) || !is_array($yandexLocation))
-            return false;
+	public function getLocationId($yandexLocation)
+	{
+		if(empty($yandexLocation) || !is_array($yandexLocation))
+			return false;
 
-        $locations = $this->extractLocations($yandexLocation);
+		$locations = $this->extractLocations($yandexLocation);
 
-        if (empty($locations))
-            return false;
+		if(empty($locations))
+			return false;
 
-        $mapExternal = $this->getLocationByExternalIds(array_keys($locations));
+		$mapExternal = $this->getLocationByExternalIds(array_keys($locations));
 
-        if (!empty($mapExternal))
-            foreach ($locations as $yLocId => $yLocParams)
-                if (!empty($mapExternal[$yLocId]))
-                    return $mapExternal[$yLocId];
+		if(!empty($mapExternal))
+			foreach($locations as $yLocId => $yLocParams)
+				if(!empty($mapExternal[$yLocId]))
+					return $mapExternal[$yLocId];
 
-        if (empty($yandexLocation["name"]))
-            return false;
+		if(empty($yandexLocation["name"]))
+			return false;
 
-        return $this->getLocationByCityName($yandexLocation["name"]);
-    }
+		return $this->getLocationByCityName($yandexLocation["name"]);
+	}
 }

@@ -13,5 +13,4 @@ use Bitrix\Main\Web\Uri;
  *
  */
 final class ContentUri extends Uri
-{
-}
+{}

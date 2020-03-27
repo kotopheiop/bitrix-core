@@ -7,95 +7,103 @@ use Bitrix\Main\Config\Option;
 
 final class Config
 {
-    static private $baseCurrency;
+	static private $baseCurrency;
 
-    static public function getBaseCurrency()
-    {
-        if (!$currency =& self::$baseCurrency) {
-            $currency = Option::get('conversion', 'BASE_CURRENCY', 'RUB');
-        }
+	static public function getBaseCurrency()
+	{
+		if (! $currency =& self::$baseCurrency)
+		{
+			$currency = Option::get('conversion', 'BASE_CURRENCY', 'RUB');
+		}
 
-        return $currency;
-    }
+		return $currency;
+	}
 
-    /** @param string $currency - currency code
-     * @internal
-     */
-    static public function setBaseCurrency($currency)
-    {
-        if (!$currency) {
-            $currency = 'RUB';
-        }
+	/** @internal
+	 * @param string $currency - currency code
+	 */
+	static public function setBaseCurrency($currency)
+	{
+		if (! $currency)
+		{
+			$currency = 'RUB';
+		}
 
-        self::$baseCurrency = $currency;
+		self::$baseCurrency = $currency;
 
-        Option::set('conversion', 'BASE_CURRENCY', $currency);
-    }
-
-
-    /** @deprecated */
-    static public function convertToBaseCurrency($value, $currency) // TODO remove from sale
-    {
-        return Utils::convertToBaseCurrency($value, $currency);
-    }
-
-    /** @deprecated */
-    static public function formatToBaseCurrency($value, $format = null) // TODO remove from sale
-    {
-        return Utils::formatToBaseCurrency($value, $format);
-    }
-
-    /** @deprecated */
-    static public function getBaseCurrencyUnit() // TODO remove from sale
-    {
-        return Utils::getBaseCurrencyUnit();
-    }
+		Option::set('conversion', 'BASE_CURRENCY', $currency);
+	}
 
 
-    static private $modules = array();
 
-    static public function getModules()
-    {
-        if (!$modules =& self::$modules) {
-            $default = array('ACTIVE' => !ModuleManager::isModuleInstalled('sale'));
+	/** @deprecated */
+	static public function convertToBaseCurrency($value, $currency) // TODO remove from sale
+	{
+		return Utils::convertToBaseCurrency($value, $currency);
+	}
 
-            foreach (
-                array(
-                    AttributeManager::getTypesInternal(),
-                    CounterManager::getTypesInternal(),
-                    RateManager::getTypesInternal(),
-                ) as $types) {
-                foreach ($types as $type) {
-                    $modules[$type['MODULE']] = $default;
-                }
-            }
+	/** @deprecated */
+	static public function formatToBaseCurrency($value, $format = null) // TODO remove from sale
+	{
+		return Utils::formatToBaseCurrency($value, $format);
+	}
 
-            if ($modules['sale']) {
-                $modules['sale']['ACTIVE'] = true;
-            }
+	/** @deprecated */
+	static public function getBaseCurrencyUnit() // TODO remove from sale
+	{
+		return Utils::getBaseCurrencyUnit();
+	}
 
-            $modules = unserialize(Option::get('conversion', 'MODULES', 'a:0:{}')) + $modules;
 
-            // TODO all modules with attributes must be active
-            $modules['conversion'] = $modules['abtest'] = $modules['sender'] = $modules['seo'] = array('ACTIVE' => true);
 
-            ksort($modules);
-        }
+	static private $modules = array();
 
-        return $modules;
-    }
+	static public function getModules()
+	{
+		if (! $modules =& self::$modules)
+		{
+			$default = array('ACTIVE' => ! ModuleManager::isModuleInstalled('sale'));
 
-    /** @internal */
-    static public function setModules(array $modules)
-    {
-        self::$modules = $modules;
-        Option::set('conversion', 'MODULES', serialize($modules));
-    }
+			foreach (
+				array(
+					AttributeManager::getTypesInternal(),
+					CounterManager::getTypesInternal(),
+					RateManager::getTypesInternal(),
+				) as $types)
+			{
+				foreach ($types as $type)
+				{
+					$modules[$type['MODULE']] = $default;
+				}
+			}
 
-    static public function isModuleActive($name)
-    {
-        $modules = self::getModules();
-        $module = $modules[$name];
-        return $module && $module['ACTIVE'];
-    }
+			if ($modules['sale'])
+			{
+				$modules['sale']['ACTIVE'] = true;
+			}
+
+			$modules = unserialize(Option::get('conversion', 'MODULES', 'a:0:{}')) + $modules;
+
+			// TODO all modules with attributes must be active
+			$modules['conversion'] = $modules['abtest'] = $modules['sender'] = $modules['seo'] = array('ACTIVE' => true);
+
+			ksort($modules);
+		}
+
+		return $modules;
+	}
+
+	/** @internal */
+	static public function setModules(array $modules)
+	{
+		self::$modules = $modules;
+		Option::set('conversion', 'MODULES', serialize($modules));
+	}
+
+	static public function isModuleActive($name)
+	{
+		$modules = self::getModules();
+		$module = $modules[$name];
+		return $module && $module['ACTIVE'];
+	}
 }

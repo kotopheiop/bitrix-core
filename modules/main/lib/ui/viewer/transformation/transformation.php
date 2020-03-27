@@ -6,27 +6,26 @@ use Bitrix\Transformer\FileTransformer;
 
 abstract class Transformation
 {
-    public static function getInputContentTypes()
-    {
-        return [];
-    }
+	public static function getInputContentTypes()
+	{
+		return [];
+	}
 
-    abstract public function getOutputContentType();
+	abstract public function getOutputContentType();
+	abstract public function getOutputExtension();
 
-    abstract public function getOutputExtension();
+	/**
+	 * @return FileTransformer
+	 */
+	abstract public function buildTransformer();
 
-    /**
-     * @return FileTransformer
-     */
-    abstract public function buildTransformer();
-
-    /**
-     * Returns maximum file size for transformation.
-     *
-     * @return int
-     */
-    public function getInputMaxSize()
-    {
-        return 0;
-    }
+	/**
+	 * Returns maximum file size for transformation.
+	 *
+	 * @return int
+	 */
+	public function getInputMaxSize()
+	{
+		return 0;
+	}
 }
